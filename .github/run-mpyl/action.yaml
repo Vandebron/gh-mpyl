@@ -14,7 +14,7 @@ inputs:
 
 runs:
   using: docker
-  image: ghcr.io/vandebron/gh-mpyl:latest
+  image: docker://ghcr.io/vandebron/gh-mpyl:latest
   args:
     - ${{ inputs.mpyl-command }}
   env:
