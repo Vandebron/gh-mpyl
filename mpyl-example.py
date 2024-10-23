@@ -12,7 +12,6 @@ def main(args: argparse.Namespace):
         from src.mpyl.utilities.pyaml_env import parse_config
         from src.mpyl.cli import MpylCliParameters
         from src.mpyl.build import run_mpyl
-        from plugins.gradle import BuildGradle
 
     else:
         from mpyl.steps.run_properties import construct_run_properties
@@ -28,7 +27,7 @@ def main(args: argparse.Namespace):
         pull_main=True,
         verbose=args.verbose,
         all=args.all,
-        dryrun=args.dryrun,
+        install=args.install,
     )
     run_properties = construct_run_properties(
         config=config, properties=properties, cli_parameters=cli_parameters
@@ -61,9 +60,9 @@ if __name__ == "__main__":
         action="store_true",
     )
     parser.add_argument(
-        "--dryrun",
-        "-d",
-        help="don't push or deploy images",
+        "--install",
+        "-i",
+        help="Deploy images",
         default=False,
         action="store_true",
     )

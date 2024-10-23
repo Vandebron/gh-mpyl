@@ -138,7 +138,7 @@ def run_mpyl(
                 accumulator=run_result,
                 executor=steps,
                 reporter=reporter,
-                dry_run=cli_parameters.dryrun or cli_parameters.local,
+                install=cli_parameters.install,
             )
         except ValidationError as exc:
             console.log(
@@ -167,7 +167,7 @@ def run_build(
     accumulator: RunResult,
     executor: Steps,
     reporter: Optional[Reporter] = None,
-    dry_run: bool = True,
+    install: bool = False,
 ):
     try:
         for stage, project_executions in accumulator.run_plan.selected_plan.items():
@@ -182,7 +182,7 @@ def run_build(
                         output=Output(success=True, message="This step was cached"),
                     )
                 else:
-                    result = executor.execute(stage.name, project_execution, dry_run)
+                    result = executor.execute(stage.name, project_execution, install)
                 accumulator.append(result)
                 if reporter:
                     reporter.send_report(accumulator)

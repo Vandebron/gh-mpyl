@@ -1,4 +1,5 @@
 """Deploys the docker image produced in the build stage to Kubernetes, using HELM. """
+
 import re
 from logging import Logger
 from typing import Optional
@@ -76,7 +77,7 @@ class DeployKubernetes(Step):
         if deploy_result.success:
             hostname = self.try_extract_hostname(chart, builder.project.name)
             url = None
-            if hostname:
+            if hostname and step_input.install:
                 self._logger.info(
                     f"Service {step_input.project_execution.name} reachable at: {hostname}"
                 )
