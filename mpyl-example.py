@@ -12,7 +12,6 @@ def main(args: argparse.Namespace):
         from src.mpyl.utilities.pyaml_env import parse_config
         from src.mpyl.cli import MpylCliParameters
         from src.mpyl.build import run_mpyl
-        from plugins.gradle import BuildGradle
 
     else:
         from mpyl.steps.run_properties import construct_run_properties
@@ -25,7 +24,6 @@ def main(args: argparse.Namespace):
     cli_parameters = MpylCliParameters(
         tag=args.tag,
         verbose=args.verbose,
-        dryrun=args.dryrun,
     )
     run_properties = construct_run_properties(
         config=config, properties=properties, cli_parameters=cli_parameters
@@ -43,13 +41,6 @@ def main(args: argparse.Namespace):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simple MPL pipeline")
     parser.add_argument("--tag", "-t", help="The name of the tag to build", type=str)
-    parser.add_argument(
-        "--dryrun",
-        "-d",
-        help="don't push or deploy images",
-        default=False,
-        action="store_true",
-    )
     parser.add_argument(
         "--verbose",
         "-v",

@@ -3,7 +3,7 @@
 from logging import Logger
 
 from . import STAGE_NAME
-from .k8s import deploy_helm_chart
+from .k8s import generate_helm_charts
 from .k8s.chart import ChartBuilder, to_cron_job_chart, to_job_chart
 from .. import Step, Meta
 from ..models import Input, Output, ArtifactType
@@ -28,10 +28,7 @@ class DeployKubernetesJob(Step):
         chart = (
             to_cron_job_chart(builder) if builder.is_cron_job else to_job_chart(builder)
         )
-        return deploy_helm_chart(
-            self._logger,
-            chart,
-            step_input,
-            builder.release_name,
-            delete_existing=True,
+
+        return generate_helm_charts(
+            self._logger, chart, step_input, builder.release_name
         )

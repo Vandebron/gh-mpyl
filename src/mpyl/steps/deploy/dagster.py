@@ -1,6 +1,7 @@
 """
 Step to deploy a dagster user code repository to k8s
 """
+
 from functools import reduce
 from logging import Logger
 from pathlib import Path
@@ -126,7 +127,6 @@ class DeployDagster(Step):
 
         helm_install_result = helm.install_chart_with_values(
             logger=self._logger,
-            dry_run=step_input.dry_run,
             values_path=values_path / Path("values.yaml"),
             release_name=release_name,
             chart_version=dagster_version,
@@ -136,7 +136,7 @@ class DeployDagster(Step):
         )
 
         dagster_deploy_results.append(helm_install_result)
-        if helm_install_result.success and not step_input.dry_run:
+        if helm_install_result.success:
             config_map = get_config_map(
                 core_api,
                 dagster_config.base_namespace,
