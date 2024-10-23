@@ -11,7 +11,7 @@ from kubernetes import config, client
 from kubernetes.client import V1ConfigMap, ApiException, V1Deployment
 from ruamel.yaml import yaml_object, YAML
 
-from .deploy_config import DeployConfig, DeployAction, get_namespace
+from .deploy_config import get_namespace
 from .helm import write_helm_chart, GENERATED_WARNING
 from ...deploy.k8s.resources import CustomResourceDefinition
 from ...models import RunProperties, ArtifactSpec
