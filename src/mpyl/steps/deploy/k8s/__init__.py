@@ -14,7 +14,7 @@ from ruamel.yaml import yaml_object, YAML
 from .deploy_config import DeployConfig, DeployAction, get_namespace
 from .helm import write_helm_chart, GENERATED_WARNING
 from ...deploy.k8s.resources import CustomResourceDefinition
-from ...models import RunProperties, input_to_artifact, ArtifactType, ArtifactSpec
+from ...models import RunProperties, ArtifactSpec
 from ....project import ProjectName
 from ....steps import Input, Output
 from ....steps.deploy.k8s import helm
@@ -161,64 +161,46 @@ def replace_config_map(
         )
 
 
-def deploy_helm_chart(  # pylint: disable=too-many-locals
+def deploy_helm_chart(
     logger: Logger,
-    chart: dict[str, CustomResourceDefinition],
+    chart_path: Path,
     step_input: Input,
     release_name: str,
     delete_existing: bool = False,
 ) -> Output:
     run_properties = step_input.run_properties
     project = step_input.project_execution.project
-
-    chart_path = write_helm_chart(
-        logger, chart, Path(project.target_path), run_properties, release_name
+    namespace = get_namespace(run_properties, project)
+    project_id: str = (
+        project.deployment.kubernetes.rancher.project_id.get_value(
+            target=run_properties.target
+        )
+        if project.deployment
+        and project.deployment.kubernetes
+        and project.deployment.kubernetes.rancher
+        and project.deployment.kubernetes.rancher.project_id
+        else ""
     )
 
-    if step_input.install:
-        namespace = get_namespace(run_properties, project)
-        project_id: str = (
-            project.deployment.kubernetes.rancher.project_id.get_value(
-                target=run_properties.target
-            )
-            if project.deployment
-            and project.deployment.kubernetes
-            and project.deployment.kubernetes.rancher
-            and project.deployment.kubernetes.rancher.project_id
-            else ""
-        )
-
-        cluster_config: ClusterConfig = get_cluster_config_for_project(
-            run_properties, project
-        )
-
-        upsert_namespace(
-            logger=logger,
-            namespace=namespace,
-            project_id=project_id,
-            run_properties=run_properties,
-            cluster_config=cluster_config,
-        )
-
-        return helm.install(
-            logger,
-            chart_path,
-            release_name,
-            namespace,
-            cluster_config.context,
-            delete_existing,
-        )
-
-    artifact = input_to_artifact(
-        ArtifactType.HELM_CHART,
-        step_input,
-        spec=RenderedHelmChartSpec(str(chart_path)),
+    cluster_config: ClusterConfig = get_cluster_config_for_project(
+        run_properties, project
     )
 
-    return Output(
-        success=True,
-        message=f"Helm charts written to {chart_path}",
-        produced_artifact=artifact,
+    upsert_namespace(
+        logger=logger,
+        namespace=namespace,
+        project_id=project_id,
+        run_properties=run_properties,
+        cluster_config=cluster_config,
+    )
+
+    return helm.install(
+        logger,
+        chart_path,
+        release_name,
+        namespace,
+        cluster_config.context,
+        delete_existing,
     )
 
 

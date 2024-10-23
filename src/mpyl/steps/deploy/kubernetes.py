@@ -5,8 +5,14 @@ from logging import Logger
 from typing import Optional
 
 from . import STAGE_NAME
-from .k8s import deploy_helm_chart, CustomResourceDefinition, DeployedHelmAppSpec
+from .k8s import (
+    deploy_helm_chart,
+    CustomResourceDefinition,
+    DeployedHelmAppSpec,
+    RenderedHelmChartSpec,
+)
 from .k8s.chart import ChartBuilder, to_service_chart
+from .k8s.helm import write_helm_chart
 from .. import Step, Meta
 from ..models import (
     Input,
@@ -70,26 +76,44 @@ class DeployKubernetes(Step):
     def execute(self, step_input: Input) -> Output:
         builder = ChartBuilder(step_input)
         chart = to_service_chart(builder)
+        project = step_input.project_execution.project
 
-        deploy_result = deploy_helm_chart(
-            self._logger, chart, step_input, builder.release_name
+        chart_path = write_helm_chart(
+            self._logger,
+            chart,
+            project.target_path,
+            step_input.run_properties,
+            builder.release_name,
         )
-        if deploy_result.success:
-            hostname = self.try_extract_hostname(chart, builder.project.name)
-            url = None
-            if hostname and step_input.install:
-                self._logger.info(
-                    f"Service {step_input.project_execution.name} reachable at: {hostname}"
-                )
-                endpoint = self.get_endpoint(builder)
-                url = f"{hostname}{endpoint}"
-            artifact = input_to_artifact(
-                ArtifactType.DEPLOYED_HELM_APP,
-                step_input,
-                spec=DeployedHelmAppSpec(url=f"{url}"),
+
+        if step_input.install:
+            deploy_result = deploy_helm_chart(
+                self._logger, chart_path, step_input, builder.release_name
             )
-            return Output(
-                success=True, message=deploy_result.message, produced_artifact=artifact
+
+            if deploy_result.success:
+                hostname = self.try_extract_hostname(chart, project.name)
+                url = None
+
+                if hostname:
+                    self._logger.info(
+                        f"Service {step_input.project_execution.name} reachable at: {hostname}"
+                    )
+                    url = f"{hostname}{self.get_endpoint(builder)}"
+                deploy_result.produced_artifact = input_to_artifact(
+                    ArtifactType.DEPLOYED_HELM_APP,
+                    step_input,
+                    spec=DeployedHelmAppSpec(url=f"{url}"),
+                )
+        else:
+            deploy_result = Output(
+                success=True,
+                message=f"Helm charts written to {chart_path}",
+                produced_artifact=input_to_artifact(
+                    ArtifactType.HELM_CHART,
+                    step_input,
+                    spec=RenderedHelmChartSpec(str(chart_path)),
+                ),
             )
 
         return deploy_result
