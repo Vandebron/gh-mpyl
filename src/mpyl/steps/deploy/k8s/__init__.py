@@ -1,7 +1,6 @@
 """Kubernetes deployment related helper methods"""
 
 import datetime
-import os
 from dataclasses import dataclass
 from logging import Logger
 from pathlib import Path
@@ -12,10 +11,10 @@ from kubernetes import config, client
 from kubernetes.client import V1ConfigMap, ApiException, V1Deployment
 from ruamel.yaml import yaml_object, YAML
 
-from .deploy_config import DeployConfig, DeployAction, get_namespace
+from .deploy_config import get_namespace
 from .helm import write_helm_chart, GENERATED_WARNING
 from ...deploy.k8s.resources import CustomResourceDefinition
-from ...models import RunProperties, input_to_artifact, ArtifactType, ArtifactSpec
+from ...models import RunProperties, ArtifactSpec
 from ....project import ProjectName
 from ....steps import Input, Output
 from ....steps.deploy.k8s import helm
@@ -42,13 +41,6 @@ class DeployedHelmAppSpec(ArtifactSpec):
 class RenderedHelmChartSpec(ArtifactSpec):
     yaml_tag = "!RenderedHelmChartSpec"
     chart_path: str
-
-
-@yaml_object(yaml)
-@dataclass
-class KubernetesManifestSpec(ArtifactSpec):
-    yaml_tag = "!KubernetesManifestSpec"
-    manifest_file_path: str
 
 
 def rollout_restart_deployment(
@@ -87,7 +79,6 @@ def upsert_namespace(
     logger: Logger,
     namespace: str,
     project_id: str,
-    dry_run: bool,
     run_properties: RunProperties,
     cluster_config: ClusterConfig,
 ) -> None:
@@ -102,7 +93,7 @@ def upsert_namespace(
     )
     namespaces = api.list_namespace(field_selector=f"metadata.name={namespace}")
 
-    if len(namespaces.items) == 0 and not dry_run:
+    if len(namespaces.items) == 0:
         try:
             api.create_namespace(
                 client.V1Namespace(
@@ -120,27 +111,8 @@ def upsert_namespace(
         logger.info(f"Found namespace {namespace}")
 
 
-def render_manifests(chart: dict[str, CustomResourceDefinition]):
-    result = f"{GENERATED_WARNING}\n"
-    for name, template_content in sorted(chart.items()):
-        manifest = render_crd(name, template_content)
-        result += manifest
-    return result
-
-
 def render_crd(name: str, crd: CustomResourceDefinition):
     return f"---\n# {name}\n{to_yaml(crd)}"
-
-
-def write_manifest(
-    target_path: Path, chart: dict[str, CustomResourceDefinition]
-) -> Path:
-    if not target_path.exists():
-        os.makedirs(target_path, exist_ok=True)
-    manifests = render_manifests(chart)
-    manifest_file = target_path / "manifest.yaml"
-    manifest_file.write_text(manifests, "utf-8")
-    return manifest_file
 
 
 def get_config_map(
@@ -189,55 +161,16 @@ def replace_config_map(
         )
 
 
-def deploy_helm_chart(  # pylint: disable=too-many-locals
+def deploy_helm_chart(
     logger: Logger,
-    chart: dict[str, CustomResourceDefinition],
+    chart_path: Path,
     step_input: Input,
     release_name: str,
     delete_existing: bool = False,
 ) -> Output:
     run_properties = step_input.run_properties
     project = step_input.project_execution.project
-    deployment_config = DeployConfig.from_config(values=run_properties.config)
-
-    action = deployment_config.action.value
-    if action == DeployAction.KUBERNETES_MANIFEST.value:  # pylint: disable=no-member
-        path = Path(project.root_path, deployment_config.output_path)
-        file_path = write_manifest(target_path=path, chart=chart)
-        artifact = input_to_artifact(
-            artifact_type=ArtifactType.KUBERNETES_MANIFEST,
-            step_input=step_input,
-            spec=KubernetesManifestSpec(str(file_path)),
-        )
-
-        return Output(
-            success=True,
-            message=f"Wrote kubectl manifest to {path}",
-            produced_artifact=artifact,
-        )
-
-    chart_path = write_helm_chart(
-        logger, chart, Path(project.target_path), run_properties, release_name
-    )
-
-    if action == DeployAction.HELM_TEMPLATE.value:  # pylint: disable=no-member
-        template_path = helm.template(logger, chart_path, release_name)
-        artifact = input_to_artifact(
-            ArtifactType.HELM_CHART,
-            step_input,
-            spec=RenderedHelmChartSpec(str(template_path)),
-        )
-        return Output(
-            success=True,
-            message=f"Chart templated to {template_path}",
-            produced_artifact=artifact,
-        )
-
     namespace = get_namespace(run_properties, project)
-    dry_run = (
-        step_input.dry_run
-        or action == DeployAction.HELM_DRY_RUN.value  # pylint: disable=no-member
-    )
     project_id: str = (
         project.deployment.kubernetes.rancher.project_id.get_value(
             target=run_properties.target
@@ -257,7 +190,6 @@ def deploy_helm_chart(  # pylint: disable=too-many-locals
         logger=logger,
         namespace=namespace,
         project_id=project_id,
-        dry_run=dry_run,
         run_properties=run_properties,
         cluster_config=cluster_config,
     )
@@ -265,7 +197,6 @@ def deploy_helm_chart(  # pylint: disable=too-many-locals
     return helm.install(
         logger,
         chart_path,
-        dry_run,
         release_name,
         namespace,
         cluster_config.context,

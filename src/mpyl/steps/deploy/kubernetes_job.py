@@ -3,10 +3,11 @@
 from logging import Logger
 
 from . import STAGE_NAME
-from .k8s import deploy_helm_chart
+from .k8s import deploy_helm_chart, RenderedHelmChartSpec
 from .k8s.chart import ChartBuilder, to_cron_job_chart, to_job_chart
 from .. import Step, Meta
-from ..models import Input, Output, ArtifactType
+from ..models import Input, Output, ArtifactType, input_to_artifact
+from ...steps.deploy.k8s import write_helm_chart
 
 
 class DeployKubernetesJob(Step):
@@ -28,10 +29,29 @@ class DeployKubernetesJob(Step):
         chart = (
             to_cron_job_chart(builder) if builder.is_cron_job else to_job_chart(builder)
         )
-        return deploy_helm_chart(
+        chart_path = write_helm_chart(
             self._logger,
             chart,
-            step_input,
+            step_input.project_execution.project.target_path,
+            step_input.run_properties,
             builder.release_name,
-            delete_existing=True,
+        )
+
+        if step_input.install:
+            return deploy_helm_chart(
+                self._logger,
+                chart_path,
+                step_input,
+                builder.release_name,
+                delete_existing=True,
+            )
+
+        return Output(
+            success=True,
+            message=f"Helm charts written to {chart_path}",
+            produced_artifact=input_to_artifact(
+                ArtifactType.HELM_CHART,
+                step_input,
+                spec=RenderedHelmChartSpec(str(chart_path)),
+            ),
         )

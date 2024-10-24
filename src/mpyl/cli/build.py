@@ -119,11 +119,10 @@ class CustomValidation(click.Command):
     help="Comma separated list of the projects to build",
 )
 @click.option(
-    "--dryrun",
-    "dryrun_",
+    "--install",
     is_flag=True,
     default=False,
-    help="don't push or deploy images",
+    help="Installs the helm charts using helm if toggled. Otherwise, the charts are generated but not installed",
 )
 @click.pass_obj
 def run(
@@ -133,7 +132,7 @@ def run(
     tag,
     stage,
     projects,
-    dryrun_,
+    install,
 ):  # pylint: disable=invalid-name
     run_result_files = list(Path(RUN_ARTIFACTS_FOLDER).glob(RUN_RESULT_FILE_GLOB))
     for run_result_file in run_result_files:
@@ -146,8 +145,8 @@ def run(
         verbose=obj.verbose,
         tag=tag,
         stage=stage,
+        install=install,
         projects=projects,
-        dryrun=dryrun_,
     )
     obj.console.log(parameters)
 

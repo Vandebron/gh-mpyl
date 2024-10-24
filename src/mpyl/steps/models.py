@@ -239,7 +239,7 @@ class Input:
     run_properties: RunProperties
     """Run specific properties"""
     required_artifact: Optional[Artifact] = None
-    dry_run: bool = False
+    install: bool = False
 
     def as_spec(self, spec_type: Type[ArtifactSpec]):
         """Returns the artifact spec as type :param typ:"""
