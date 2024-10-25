@@ -45,7 +45,7 @@ def construct_run_properties(
             run_plan_logger = logging.getLogger("mpyl")
             if explain_run_plan:
                 run_plan_logger.setLevel("DEBUG")
-            changed_files_path = config["vcs"].get("changedFilesPath", None)
+            changed_files_path = config["vcs"].get("changedFilesPath", ".mpyl/changed_files.json")
             run_plan = _create_run_plan(
                 cli_parameters=cli_parameters,
                 all_projects=all_projects,
@@ -58,8 +58,8 @@ def construct_run_properties(
         return RunProperties.for_local_run(
             config=config,
             run_plan=run_plan,
-            revision=repo.get_sha,
-            branch=repo.get_branch,
+            revision=config["build"]["versioning"]["revision"],
+            branch=config["build"]["versioning"]["branch"],
             tag=tag,
             stages=stages,
             all_projects=all_projects,
@@ -80,7 +80,7 @@ def _create_run_plan(
     all_projects: set[Project],
     all_stages: list[Stage],
     explain_run_plan: bool,
-    changed_files_path: Optional[str] = None,
+    changed_files_path: str,
 ):
     run_plan_logger = logging.getLogger("mpyl")
     if explain_run_plan:

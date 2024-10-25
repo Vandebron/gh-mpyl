@@ -264,9 +264,9 @@ def create_run_plan(
     all_stages: list[Stage],
     build_all: bool,
     local: bool,
+    changed_files_path: str,
     selected_projects: set[Project],
     selected_stage: Optional[Stage] = None,
-    changed_files_path: Optional[str] = None,
 ) -> RunPlan:
     run_plan_file = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.pickle"
 
@@ -304,12 +304,12 @@ def _discover_run_plan(
     all_projects: set[Project],
     all_stages: list[Stage],
     build_all: bool,
+    changed_files_path: str,
     selected_projects: set[Project],
     selected_stage: Optional[Stage],
-    changed_files_path: Optional[str] = None,
 ) -> RunPlan:
     logger.info("Discovering run plan...")
-    changeset = Changeset.from_file(logger=logger, sha="FIXME ptab", changed_files_path=changed_files_path) if changed_files_path else None
+    changeset = Changeset.from_file(logger=logger, sha="FIXME ptab", changed_files_path=changed_files_path)
     plan = {}
 
     def add_projects_to_plan(stage: Stage):
