@@ -13,7 +13,6 @@ from . import (
     CliContext,
     CONFIG_PATH_HELP,
     create_console_logger,
-    parse_config_from_supplied_location,
 )
 from ..cli.commands.projects.lint import (
     _check_and_load_projects,
@@ -67,6 +66,7 @@ def projects(ctx, config, verbose, filter_):
     ctx.obj = ProjectsContext(
         cli=CliContext(
             config=parse_config(config),
+            repo=Repository(),
             console=create_console_logger(show_path=False, verbose=verbose, max_width=0),
             verbose=verbose,
             run_properties={},
@@ -84,7 +84,7 @@ def list_projects(obj: ProjectsContext):
     found_projects = obj.cli.repo.find_projects(obj.filter)
 
     for proj in found_projects:
-        project = load_project(obj.cli.repo.root_dir, Path(proj), False)
+        project = load_project(obj.cli.repo.path, Path(proj), False)
         obj.cli.console.print(Markdown(f"{proj} `{project.name}`"))
 
 
@@ -95,7 +95,7 @@ def list_project_names(obj: ProjectsContext):
 
     names = sorted(
         [
-            load_project(obj.cli.repo.root_dir, Path(proj), False).name
+            load_project(obj.cli.repo.path, Path(proj), False).name
             for proj in found_projects
         ]
     )
@@ -108,7 +108,7 @@ class ProjectPath(ParamType):
     name = "project_path"
 
     def shell_complete(self, ctx: click.Context, param, incomplete: str):
-        repo = Repository(Path(""))
+        repo = Repository()
         found_projects = repo.find_projects(incomplete)
         return [CompletionItem(value=proj) for proj in found_projects]
 

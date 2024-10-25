@@ -74,7 +74,7 @@ def build(ctx, config, properties, verbose):
         max_width=console_config.width,
     )
 
-    ctx.obj = CliContext(parsed_config, Repository(path=Path("")), console, verbose, parsed_properties)
+    ctx.obj = CliContext(parsed_config, Repository(), console, verbose, parsed_properties)
 
 
 class CustomValidation(click.Command):
@@ -220,7 +220,7 @@ def clean(obj: CliContext, filter_):
     found_projects: list[Path] = [
         Path(
             load_project(
-                obj.repo.root_dir, Path(project_path), strict=False
+                obj.repo.path, Path(project_path), strict=False
             ).target_path
         )
         for project_path in obj.repo.find_projects(filter_ if filter_ else "")

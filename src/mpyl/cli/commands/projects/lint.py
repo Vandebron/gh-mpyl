@@ -42,7 +42,7 @@ def _check_and_load_projects(
     console: Optional[Console], repo: Repository, project_paths: list[str], strict: bool
 ) -> list[Project]:
     projects = [
-        __load_project(console, repo.root_dir, project_path, strict)
+        __load_project(console, repo.path, project_path, strict)
         for project_path in project_paths
     ]
     valid_projects = [project for project in projects if project]

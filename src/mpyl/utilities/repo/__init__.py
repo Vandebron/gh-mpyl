@@ -57,13 +57,9 @@ class Changeset:
         return Changeset(sha=sha, _files_touched={})
 
 
-class Repository:  # pylint: disable=too-many-public-methods
-    def __init__(self, path: Path):
-        self._path = path
-
-    @property
-    def root_dir(self) -> Path:
-        return Path(self._path)
+@dataclass(frozen=True)
+class Repository:
+    path: Path = Path("")
 
     def find_projects(self, folder_pattern: str = "") -> list[str]:
         # FIXME replace repo.git.ls_files with a filesystem path traversal
