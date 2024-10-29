@@ -141,26 +141,28 @@ class Steps:
         project_execution: ProjectExecution,
         stage: Stage,
     ) -> Output:
-        main_step_artifact = main_result.produced_artifact
+        combined_artifact = main_result.produced_artifact
         after_result = self._execute(
             executor=step,
             project_execution=project_execution,
             properties=self._properties,
-            artifact=main_step_artifact,
+            artifact=combined_artifact,
         )
+
         if (
             after_result.produced_artifact
             and after_result.produced_artifact.artifact_type != ArtifactType.NONE
         ):
             after_result.write(project_execution.project.target_path, stage.name)
-        else:
-            after_result.produced_artifact = main_step_artifact
+            combined_artifact = after_result.produced_artifact
 
-        if not main_result.success:
-            after_result.message = main_result.message
-            after_result.success = False
+        combined_result = Output(
+            success=main_result.success and after_result.success,
+            message=f"{main_result.message}\n{after_result.message}",
+            produced_artifact=combined_artifact,
+        )
 
-        return after_result
+        return combined_result
 
     def _validate_project_against_config(self, project: Project) -> Optional[Output]:
         allowed_maintainers = set(

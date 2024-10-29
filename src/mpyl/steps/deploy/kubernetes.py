@@ -100,10 +100,14 @@ class DeployKubernetes(Step):
                         f"Service {step_input.project_execution.name} reachable at: {hostname}"
                     )
                     url = f"{hostname}{self.get_endpoint(builder)}"
-                deploy_result.produced_artifact = input_to_artifact(
-                    ArtifactType.DEPLOYED_HELM_APP,
-                    step_input,
-                    spec=DeployedHelmAppSpec(url=f"{url}"),
+                deploy_result = Output(
+                    success=True,
+                    message=f"Helm charts deployed to namespace {builder.namespace}",
+                    produced_artifact=input_to_artifact(
+                        ArtifactType.DEPLOYED_HELM_APP,
+                        step_input,
+                        spec=DeployedHelmAppSpec(url=f"{url}"),
+                    ),
                 )
         else:
             deploy_result = Output(
