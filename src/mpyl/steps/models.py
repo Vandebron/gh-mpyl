@@ -229,7 +229,7 @@ class Input:
 
 
 @yaml_object(yaml)
-@dataclass()
+@dataclass(frozen=False)
 class Output:
     success: bool
     message: str
