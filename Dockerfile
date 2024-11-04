@@ -1,10 +1,11 @@
+ARG PYTHON_VERSION=3.11
+FROM public.ecr.aws/vdb-public/python:${PYTHON_VERSION}-slim-bookworm
+
+USER root
+
 # ------------------------------------------------------------------------------
 #             Install JDK
 # ------------------------------------------------------------------------------
-ARG PYTHON_VERSION=3.11
-FROM public.ecr.aws/vdb-public/python:${PYTHON_VERSION}-slim-bookworm AS jdk
-
-USER root
 
 ENV JAVA_HOME=/opt/java/openjdk
 ENV PATH=$JAVA_HOME/bin:$PATH
@@ -85,12 +86,11 @@ RUN set -eux; \
     echo "javac --version"; javac --version; \
     echo "java --version"; java --version; \
     echo "Complete." \
-    
+
 
 # ------------------------------------------------------------------------------
 #             Install SBT and Scala
 # ------------------------------------------------------------------------------
-FROM jdk AS sbt
 
 # Env variables
 ARG SCALA_VERSION
@@ -170,7 +170,6 @@ WORKDIR /root
 # ------------------------------------------------------------------------------
 #             Install Python
 # ------------------------------------------------------------------------------
-FROM sbt AS python
 
 # Prevents Python from writing pyc files.
 ENV PYTHONDONTWRITEBYTECODE=1
