@@ -15,12 +15,12 @@ inputs:
     description: The environment this action runs in
     required: true
   version:
-    description: The version to release
+    description: The version to be released with this workflow run
     required: true
   # to be replaced by environment, see https://vandebron.atlassian.net/browse/GUILD-1138
   deploy-target:
     description: The deploy target to use
-    required: true
+    required: false
   config-path:
     description: The path to the MPyL config file
     default: mpyl_config.yml
