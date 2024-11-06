@@ -44,7 +44,7 @@ jobs:
         if: inputs.image != ''
         env:
           IMAGE: docker://${{ inputs.image }}
-        run: yq -i '.runs.image = strenv(IMAGE)' actions/health-check/action.yaml
+        run: yq -i '.runs.image = strenv(IMAGE)' actions/lint-projects/action.yaml
 
       - uses: ./actions/lint-projects
         with:
@@ -60,7 +60,7 @@ jobs:
         if: inputs.image != ''
         env:
           IMAGE: docker://${{ inputs.image }}
-        run: yq -i '.runs.image = strenv(IMAGE)' actions/health-check/action.yaml
+        run: yq -i '.runs.image = strenv(IMAGE)' actions/run-plan/action.yaml
 
       - uses: ./actions/run-plan
         with:
@@ -80,7 +80,7 @@ jobs:
         if: inputs.image != ''
         env:
           IMAGE: docker://${{ inputs.image }}
-        run: yq -i '.runs.image = strenv(IMAGE)' actions/health-check/action.yaml
+        run: yq -i '.runs.image = strenv(IMAGE)' actions/run-stage/action.yaml
 
       - uses: ./actions/run-stage
         with:
