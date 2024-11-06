@@ -40,6 +40,9 @@ def perform_health_checks(bare_console: Console):
     console = HealthConsole(bare_console)
     load_dotenv(Path(".env"))
 
+    bare_console.print(f"GIT_COMMIT: {os.environ.get('GIT_COMMIT')}")
+    bare_console.print(f"CHANGE_ID: {os.environ.get('CHANGE_ID')}")
+
     console.title("Version")
     __check_version(console)
 

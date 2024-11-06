@@ -28,16 +28,24 @@ inputs:
     description: ???
     required: false
     default: ${{ github.sha }}
+  debug:
+    description: Whether to run mpyl in debug mode
+    required: false
+    default: ${{ runner.debug }}
+  pr-number:
+    description: ???
+    required: false
+    default: ${{ github.event.pull_request.number }}
 
 runs:
   using: docker
   image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.3.0
   args:
-    - ${{ inputs.group }} ${{ runner.debug != '' && '--verbose' || '' }} ${{ inputs.command }}
+    - ${{ inputs.group }} ${{ inputs.debug != '' && '--verbose' || '' }} ${{ inputs.command }}
   env:
     MPYL_CONFIG_PATH: ${{ inputs.config-path || 'mpyl_config.yml' }}
     CHANGED_FILES_PATH: ${{ inputs.changed-files-path }}
     TAG_NAME: ${{ inputs.environment != 'pull-request' && inputs.version || '' }}  # run_properties.versioning.tag
     GIT_COMMIT: ${{ inputs.commit }}  # run_properties.versioning.revision
-    CHANGE_ID: ${{ github.event.pull_request.number }}  # run_properties.versioning.pr_number
+    CHANGE_ID: ${{ inputs.pr-number }}  # run_properties.versioning.pr_number
     DEPLOY_TARGET: ${{ inputs.deploy-target }}  # run_properties.parameters.deploy_target
