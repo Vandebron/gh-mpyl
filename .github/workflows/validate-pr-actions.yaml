@@ -14,30 +14,48 @@ concurrency:
 
 jobs:
 
-  build:
-    name: ▶️ Run build action
+  build-stage:
+    name: ▶️ Run actions/build-stage
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.1
-      - uses: ./actions/build
+      - uses: ./actions/build-stage
         with:
-          command: status
+          project: minimalService
+          stage: deploy
           environment: pull-request
           deploy-target: PullRequest
           version: a-random-version
+          config-path: tests/test_resources/mpyl_config.yml
 
   health:
-    name: ▶️ Run health action
+    name: ▶️ Run actions/health
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.1
       - uses: ./actions/health
+        with:
+          config-path: tests/test_resources/mpyl_config.yml
 
   projects:
-    name: ▶️ Run projects action
+    name: ▶️ Run actions/projects
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.1
       - uses: ./actions/projects
         with:
           command: list
+          config-path: tests/test_resources/mpyl_config.yml
+
+  run-plan:
+    name: ▶️ Run actions/run-plan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.1
+      - uses: ./actions/run-plan
+        with:
+          environment: pull-request
+          deploy-target: PullRequest
+          version: a-random-version
+          config-path: tests/test_resources/mpyl_config.yml
+          changed-files-path: fixme-add-this-file-to-tests.json
