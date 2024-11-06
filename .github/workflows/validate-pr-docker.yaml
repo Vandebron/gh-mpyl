@@ -66,18 +66,7 @@ jobs:
 
   run:
     name: ▶️ Run actions
-    runs-on: ubuntu-latest
-    needs:
-      - release
-    steps:
-      - uses: actions/checkout@v4.2.1
-
-      - name: Point action.yaml to the new version
-        env:
-          IMAGE: docker://${{ needs.release.outputs.image }}
-        run: |-
-          for f in actions/**/action.yaml; do
-            yq -i '.runs.image = strenv(IMAGE)' "$f"
-          done
-
-      - uses: ./.github/workflows/validate-pr-actions.yaml
+    needs: release
+    uses: ./.github/workflows/validate-pr-actions.yaml
+    with:
+      image: ${{ needs.release.outputs.image }}

@@ -3,6 +3,10 @@ name: Validate Github Actions
 
 on:
   workflow_call:
+    inputs:
+      image:
+        type: string
+        required: false
   pull_request:
     paths:
       - actions/**
@@ -19,6 +23,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.1
+
+      - name: Point action.yaml to the new version
+        if: inputs.image != ''
+        env:
+          IMAGE: docker://${{ inputs.image }}
+        run: yq -i '.runs.image = strenv(IMAGE)' actions/health-check/action.yaml
+
       - uses: ./actions/health-check
         with:
           config-path: tests/test_resources/mpyl_config.yml
@@ -28,6 +39,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.1
+
+      - name: Point action.yaml to the new version
+        if: inputs.image != ''
+        env:
+          IMAGE: docker://${{ inputs.image }}
+        run: yq -i '.runs.image = strenv(IMAGE)' actions/health-check/action.yaml
+
       - uses: ./actions/lint-projects
         with:
           config-path: tests/test_resources/mpyl_config.yml
@@ -37,6 +55,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.1
+
+      - name: Point action.yaml to the new version
+        if: inputs.image != ''
+        env:
+          IMAGE: docker://${{ inputs.image }}
+        run: yq -i '.runs.image = strenv(IMAGE)' actions/health-check/action.yaml
+
       - uses: ./actions/run-plan
         with:
           environment: pull-request
@@ -50,6 +75,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.1
+
+      - name: Point action.yaml to the new version
+        if: inputs.image != ''
+        env:
+          IMAGE: docker://${{ inputs.image }}
+        run: yq -i '.runs.image = strenv(IMAGE)' actions/health-check/action.yaml
+
       - uses: ./actions/run-stage
         with:
           project: minimalService
