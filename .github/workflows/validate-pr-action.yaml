@@ -1,0 +1,27 @@
+---
+name: Validate Github Action
+
+on:
+  pull_request:
+    paths:
+      - action.yaml
+
+# If multiple commits are pushed simultaneously, only build the last one.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+
+  run:
+    name: ▶️ Run action
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.1
+
+      - name: Run docker image
+        uses: ./
+        with:
+          group: health
+          environment: an-environment
+          version: a-version
