@@ -8,9 +8,6 @@ inputs:
   command:
     description: The command to run
     required: false
-  debug:
-    description: Whether to run MPyL in debug mode
-    required: false
   environment:
     description: The environment this Action runs in
     required: true
@@ -31,7 +28,7 @@ runs:
   using: docker
   image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.3.0
   args:
-    - ${{ inputs.group }} ${{ inputs.debug != '' && '--verbose' || '' }} ${{ inputs.command }}
+    - ${{ inputs.group }} ${{ runner.debug != '' && '--verbose' || '' }} ${{ inputs.command }}
   env:
     MPYL_CONFIG_PATH: ${{ inputs.config-path || 'mpyl_config.yml' }}
     CHANGED_FILES_PATH: ${{ inputs.changed-files-path }}
