@@ -15,7 +15,7 @@ inputs:
     description: The environment this Action runs in
     required: true
   version:
-    description: The version to be released with this workflow run
+    description: The version of the deliverable produced by the current workflow run
     required: true
   # to be replaced by environment, see https://vandebron.atlassian.net/browse/GUILD-1138
   deploy-target:
