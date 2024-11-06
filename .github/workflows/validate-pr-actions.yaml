@@ -1,0 +1,43 @@
+---
+name: Validate Github Actions
+
+on:
+  workflow_call:
+  pull_request:
+    paths:
+      - actions/**
+
+# If multiple commits are pushed simultaneously, only build the last one.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+
+  build:
+    name: ▶️ Run build action
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.1
+      - uses: ./actions/build
+        with:
+          command: status
+          environment: pull-request
+          deploy-target: PullRequest
+          version: a-random-version
+
+  health:
+    name: ▶️ Run health action
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.1
+      - uses: ./actions/health
+
+  projects:
+    name: ▶️ Run projects action
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.1
+      - uses: ./actions/projects
+        with:
+          command: list

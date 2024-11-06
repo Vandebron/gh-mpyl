@@ -75,11 +75,9 @@ jobs:
       - name: Point action.yaml to the new version
         env:
           IMAGE: docker://${{ needs.release.outputs.image }}
-        run: yq -i '.runs.image = strenv(IMAGE)' action.yaml
+        run: |-
+          for f in actions/**/action.yaml; do
+            yq -i '.runs.image = strenv(IMAGE)' "$f"
+          done
 
-      - name: Run docker image
-        uses: ./
-        with:
-          group: health
-          environment: an-environment
-          version: a-version
+      - uses: ./.github/workflows/validate-pr-action

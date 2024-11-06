@@ -1,0 +1,49 @@
+---
+name: Run MPyL build group
+description: Run 'mpyl group' inside a Docker container
+inputs:
+  command:
+    description: The command to run
+    required: true
+  environment:
+    description: The environment this Action runs in
+    required: true
+  version:
+    description: The version of the deliverable produced by the current workflow run
+    required: true
+  # to be replaced by environment, see https://vandebron.atlassian.net/browse/GUILD-1138
+  deploy-target:
+    description: The deploy target to use
+    required: true
+  config-path:
+    description: The path to the MPyL config file
+    required: false
+  changed-files-path:
+    description: The path to the file containing the changed files
+    required: false
+  # the following inputs do not actually need to be exposed, but since unfortunately we can't access the github or runner
+  # context in runs.env.* we're forced to declare them as inputs
+  debug:
+    description: Whether to run mpyl in debug mode
+    required: false
+    default: ${{ runner.debug }}
+  commit:
+    description: The commit SHA that triggered the current workflow run
+    required: false
+    default: ${{ github.sha }}
+  pr-number:
+    description: The pull request number (if applicable) that triggered the current workflow run
+    required: false
+    default: ${{ github.event.pull_request.number }}
+runs:
+  using: docker
+  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.3.0
+  args:
+    - build ${{ inputs.debug != '' && '--verbose' || '' }} ${{ inputs.command }}
+  env:
+    MPYL_CONFIG_PATH: ${{ inputs.config-path || 'mpyl_config.yml' }}
+    CHANGED_FILES_PATH: ${{ inputs.changed-files-path }}
+    TAG_NAME: ${{ inputs.environment != 'pull-request' && inputs.version || '' }}  # run_properties.versioning.tag
+    GIT_COMMIT: ${{ inputs.commit }}  # run_properties.versioning.revision
+    CHANGE_ID: ${{ inputs.pr-number }}  # run_properties.versioning.pr_number
+    DEPLOY_TARGET: ${{ inputs.deploy-target }}  # run_properties.parameters.deploy_target
