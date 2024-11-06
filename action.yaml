@@ -23,7 +23,7 @@ inputs:
     required: false
   config-path:
     description: The path to the MPyL config file
-    default: mpyl_config.yml
+    required: false
   changed-files-path:
     description: The path to the file containing the changed files
     required: false
@@ -33,7 +33,7 @@ runs:
   args:
     - ${{ inputs.group }} ${{ inputs.debug != '' && '--verbose' || '' }} ${{ inputs.command }}
   env:
-    MPYL_CONFIG_PATH: ${{ inputs.config-path }}
+    MPYL_CONFIG_PATH: ${{ inputs.config-path || 'mpyl_config.yml' }}
     CHANGED_FILES_PATH: ${{ inputs.changed-files-path }}
     TAG_NAME: ${{ inputs.environment != 'pull-request' && inputs.version || '' }}  # run_properties.versioning.tag
     GIT_COMMIT: ${{ github.sha }}  # run_properties.versioning.revision
