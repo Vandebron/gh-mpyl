@@ -181,13 +181,19 @@ jobs:
       - release
     steps:
       - uses: actions/checkout@v4.2.1
-# don't do this for now, keep using Dockerfile to test it
-#      - name: Point action.yaml to the new version
-#        env:
-#          IMAGE: docker://${{ needs.release.outputs.image }}
-#        run: yq -i '.runs.image = strenv(IMAGE)' action.yaml
+
+      # don't do this for now, keep using Dockerfile to test it
+      #      - name: Point action.yaml to the new version
+      #        env:
+      #          IMAGE: docker://${{ needs.release.outputs.image }}
+      #        run: yq -i '.runs.image = strenv(IMAGE)' action.yaml
 
       - name: Run docker image
         uses: ./
         with:
           group: health
+        env:
+          TAG: some tag
+          GIT_COMMIT: some commit
+          CHANGE_ID: some change id
+          DEPLOY_TARGET: some deploy target
