@@ -1,13 +1,13 @@
+---
 name: MPyL
 description: Action to run MPyL from a docker container
-
 inputs:
   group:
     description: The command group to run
     required: true
   command:
     description: The command to run
-    required: true
+    required: false
   debug:
     description: Whether to run MPyL in debug mode
     required: false
@@ -27,16 +27,15 @@ inputs:
   changed-files-path:
     description: The path to the file containing the changed files
     required: false
-
 runs:
   using: docker
-  image: Dockerfile
+  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.3.0
   args:
     - ${{ inputs.group }} ${{ inputs.debug != '' && '--verbose' || '' }} ${{ inputs.command }}
   env:
     MPYL_CONFIG_PATH: ${{ inputs.config-path }}
     CHANGED_FILES_PATH: ${{ inputs.changed-files-path }}
-    TAG: ${{ inputs.environment != 'pull-request' && inputs.version || '' }}  # run_properties.versioning.tag
+    TAG_NAME: ${{ inputs.environment != 'pull-request' && inputs.version || '' }}  # run_properties.versioning.tag
     GIT_COMMIT: ${{ github.sha }}  # run_properties.versioning.revision
     CHANGE_ID: ${{ github.event.pull_request.number }}  # run_properties.versioning.pr_number
     DEPLOY_TARGET: ${{ inputs.deploy-target }}  # run_properties.parameters.deploy_target
