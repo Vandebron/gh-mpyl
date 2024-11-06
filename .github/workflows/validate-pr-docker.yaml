@@ -65,7 +65,7 @@ jobs:
           push: true
 
   run:
-    name: ▶️ Run action
+    name: ▶️ Run actions
     runs-on: ubuntu-latest
     needs:
       - release
@@ -80,4 +80,4 @@ jobs:
             yq -i '.runs.image = strenv(IMAGE)' "$f"
           done
 
-      - uses: ./.github/workflows/validate-pr-action
+      - uses: ./.github/workflows/validate-pr-actions.yaml
