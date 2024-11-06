@@ -24,6 +24,11 @@ inputs:
   changed-files-path:
     description: The path to the file containing the changed files
     required: false
+  commit:
+    description: ???
+    required: false
+    default: ${{ github.sha }}
+
 runs:
   using: docker
   image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.3.0

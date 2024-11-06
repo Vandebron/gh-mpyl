@@ -1,5 +1,5 @@
 ---
-name: Validate code
+name: Validate MPyL code
 
 on:
   pull_request:
