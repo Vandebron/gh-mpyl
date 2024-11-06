@@ -6,6 +6,7 @@ on:
     paths:
       - src/**
       - tests/**
+      - action.yaml
       - Dockerfile
       - entrypoint.sh
       - requirements.txt
@@ -191,3 +192,5 @@ jobs:
         uses: ./
         with:
           group: health
+          environment: an-environment
+          version: a-version
