@@ -1,10 +1,7 @@
 ---
-name: Run MPyL projects group
-description: Run 'mpyl projects' inside a Docker container
+name: Lint MPyL projects
+description: Lint all known MPyL projects inside a Docker container
 inputs:
-  command:
-    description: The command to run
-    required: true
   config-path:
     description: The path to the MPyL config file
     required: false
@@ -18,6 +15,6 @@ runs:
   using: docker
   image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.3.0
   args:
-    - projects ${{ inputs.debug != '' && '--verbose' || '' }} ${{ inputs.command }}
+    - projects ${{ inputs.debug != '' && '--verbose' || '' }} lint
   env:
     MPYL_CONFIG_PATH: ${{ inputs.config-path || 'mpyl_config.yml' }}

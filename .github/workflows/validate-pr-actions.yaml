@@ -14,23 +14,22 @@ concurrency:
 
 jobs:
 
-  health:
-    name: ▶️ Run actions/health
+  health-check:
+    name: ▶️ Run actions/health-check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.1
-      - uses: ./actions/health
+      - uses: ./actions/health-check
         with:
           config-path: tests/test_resources/mpyl_config.yml
 
-  projects:
-    name: ▶️ Run actions/projects
+  lint-projects:
+    name: ▶️ Run actions/lint-projects
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.1
-      - uses: ./actions/projects
+      - uses: ./actions/lint-projects
         with:
-          command: list
           config-path: tests/test_resources/mpyl_config.yml
 
   run-plan:
@@ -43,8 +42,8 @@ jobs:
           environment: pull-request
           deploy-target: PullRequest
           version: a-random-version
+          changed-files-path: FIXME-add-this-file-to-test-resources.json  # FIXME
           config-path: tests/test_resources/mpyl_config.yml
-          changed-files-path: fixme-add-this-file-to-tests.json
 
   run-stage:
     name: ▶️ Run actions/run-stage

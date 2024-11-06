@@ -1,6 +1,6 @@
 ---
-name: Run MPyL health group
-description: Run 'mpyl health' inside a Docker container
+name: Run MPyL health check
+description: Perform MPyL health check inside a Docker container
 inputs:
   config-path:
     description: The path to the MPyL config file
