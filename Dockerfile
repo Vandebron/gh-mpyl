@@ -1,5 +1,3 @@
-# fixme trigger build
-
 ARG PYTHON_VERSION=3.11
 FROM public.ecr.aws/vdb-public/python:${PYTHON_VERSION}-slim-bookworm AS base
 
