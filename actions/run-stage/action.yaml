@@ -37,7 +37,7 @@ inputs:
     default: ${{ github.event.pull_request.number }}
 runs:
   using: docker
-  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.3.2
+  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.3.3
   args:
     - build ${{ inputs.debug != '' && '--verbose' || '' }} run --ci --stage ${{ inputs.stage }} --projects ${{ inputs.project }}
   env:
