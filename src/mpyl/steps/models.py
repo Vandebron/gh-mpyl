@@ -251,7 +251,7 @@ class Input:
 
 
 @yaml_object(yaml)
-@dataclass(frozen=False)
+@dataclass(frozen=False)  # yaml_object classes can't be frozen
 class Output:
     success: bool
     message: str
