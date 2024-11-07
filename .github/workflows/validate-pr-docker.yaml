@@ -5,7 +5,6 @@ on:
   pull_request:
     paths:
       - Dockerfile
-      - entrypoint.sh
       - requirements.txt
 
 # If multiple commits are pushed simultaneously, only build the last one.
