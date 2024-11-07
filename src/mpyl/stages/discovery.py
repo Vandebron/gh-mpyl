@@ -263,7 +263,6 @@ def create_run_plan(
     repository: Repository,
     all_projects: set[Project],
     all_stages: list[Stage],
-    build_all: bool,
     selected_projects: set[Project],
     tag: Optional[str] = None,
     selected_stage: Optional[Stage] = None,
@@ -289,7 +288,6 @@ def create_run_plan(
         repository=repository,
         all_projects=all_projects,
         all_stages=all_stages,
-        build_all=build_all,
         selected_projects=selected_projects,
         selected_stage=selected_stage,
         tag=tag,
@@ -306,7 +304,6 @@ def _discover_run_plan(
     repository: Repository,
     all_projects: set[Project],
     all_stages: list[Stage],
-    build_all: bool,
     selected_projects: set[Project],
     selected_stage: Optional[Stage],
     tag: Optional[str] = None,
@@ -323,14 +320,7 @@ def _discover_run_plan(
     plan = {}
 
     def add_projects_to_plan(stage: Stage):
-        if build_all:
-            project_executions = to_project_executions(
-                logger=logger,
-                projects=for_stage(all_projects, stage),
-                stage=stage.name,
-                changeset=changeset,
-            )
-        elif selected_projects:
+        if selected_projects:
             project_executions = to_project_executions(
                 logger=logger,
                 projects=for_stage(selected_projects, stage),
