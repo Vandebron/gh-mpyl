@@ -264,7 +264,6 @@ def create_run_plan(
     all_projects: set[Project],
     all_stages: list[Stage],
     build_all: bool,
-    local: bool,
     selected_projects: set[Project],
     tag: Optional[str] = None,
     selected_stage: Optional[Stage] = None,
@@ -291,15 +290,13 @@ def create_run_plan(
         all_projects=all_projects,
         all_stages=all_stages,
         build_all=build_all,
-        local=local,
         selected_projects=selected_projects,
         selected_stage=selected_stage,
         tag=tag,
         changed_files_path=changed_files_path,
     )
 
-    if not local:
-        _store_run_plan(logger, run_plan, run_plan_file)
+    _store_run_plan(logger, run_plan, run_plan_file)
     return run_plan
 
 
@@ -310,7 +307,6 @@ def _discover_run_plan(
     all_projects: set[Project],
     all_stages: list[Stage],
     build_all: bool,
-    local: bool,
     selected_projects: set[Project],
     selected_stage: Optional[Stage],
     tag: Optional[str] = None,

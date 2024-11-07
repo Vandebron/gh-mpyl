@@ -93,11 +93,6 @@ class CustomValidation(click.Command):
 
 @build.command(help="Run an MPyL build", cls=CustomValidation)
 @click.option(
-    "--ci",
-    is_flag=True,
-    help="Run as CI build instead of local. Ignores untracked changes.",
-)
-@click.option(
     "--all",
     "all_",
     is_flag=True,
@@ -128,7 +123,6 @@ class CustomValidation(click.Command):
 @click.pass_obj
 def run(
     obj: CliContext,
-    ci,
     all_,
     tag,
     stage,
@@ -140,7 +134,6 @@ def run(
         run_result_file.unlink()
 
     parameters = MpylCliParameters(
-        local=not ci,
         pull_main=all_,
         all=all_,
         verbose=obj.verbose,
@@ -195,7 +188,7 @@ def run(
 def status(obj: CliContext, all_, projects, stage, tag, explain):
     try:
         parameters = MpylCliParameters(
-            local=sys.stdout.isatty(), all=all_, projects=projects, stage=stage, tag=tag
+            all=all_, projects=projects, stage=stage, tag=tag
         )
         print_status(obj, parameters, explain)
     except asyncio.exceptions.TimeoutError:

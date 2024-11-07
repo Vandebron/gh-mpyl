@@ -23,7 +23,6 @@ def main(args: argparse.Namespace):
     config = parse_config("mpyl_config.yml")
     properties = parse_config("run_properties.yml")
     cli_parameters = MpylCliParameters(
-        local=args.local,
         tag=args.tag,
         pull_main=True,
         verbose=args.verbose,
@@ -45,13 +44,6 @@ def main(args: argparse.Namespace):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simple MPL pipeline")
-    parser.add_argument(
-        "--local",
-        "-l",
-        help="a local developer run",
-        default=False,
-        action="store_true",
-    )
     parser.add_argument("--tag", "-t", help="The name of the tag to build", type=str)
     parser.add_argument(
         "--all",
