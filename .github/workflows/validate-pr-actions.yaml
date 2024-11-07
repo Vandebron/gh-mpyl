@@ -33,9 +33,8 @@ jobs:
         run: yq -i '.runs.image = strenv(IMAGE)' actions/health-check/action.yaml
 
       - uses: ./actions/health-check
-        # FIXME put me back
-        #        with:
-        #          config-path: tests/test_resources/mpyl_config.yml
+        with:
+          config-path: tests/test_resources/mpyl_config.yml
 
   lint-projects:
     name: ▶️ Run actions/lint-projects
