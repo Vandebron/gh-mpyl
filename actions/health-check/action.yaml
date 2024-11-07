@@ -11,4 +11,4 @@ runs:
   args:
     - health
   env:
-    MPYL_CONFIG_PATH: ${{ inputs.config-path || 'mpyl_config.yml' }}
+    MPYL_CONFIG_PATH: ${{ inputs.config-path }}

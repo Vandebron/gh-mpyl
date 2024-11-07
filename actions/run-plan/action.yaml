@@ -38,7 +38,7 @@ runs:
   args:
     - build ${{ inputs.debug != '' && '--verbose' || '' }} status
   env:
-    MPYL_CONFIG_PATH: ${{ inputs.config-path || 'mpyl_config.yml' }}
+    MPYL_CONFIG_PATH: ${{ inputs.config-path }}
     CHANGED_FILES_PATH: ${{ inputs.changed-files-path }}
     # FIXME are these actually necessary to calculate the run plan ?
     TAG_NAME: ${{ inputs.environment != 'pull-request' && inputs.version || '' }}  # run_properties.versioning.tag

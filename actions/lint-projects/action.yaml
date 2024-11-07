@@ -17,4 +17,4 @@ runs:
   args:
     - projects ${{ inputs.debug != '' && '--verbose' || '' }} lint
   env:
-    MPYL_CONFIG_PATH: ${{ inputs.config-path || 'mpyl_config.yml' }}
+    MPYL_CONFIG_PATH: ${{ inputs.config-path }}
