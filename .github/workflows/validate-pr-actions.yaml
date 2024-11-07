@@ -98,7 +98,7 @@ jobs:
       - uses: ./actions/run-stage
         with:
           project: job
-          stage: deploy
+          stage: build
           environment: pull-request
           deploy-target: PullRequest
           version: a-random-version
