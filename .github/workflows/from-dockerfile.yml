@@ -1,3 +1,4 @@
+---
 name: from-dockerfile
 on:
   workflow_dispatch:
@@ -12,6 +13,6 @@ jobs:
           fetch-depth: 0
 
       - name: Check mpyl health
-        uses: ./.github/run-mpyl
+        uses: ./
         with:
-          command: health
+          group: health
