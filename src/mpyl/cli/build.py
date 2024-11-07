@@ -23,7 +23,6 @@ from ..constants import (
     RUN_RESULT_FILE_GLOB,
 )
 from ..project import load_project
-from ..run_plan import RunPlan
 from ..steps.run_properties import construct_run_properties
 from ..utilities.pyaml_env import parse_config
 from ..utilities.repo import Repository, RepoConfig
