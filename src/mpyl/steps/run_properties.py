@@ -57,17 +57,6 @@ def construct_run_properties(
                     changed_files_path=changed_files_path,
                 )
 
-    if cli_parameters.local:
-        return RunProperties.for_local_run(
-            config=config,
-            run_plan=run_plan,
-            revision=repo.get_sha,
-            branch=repo.get_branch,
-            tag=tag,
-            stages=stages,
-            all_projects=all_projects,
-        )
-
     return RunProperties.from_configuration(
         run_properties=properties,
         config=config,
@@ -111,7 +100,6 @@ def _create_run_plan(
         all_projects=all_projects,
         all_stages=all_stages,
         tag=tag,
-        local=cli_parameters.local,
         selected_stage=selected_stage,
         selected_projects=selected_projects,
         changed_files_path=changed_files_path,

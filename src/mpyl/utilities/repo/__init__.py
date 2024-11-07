@@ -42,18 +42,6 @@ class Changeset:
         return Changeset(sha, changes)
 
     @staticmethod
-    def with_untracked_files(sha: str, diff: set[str], untracked_files: set[str]):
-        changes = {}
-        for line in diff:
-            parts = line.split("\t")
-            changes[parts[1]] = parts[0]
-
-        for file in untracked_files:
-            changes[file] = "U"
-
-        return Changeset(sha, changes)
-
-    @staticmethod
     def empty(sha: str):
         return Changeset(sha=sha, _files_touched={})
 
@@ -157,9 +145,6 @@ class Repository:  # pylint: disable=too-many-public-methods
             return "/".join(parts)
         return f"origin/{self.main_branch}"
 
-    def __get_filter_patterns(self):
-        return ["--"] + [f":!{pattern}" for pattern in self.config.ignore_patterns]
-
     def changes_in_branch(self) -> Changeset:
         return Changeset.from_diff(self.get_sha, self.changed_files_in_branch())
 
@@ -172,18 +157,6 @@ class Repository:  # pylint: disable=too-many-public-methods
             self._repo.git.diff(f"{base_branch}...HEAD", name_status=True).splitlines()
         )
         return diff
-
-    def changes_in_branch_including_local(self) -> Changeset:
-        local_changes = set(
-            self._repo.git.diff(
-                self.__get_filter_patterns(), None, name_status=True
-            ).splitlines()
-        )
-        return Changeset.with_untracked_files(
-            sha=self.get_sha,
-            diff=self.changed_files_in_branch() | local_changes,
-            untracked_files=set(self._repo.untracked_files),
-        )
 
     def changes_in_tagged_commit(self, logger: logging.Logger, tag: str) -> Changeset:
         head_commit = self._repo.head.commit

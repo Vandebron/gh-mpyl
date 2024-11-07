@@ -92,11 +92,6 @@ class CustomValidation(click.Command):
 
 
 @build.command(help="Run an MPyL build", cls=CustomValidation)
-@click.option(
-    "--ci",
-    is_flag=True,
-    help="Run as CI build instead of local. Ignores untracked changes.",
-)
 @click.option("--tag", "-t", help="Tag to build", type=click.STRING, required=False)
 @click.option(
     "--stage",
@@ -122,7 +117,6 @@ class CustomValidation(click.Command):
 @click.pass_obj
 def run(
     obj: CliContext,
-    ci,
     tag,
     stage,
     projects,
@@ -133,7 +127,6 @@ def run(
         run_result_file.unlink()
 
     parameters = MpylCliParameters(
-        local=not ci,
         verbose=obj.verbose,
         tag=tag,
         stage=stage,
@@ -179,9 +172,7 @@ def run(
 @click.pass_obj
 def status(obj: CliContext, projects, stage, tag, explain):
     try:
-        parameters = MpylCliParameters(
-            local=sys.stdout.isatty(), projects=projects, stage=stage, tag=tag
-        )
+        parameters = MpylCliParameters(projects=projects, stage=stage, tag=tag)
         print_status(obj, parameters, explain)
     except asyncio.exceptions.TimeoutError:
         pass
