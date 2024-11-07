@@ -76,15 +76,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4.2.1
 
-      - name: Point action.yaml to a new version
+      - name: Point action.yaml files to a new version
         if: inputs.image != ''
         env:
           IMAGE: docker://${{ inputs.image }}
-        run: yq -i '.runs.image = strenv(IMAGE)' actions/run-stage/action.yaml
+        run: |-
+          yq -i '.runs.image = strenv(IMAGE)' actions/run-plan/action.yaml
+          yq -i '.runs.image = strenv(IMAGE)' actions/run-stage/action.yaml
+
+      # To run a stage we always need to create a run plan before
+      # TODO find out if it's possible to write a stub run plan in tests/ so that we can test actions/run-stage in
+      # isolation (without having to run actions/run-plan before)
+      - uses: ./actions/run-plan
+        with:
+          environment: pull-request
+          deploy-target: PullRequest
+          version: a-random-version
+          changed-files-path: tests/test_resources/repository/changed_files.json
+          config-path: tests/test_resources/mpyl_config.yml
 
       - uses: ./actions/run-stage
         with:
-          project: minimalService
+          project: job
           stage: deploy
           environment: pull-request
           deploy-target: PullRequest
