@@ -316,7 +316,6 @@ def _discover_run_plan(
     changeset = _get_changes(
         logger=logger,
         repo=repository,
-        local=local,
         tag=tag,
         changed_files_path=changed_files_path,
     )
@@ -368,7 +367,6 @@ def for_stage(projects: set[Project], stage: Stage) -> set[Project]:
 def _get_changes(
     logger: logging.Logger,
     repo: Repository,
-    local: bool,
     tag: Optional[str] = None,
     changed_files_path: Optional[str] = None,
 ):
@@ -376,8 +374,6 @@ def _get_changes(
         return repo.changes_from_file(
             logger=logger, changed_files_path=changed_files_path
         )
-    if local:
-        return repo.changes_in_branch_including_local()
     if tag:
         return repo.changes_in_tagged_commit(logger=logger, tag=tag)
 
