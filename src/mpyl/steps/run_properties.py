@@ -112,7 +112,6 @@ def _create_run_plan(
         all_stages=all_stages,
         tag=tag,
         local=cli_parameters.local,
-        build_all=cli_parameters.all,
         selected_stage=selected_stage,
         selected_projects=selected_projects,
         changed_files_path=changed_files_path,
