@@ -10,6 +10,9 @@ on:
   pull_request:
     paths:
       - actions/**
+      - tests/test_resources/mpyl_config.yml
+      - tests/test_resources/repository/changed_files.json
+      - tests/projects/job/**
 
 # If multiple commits are pushed simultaneously, only build the last one.
 concurrency:
