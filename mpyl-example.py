@@ -25,7 +25,6 @@ def main(args: argparse.Namespace):
     cli_parameters = MpylCliParameters(
         local=args.local,
         tag=args.tag,
-        pull_main=True,
         verbose=args.verbose,
         dryrun=args.dryrun,
     )

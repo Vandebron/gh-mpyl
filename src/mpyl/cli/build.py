@@ -123,7 +123,6 @@ class CustomValidation(click.Command):
 def run(
     obj: CliContext,
     ci,
-    all_,
     tag,
     stage,
     projects,
@@ -135,7 +134,6 @@ def run(
 
     parameters = MpylCliParameters(
         local=not ci,
-        pull_main=all_,
         verbose=obj.verbose,
         tag=tag,
         stage=stage,
@@ -179,7 +177,7 @@ def run(
 @click.option("--tag", "-t", help="Tag to build", type=click.STRING, required=False)
 @click.option("--explain", "-e", is_flag=True, help="Explain the current run plan")
 @click.pass_obj
-def status(obj: CliContext, all_, projects, stage, tag, explain):
+def status(obj: CliContext, projects, stage, tag, explain):
     try:
         parameters = MpylCliParameters(
             local=sys.stdout.isatty(), projects=projects, stage=stage, tag=tag
