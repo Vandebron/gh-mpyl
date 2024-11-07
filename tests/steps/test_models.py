@@ -1,20 +1,41 @@
 import os
+from pathlib import Path
 
 import pytest
 from jsonschema import ValidationError
 from ruamel.yaml import YAML  # type: ignore
 
+from mpyl.cli import MpylCliParameters
+from mpyl.project import Project
 from src.mpyl.constants import (
     DEFAULT_CONFIG_FILE_NAME,
     DEFAULT_RUN_PROPERTIES_FILE_NAME,
 )
 from src.mpyl.run_plan import RunPlan
-from src.mpyl.steps.models import VersioningProperties
+from src.mpyl.steps.models import VersioningProperties, RunProperties
 from src.mpyl.steps.run_properties import construct_run_properties
 from src.mpyl.utilities.pyaml_env import parse_config
 from tests import root_test_path
 
 yaml = YAML()
+
+
+def stub_run_properties(
+    config: dict,
+    properties: dict,
+    run_plan: RunPlan,
+    all_projects: set[Project],
+    cli_parameters: MpylCliParameters = MpylCliParameters(),
+    root_dir: Path = Path(""),
+):
+    return RunProperties.from_configuration(
+        run_properties=properties,
+        config=config,
+        run_plan=run_plan,
+        all_projects=all_projects,
+        cli_tag=cli_parameters.tag or properties["build"]["versioning"].get("tag"),
+        root_dir=root_dir,
+    )
 
 
 class TestModels:
@@ -26,13 +47,11 @@ class TestModels:
 
     def test_should_return_error_if_validation_fails(self):
         with pytest.raises(ValidationError) as excinfo:
-            construct_run_properties(
+            stub_run_properties(
                 config=self.config_values,
                 properties=parse_config(
                     self.resource_path / "run_properties_invalid.yml"
                 ),
-                run_plan=RunPlan.empty(),
-                all_projects=set(),
                 root_dir=self.resource_path,
             )
 
@@ -46,8 +65,6 @@ class TestModels:
         run_properties = construct_run_properties(
             config=self.config_values,
             properties=valid_run_properties_values,
-            run_plan=RunPlan.empty(),
-            all_projects=set(),
             root_dir=self.resource_path,
         )
 

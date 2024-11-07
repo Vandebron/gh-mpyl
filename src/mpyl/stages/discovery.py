@@ -264,7 +264,6 @@ def create_run_plan(
     all_projects: set[Project],
     all_stages: list[Stage],
     selected_projects: set[Project],
-    tag: Optional[str] = None,
     selected_stage: Optional[Stage] = None,
     changed_files_path: Optional[str] = None,
 ) -> RunPlan:
@@ -283,19 +282,21 @@ def create_run_plan(
             logger.debug(f"Run plan: {existing_run_plan}")
         return existing_run_plan
 
-    run_plan = _discover_run_plan(
-        logger=logger,
-        repository=repository,
-        all_projects=all_projects,
-        all_stages=all_stages,
-        selected_projects=selected_projects,
-        selected_stage=selected_stage,
-        tag=tag,
-        changed_files_path=changed_files_path,
-    )
+    if changed_files_path:
+        run_plan = _discover_run_plan(
+            logger=logger,
+            repository=repository,
+            all_projects=all_projects,
+            all_stages=all_stages,
+            selected_projects=selected_projects,
+            selected_stage=selected_stage,
+            changed_files_path=changed_files_path,
+        )
 
-    _store_run_plan(logger, run_plan, run_plan_file)
-    return run_plan
+        _store_run_plan(logger, run_plan, run_plan_file)
+        return run_plan
+
+    raise ValueError(f"Unable to discover run plan without a changed_files.json")
 
 
 # pylint: disable=too-many-arguments
@@ -306,15 +307,12 @@ def _discover_run_plan(
     all_stages: list[Stage],
     selected_projects: set[Project],
     selected_stage: Optional[Stage],
-    tag: Optional[str] = None,
-    changed_files_path: Optional[str] = None,
+    changed_files_path: str,
 ) -> RunPlan:
     logger.info("Discovering run plan...")
-    changeset = _get_changes(
+    changeset = repository.changes_from_file(
         logger=logger,
-        repo=repository,
-        tag=tag,
-        changed_files_path=changed_files_path,
+        changed_files_path=changed_files_path
     )
 
     plan = {}
@@ -352,22 +350,6 @@ def _discover_run_plan(
 
 def for_stage(projects: set[Project], stage: Stage) -> set[Project]:
     return {p for p in projects if p.stages.for_stage(stage.name)}
-
-
-def _get_changes(
-    logger: logging.Logger,
-    repo: Repository,
-    tag: Optional[str] = None,
-    changed_files_path: Optional[str] = None,
-):
-    if changed_files_path:
-        return repo.changes_from_file(
-            logger=logger, changed_files_path=changed_files_path
-        )
-    if tag:
-        return repo.changes_in_tagged_commit(logger=logger, tag=tag)
-
-    return repo.changes_in_branch()
 
 
 def _load_existing_run_plan(

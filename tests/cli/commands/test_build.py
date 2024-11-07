@@ -12,6 +12,7 @@ from src.mpyl.steps.build import STAGE_NAME
 from src.mpyl.steps.run import RunResult
 from src.mpyl.steps.run_properties import construct_run_properties
 from src.mpyl.steps.steps import Steps, StepsCollection
+from steps.test_models import stub_run_properties
 from tests import root_test_path
 from tests.test_resources.test_data import (
     get_minimal_project,
@@ -91,7 +92,7 @@ class TestBuildCommand:
         run_plan = RunPlan.from_plan(
             {TestStage.build(): {ProjectExecution.run(p) for p in projects}}
         )
-        run_properties = construct_run_properties(
+        run_properties = stub_run_properties(
             config=config_values,
             properties=properties_values,
             run_plan=run_plan,

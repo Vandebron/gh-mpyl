@@ -65,8 +65,6 @@ def build(ctx, config, properties, verbose):
     console_config = construct_run_properties(
         properties=parsed_properties,
         config=parsed_config,
-        run_plan=RunPlan.empty(),
-        all_projects=set(),
     ).console
     console = create_console_logger(
         show_path=console_config.show_paths,
