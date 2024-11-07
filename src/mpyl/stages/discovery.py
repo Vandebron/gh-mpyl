@@ -296,7 +296,7 @@ def create_run_plan(
         _store_run_plan(logger, run_plan, run_plan_file)
         return run_plan
 
-    raise ValueError(f"Unable to discover run plan without a changed_files.json")
+    raise ValueError("Unable to discover run plan without a changed_files JSON file.")
 
 
 # pylint: disable=too-many-arguments
