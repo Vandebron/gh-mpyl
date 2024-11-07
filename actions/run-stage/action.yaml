@@ -40,7 +40,7 @@ runs:
   image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.3.0
   args:
     - build
-    - ${{ inputs.debug != '' && '--verbose' || '' }}
+    - ${{ inputs.debug != '' && '--verbose' || null }}
     - run
     - --ci
     - --stage
