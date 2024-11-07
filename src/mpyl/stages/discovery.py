@@ -263,8 +263,6 @@ def create_run_plan(
     repository: Repository,
     all_projects: set[Project],
     all_stages: list[Stage],
-    build_all: bool,
-    local: bool,
     selected_projects: set[Project],
     tag: Optional[str] = None,
     selected_stage: Optional[Stage] = None,
@@ -290,16 +288,13 @@ def create_run_plan(
         repository=repository,
         all_projects=all_projects,
         all_stages=all_stages,
-        build_all=build_all,
-        local=local,
         selected_projects=selected_projects,
         selected_stage=selected_stage,
         tag=tag,
         changed_files_path=changed_files_path,
     )
 
-    if not local:
-        _store_run_plan(logger, run_plan, run_plan_file)
+    _store_run_plan(logger, run_plan, run_plan_file)
     return run_plan
 
 
@@ -309,8 +304,6 @@ def _discover_run_plan(
     repository: Repository,
     all_projects: set[Project],
     all_stages: list[Stage],
-    build_all: bool,
-    local: bool,
     selected_projects: set[Project],
     selected_stage: Optional[Stage],
     tag: Optional[str] = None,
@@ -320,7 +313,6 @@ def _discover_run_plan(
     changeset = _get_changes(
         logger=logger,
         repo=repository,
-        local=local,
         tag=tag,
         changed_files_path=changed_files_path,
     )
@@ -328,14 +320,7 @@ def _discover_run_plan(
     plan = {}
 
     def add_projects_to_plan(stage: Stage):
-        if build_all:
-            project_executions = to_project_executions(
-                logger=logger,
-                projects=for_stage(all_projects, stage),
-                stage=stage.name,
-                changeset=changeset,
-            )
-        elif selected_projects:
+        if selected_projects:
             project_executions = to_project_executions(
                 logger=logger,
                 projects=for_stage(selected_projects, stage),
@@ -372,7 +357,6 @@ def for_stage(projects: set[Project], stage: Stage) -> set[Project]:
 def _get_changes(
     logger: logging.Logger,
     repo: Repository,
-    local: bool,
     tag: Optional[str] = None,
     changed_files_path: Optional[str] = None,
 ):
@@ -380,8 +364,6 @@ def _get_changes(
         return repo.changes_from_file(
             logger=logger, changed_files_path=changed_files_path
         )
-    if local:
-        return repo.changes_in_branch_including_local()
     if tag:
         return repo.changes_in_tagged_commit(logger=logger, tag=tag)
 

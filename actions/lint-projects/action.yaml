@@ -1,0 +1,20 @@
+---
+name: Lint MPyL projects
+description: Lint all known MPyL projects inside a Docker container
+inputs:
+  config-path:
+    description: The path to the MPyL config file
+    required: false
+  # the following inputs do not actually need to be exposed, but since unfortunately we can't access the github or runner
+  # context in runs.env.* we're forced to declare them as inputs
+  debug:
+    description: Whether to run mpyl in debug mode
+    required: false
+    default: ${{ runner.debug }}
+runs:
+  using: docker
+  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.3.4
+  args:
+    - projects ${{ inputs.debug != '' && '--verbose' || '' }} lint
+  env:
+    MPYL_CONFIG_PATH: ${{ inputs.config-path }}

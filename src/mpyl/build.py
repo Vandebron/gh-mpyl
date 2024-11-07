@@ -39,8 +39,7 @@ def print_status(
     )
 
     # Write the run plan as a simple JSON file to be used by Github Actions
-    if not cli_params.local:
-        write_run_plan(run_properties)
+    write_run_plan(run_properties)
 
     console = obj.console
     logger = logging.getLogger("mpyl")
@@ -96,7 +95,7 @@ def run_mpyl(
     console_properties = run_properties.console
     console = Console(
         markup=False,
-        width=None if cli_parameters.local else console_properties.width,
+        width=console_properties.width,
         no_color=False,
         log_path=False,
         color_system="256",
@@ -107,9 +106,7 @@ def run_mpyl(
         level=log_level,
         format=FORMAT,
         datefmt="[%X]",
-        handlers=[
-            RichHandler(markup=False, console=console, show_path=cli_parameters.local)
-        ],
+        handlers=[RichHandler(markup=False, console=console, show_path=False)],
     )
     print(f"Log level is set to {log_level}")
     logger = logging.getLogger("mpyl")
