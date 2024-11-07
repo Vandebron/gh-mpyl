@@ -1,0 +1,107 @@
+---
+name: Validate Github Actions
+
+on:
+  workflow_call:
+    inputs:
+      image:
+        type: string
+        required: false
+  pull_request:
+    paths:
+      - actions/**
+      - mpyl_config.example.yml
+      - tests/test_resources/repository/changed_files.json
+      - tests/projects/job/**
+
+# If multiple commits are pushed simultaneously, only build the last one.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  health-check:
+    name: ▶️ Run actions/health-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.1
+
+      - name: Point action.yaml to a new version
+        if: inputs.image != ''
+        env:
+          IMAGE: docker://${{ inputs.image }}
+        run: yq -i '.runs.image = strenv(IMAGE)' actions/health-check/action.yaml
+
+      - uses: ./actions/health-check
+        with:
+          config-path: mpyl_config.example.yml
+
+  lint-projects:
+    name: ▶️ Run actions/lint-projects
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.1
+
+      - name: Point action.yaml to a new version
+        if: inputs.image != ''
+        env:
+          IMAGE: docker://${{ inputs.image }}
+        run: yq -i '.runs.image = strenv(IMAGE)' actions/lint-projects/action.yaml
+
+      - uses: ./actions/lint-projects
+        with:
+          config-path: mpyl_config.example.yml
+
+  run-plan:
+    name: ▶️ Run actions/run-plan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.1
+
+      - name: Point action.yaml to a new version
+        if: inputs.image != ''
+        env:
+          IMAGE: docker://${{ inputs.image }}
+        run: yq -i '.runs.image = strenv(IMAGE)' actions/run-plan/action.yaml
+
+      - uses: ./actions/run-plan
+        with:
+          environment: pull-request
+          deploy-target: PullRequest
+          version: a-random-version
+          changed-files-path: tests/test_resources/repository/changed_files.json
+          config-path: mpyl_config.example.yml
+
+  run-stage:
+    name: ▶️ Run actions/run-stage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.1
+
+      - name: Point action.yaml files to a new version
+        if: inputs.image != ''
+        env:
+          IMAGE: docker://${{ inputs.image }}
+        run: |-
+          yq -i '.runs.image = strenv(IMAGE)' actions/run-plan/action.yaml
+          yq -i '.runs.image = strenv(IMAGE)' actions/run-stage/action.yaml
+
+      # To run a stage we always need to create a run plan before
+      # TODO find out if it's possible to write a stub run plan in tests/ so that we can test actions/run-stage in
+      # isolation (without having to run actions/run-plan before)
+      - uses: ./actions/run-plan
+        with:
+          environment: pull-request
+          deploy-target: PullRequest
+          version: a-random-version
+          changed-files-path: tests/test_resources/repository/changed_files.json
+          config-path: mpyl_config.example.yml
+
+      - uses: ./actions/run-stage
+        with:
+          project: job
+          stage: build
+          environment: pull-request
+          deploy-target: PullRequest
+          version: a-random-version
+          config-path: mpyl_config.example.yml

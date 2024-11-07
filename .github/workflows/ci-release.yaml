@@ -78,10 +78,13 @@ jobs:
           echo "$COSIGN_KEY" > cosign.key
           cosign sign --key cosign.key "$IMAGE:$VERSION@$DIGEST" --tlog-upload=false
 
-      - name: Point action.yaml to the new version
+      - name: Point all action.yaml files to the new version
         env:
           IMAGE: docker://${{ steps.login-ecr-public.outputs.registry }}/vdb-public/${{ env.image-name }}:${{ steps.semver.outputs.next }}
-        run: yq -i '.runs.image = strenv(IMAGE)' action.yaml
+        run: |-
+          for file in actions/**/action.yaml; do
+            yq -i '.runs.image = strenv(IMAGE)' "$file"
+          done
 
       - name: Commit changes
         uses: ryancyq/github-signed-commit@v1.2.0
@@ -89,8 +92,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         with:
-          files: action.yaml
-          commit-message: Update action.yaml to ${{ env.image-name }}:${{ steps.semver.outputs.next }}
+          files: actions/**/action.yaml
+          commit-message: Update action.yaml files to ${{ env.image-name }}:${{ steps.semver.outputs.next }}
 
       - name: Tag version ${{ steps.semver.outputs.next }}
         uses: actions/github-script@v7.0.1

@@ -1,0 +1,14 @@
+---
+name: Run MPyL health check
+description: Perform MPyL health check inside a Docker container
+inputs:
+  config-path:
+    description: The path to the MPyL config file
+    required: false
+runs:
+  using: docker
+  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.3.0
+  args:
+    - health
+  env:
+    MPYL_CONFIG_PATH: ${{ inputs.config-path }}
