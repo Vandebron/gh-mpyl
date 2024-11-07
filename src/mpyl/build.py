@@ -106,9 +106,7 @@ def run_mpyl(
         level=log_level,
         format=FORMAT,
         datefmt="[%X]",
-        handlers=[
-            RichHandler(markup=False, console=console, show_path=False)
-        ],
+        handlers=[RichHandler(markup=False, console=console, show_path=False)],
     )
     print(f"Log level is set to {log_level}")
     logger = logging.getLogger("mpyl")
