@@ -67,7 +67,7 @@ jobs:
           environment: pull-request
           deploy-target: PullRequest
           version: a-random-version
-          changed-files-path: FIXME-add-this-file-to-test-resources.json  # FIXME
+          changed-files-path: tests/test_resources/repository/changed_files.json
           config-path: tests/test_resources/mpyl_config.yml
 
   run-stage:
