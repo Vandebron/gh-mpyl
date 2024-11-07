@@ -27,9 +27,8 @@ ENV PYTHONPATH=/app
 
 # Switch to the directory of the calling repo
 WORKDIR /repo
-COPY entrypoint.sh ../entrypoint.sh
 
 # USER vdbnonroot  # Enable again after removing git from the src code
 
 # Run the application.
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["python", "/app/mpyl/__main__.py"]
