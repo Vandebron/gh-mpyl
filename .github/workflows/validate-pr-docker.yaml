@@ -7,6 +7,7 @@ on:
       - Dockerfile
       - entrypoint.sh
       - requirements.txt
+      - src/**
 
 # If multiple commits are pushed simultaneously, only build the last one.
 concurrency:
