@@ -36,7 +36,9 @@ runs:
   using: docker
   image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.3.0
   args:
-    - build ${{ inputs.debug != '' && '--verbose' || '' }} status
+    - build
+    - ${{ inputs.debug != '' && '--verbose' || '' }}
+    - status
   env:
     MPYL_CONFIG_PATH: ${{ inputs.config-path || 'mpyl_config.yml' }}
     CHANGED_FILES_PATH: ${{ inputs.changed-files-path }}

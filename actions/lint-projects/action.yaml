@@ -15,6 +15,8 @@ runs:
   using: docker
   image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.3.0
   args:
-    - projects ${{ inputs.debug != '' && '--verbose' || '' }} lint
+    - projects
+    - ${{ inputs.debug != '' && '--verbose' || '' }}
+    - lint
   env:
     MPYL_CONFIG_PATH: ${{ inputs.config-path || 'mpyl_config.yml' }}
