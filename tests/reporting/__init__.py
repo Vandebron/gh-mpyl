@@ -6,11 +6,10 @@ from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps.deploy.k8s import DeployedHelmAppSpec
 from src.mpyl.steps.models import Output, Artifact, ArtifactType
 from src.mpyl.steps.run import RunResult
-from src.mpyl.steps.run_properties import construct_run_properties
 from src.mpyl.steps.steps import StepResult
 from src.mpyl.utilities.junit import JunitTestSpec, TestRunSummary
-from steps.test_models import stub_run_properties
 from tests import root_test_path
+from tests.steps.test_models import stub_run_properties
 from tests.test_resources import test_data
 from tests.test_resources.test_data import (
     TestStage,

@@ -31,10 +31,7 @@ def construct_run_properties(
             )
         )
 
-        stages = [
-            Stage(stage["name"], stage["icon"])
-            for stage in properties["stages"]
-        ]
+        stages = [Stage(stage["name"], stage["icon"]) for stage in properties["stages"]]
         run_plan_logger = logging.getLogger("mpyl")
         if explain_run_plan:
             run_plan_logger.setLevel("DEBUG")

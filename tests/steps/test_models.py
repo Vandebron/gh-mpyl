@@ -47,7 +47,7 @@ class TestModels:
 
     def test_should_return_error_if_validation_fails(self):
         with pytest.raises(ValidationError) as excinfo:
-            stub_run_properties(
+            construct_run_properties(
                 config=self.config_values,
                 properties=parse_config(
                     self.resource_path / "run_properties_invalid.yml"

@@ -22,8 +22,8 @@ from src.mpyl.steps.run_properties import construct_run_properties
 from src.mpyl.utilities.docker import DockerImageSpec
 from src.mpyl.utilities.pyaml_env import parse_config
 from src.mpyl.utilities.repo import Repository, RepoConfig
-from steps.test_models import stub_run_properties
 from tests import root_test_path
+from tests.steps.test_models import stub_run_properties
 
 resource_path = root_test_path / "test_resources"
 config_values = parse_config(resource_path / DEFAULT_CONFIG_FILE_NAME)

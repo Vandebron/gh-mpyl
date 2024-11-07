@@ -1,5 +1,4 @@
 import logging
-import shutil
 
 from click.testing import CliRunner
 
@@ -10,10 +9,9 @@ from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps import Step, Meta, ArtifactType, Input, Output
 from src.mpyl.steps.build import STAGE_NAME
 from src.mpyl.steps.run import RunResult
-from src.mpyl.steps.run_properties import construct_run_properties
 from src.mpyl.steps.steps import Steps, StepsCollection
-from steps.test_models import stub_run_properties
 from tests import root_test_path
+from tests.steps.test_models import stub_run_properties
 from tests.test_resources.test_data import (
     get_minimal_project,
     RUN_PROPERTIES,

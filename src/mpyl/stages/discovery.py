@@ -311,8 +311,7 @@ def _discover_run_plan(
 ) -> RunPlan:
     logger.info("Discovering run plan...")
     changeset = repository.changes_from_file(
-        logger=logger,
-        changed_files_path=changed_files_path
+        logger=logger, changed_files_path=changed_files_path
     )
 
     plan = {}
