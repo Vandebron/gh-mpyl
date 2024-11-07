@@ -82,8 +82,8 @@ jobs:
         env:
           IMAGE: docker://${{ steps.login-ecr-public.outputs.registry }}/vdb-public/${{ env.image-name }}:${{ steps.semver.outputs.next }}
         run: |-
-          for f in actions/**/action.yaml; do
-            yq -i '.runs.image = strenv(IMAGE)' "$f"
+          for file in actions/**/action.yaml; do
+            yq -i '.runs.image = strenv(IMAGE)' "$file"
           done
 
       - name: Commit changes
