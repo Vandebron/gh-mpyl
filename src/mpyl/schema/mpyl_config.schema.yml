@@ -101,6 +101,22 @@ definitions:
     properties:
       deploymentStrategy:
         $ref: k8s_api_core.schema.yml#/definitions/io.k8s.api.apps.v1.DeploymentStrategy
+      deployAction:
+        type: string
+        pattern: ((HelmDeploy)|(HelmDryrun)|(HelmTemplate)|(KubectlManifest))|(!ENV.*)
+        description: >-
+          Defines the action to take in the deploy step. Defaults to helmDeploy.
+          If set to HelmDeploy, the helm chart will be deployed to the cluster.
+          If set to HelmDryRun, a helm chart deployment to the cluster will be simulated.
+          If set to HelmTemplate, the helm chart will be rendered and the result will be written to the folder specified in the helmTemplateOutputPath property
+          If set to KubectlManifest, a k8s manifest be written to the file specified in the kubectlManifestOutputPath property. This manifest can be deployd with kubectl apply -f <manifest>
+        default: HelmDeploy
+      outputPath:
+        type: string
+        default: .mpyl/kubernetes
+        description: >-
+          The path to the folder where the rendered helm chart or kubectl manifest will be written.
+          Defaults to target/kubernetes under the root folder of the project.
       defaultCluster:
         type: object
         description: Default cluster to deploy to. Can be overriden in the project.yaml
