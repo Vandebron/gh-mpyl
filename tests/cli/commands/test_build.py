@@ -123,7 +123,9 @@ class TestBuildCommand:
                 "--filter",
                 "non_existing_project",
             ],
-            env={"CHANGED_FILES_PATH": root_test_path / "test_resources/repository/changed_files.json"}
+            env={
+                "CHANGED_FILES_PATH": f"{root_test_path}/test_resources/repository/changed_files.json"
+            }
         )
 
         assert "Nothing to clean" in result.output
