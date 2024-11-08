@@ -13,7 +13,6 @@ from src.mpyl.constants import (
 from src.mpyl.project import Project
 from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps.models import VersioningProperties, RunProperties
-from src.mpyl.steps.run_properties import construct_run_properties
 from src.mpyl.utilities.pyaml_env import parse_config
 from tests import root_test_path
 
