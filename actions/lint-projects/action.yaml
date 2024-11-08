@@ -13,7 +13,7 @@ inputs:
     default: ${{ runner.debug }}
 runs:
   using: docker
-  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.3.7
+  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.3.8
   args:
     - projects ${{ inputs.debug != '' && '--verbose' || '' }} lint
   env:
