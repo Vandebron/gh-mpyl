@@ -32,11 +32,8 @@ class CliContext:
 
 @dataclass(frozen=True)
 class MpylCliParameters:
-    local: bool = False
     tag: Optional[str] = None
-    pull_main: bool = False
     verbose: bool = False
-    all: bool = False
     stage: Optional[str] = None
     projects: Optional[str] = None
     dryrun: bool = True

@@ -3,13 +3,10 @@ FROM public.ecr.aws/vdb-public/python:${PYTHON_VERSION}-slim-bookworm AS base
 
 USER root
 
-# Prevents Python from writing pyc files.
-ENV PYTHONDONTWRITEBYTECODE=1
-# Keeps Python from buffering stdout and stderr to avoid situations where
-# the application crashes without emitting any logs due to buffering.
-ENV PYTHONUNBUFFERED=1
-
-RUN apt-get -y update && apt-get -y install git
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
 # Switch to mpyl source code directory
 WORKDIR /app/mpyl
@@ -29,6 +26,12 @@ ENV PYTHONPATH=/app
 WORKDIR /repo
 
 # USER vdbnonroot  # Enable again after removing git from the src code
+
+# Prevents Python from writing pyc files.
+ENV PYTHONDONTWRITEBYTECODE=1
+# Keeps Python from buffering stdout and stderr to avoid situations where
+# the application crashes without emitting any logs due to buffering.
+ENV PYTHONUNBUFFERED=1
 
 # Run the application.
 ENTRYPOINT ["python", "/app/mpyl/__main__.py"]

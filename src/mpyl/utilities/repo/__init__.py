@@ -42,18 +42,6 @@ class Changeset:
         return Changeset(sha, changes)
 
     @staticmethod
-    def with_untracked_files(sha: str, diff: set[str], untracked_files: set[str]):
-        changes = {}
-        for line in diff:
-            parts = line.split("\t")
-            changes[parts[1]] = parts[0]
-
-        for file in untracked_files:
-            changes[file] = "U"
-
-        return Changeset(sha, changes)
-
-    @staticmethod
     def empty(sha: str):
         return Changeset(sha=sha, _files_touched={})
 
@@ -118,7 +106,7 @@ class RepoConfig:
         )
 
 
-class Repository:  # pylint: disable=too-many-public-methods
+class Repository:
     def __init__(self, config: RepoConfig, repo: Union[Repo, None] = None):
         self.config = config
         self._repo = repo or Repo(path=Git().rev_parse("--show-toplevel"))
@@ -133,71 +121,8 @@ class Repository:  # pylint: disable=too-many-public-methods
         return self
 
     @property
-    def get_sha(self):
-        return self._repo.head.commit.hexsha
-
-    @property
-    def get_branch(self) -> Optional[str]:
-        if self._repo.head.is_detached:
-            return None
-        return self._repo.active_branch.name
-
-    @property
     def root_dir(self) -> Path:
         return Path(self._repo.git_dir).parent
-
-    @property
-    def main_branch(self) -> str:
-        return self.config.main_branch.split("/")[-1]
-
-    @property
-    def main_origin_branch(self) -> str:
-        parts = self.config.main_branch.split("/")
-        if len(parts) > 1:
-            return "/".join(parts)
-        return f"origin/{self.main_branch}"
-
-    def __get_filter_patterns(self):
-        return ["--"] + [f":!{pattern}" for pattern in self.config.ignore_patterns]
-
-    def changes_in_branch(self) -> Changeset:
-        return Changeset.from_diff(self.get_sha, self.changed_files_in_branch())
-
-    def changed_files_in_branch(self) -> set[str]:
-        # TODO pass the base_branch as a build parameter, not all branches  # pylint: disable=fixme
-        #  are created from the main branch
-        #  Also throw a more specific exception if the base branch is not found
-        base_branch = self.main_origin_branch
-        diff = set(
-            self._repo.git.diff(f"{base_branch}...HEAD", name_status=True).splitlines()
-        )
-        return diff
-
-    def changes_in_branch_including_local(self) -> Changeset:
-        local_changes = set(
-            self._repo.git.diff(
-                self.__get_filter_patterns(), None, name_status=True
-            ).splitlines()
-        )
-        return Changeset.with_untracked_files(
-            sha=self.get_sha,
-            diff=self.changed_files_in_branch() | local_changes,
-            untracked_files=set(self._repo.untracked_files),
-        )
-
-    def changes_in_tagged_commit(self, logger: logging.Logger, tag: str) -> Changeset:
-        head_commit = self._repo.head.commit
-        tag_commit = self._repo.tag(f"refs/tags/{tag}").commit
-        logger.debug(f"HEAD revision: {head_commit}, tag revision: {tag_commit}")
-
-        if head_commit != tag_commit:
-            logger.error(
-                f"HEAD is at {head_commit} not at expected {tag_commit} for tag `{tag}`"
-            )
-            return Changeset.empty(self.get_sha)
-
-        diff = set(self._repo.git.diff(f"{tag}^..{tag}", name_status=True).splitlines())
-        return Changeset.from_diff(sha=tag_commit.hexsha, diff=diff)
 
     def changes_from_file(
         self, logger: logging.Logger, changed_files_path: str
@@ -207,7 +132,10 @@ class Repository:  # pylint: disable=too-many-public-methods
                 f"Creating Changeset based on changed files in {changed_files_path}"
             )
             changed_files = json.load(file)
-            return Changeset(sha=self.get_sha, _files_touched=changed_files)
+            return Changeset(
+                sha=self._repo.head.commit.hexsha,
+                _files_touched=changed_files,
+            )
 
     def find_projects(self, folder_pattern: str = "") -> list[str]:
         """

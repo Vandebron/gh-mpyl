@@ -10,7 +10,7 @@ on:
   pull_request:
     paths:
       - actions/**
-      - tests/test_resources/mpyl_config.yml
+      - mpyl_config.example.yml
       - tests/test_resources/repository/changed_files.json
       - tests/projects/job/**
 
@@ -20,7 +20,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-
   health-check:
     name: ▶️ Run actions/health-check
     runs-on: ubuntu-latest
@@ -35,7 +34,7 @@ jobs:
 
       - uses: ./actions/health-check
         with:
-          config-path: tests/test_resources/mpyl_config.yml
+          config-path: mpyl_config.example.yml
 
   lint-projects:
     name: ▶️ Run actions/lint-projects
@@ -51,7 +50,7 @@ jobs:
 
       - uses: ./actions/lint-projects
         with:
-          config-path: tests/test_resources/mpyl_config.yml
+          config-path: mpyl_config.example.yml
 
   run-plan:
     name: ▶️ Run actions/run-plan
@@ -71,7 +70,7 @@ jobs:
           deploy-target: PullRequest
           version: a-random-version
           changed-files-path: tests/test_resources/repository/changed_files.json
-          config-path: tests/test_resources/mpyl_config.yml
+          config-path: mpyl_config.example.yml
 
   run-stage:
     name: ▶️ Run actions/run-stage
@@ -96,7 +95,7 @@ jobs:
           deploy-target: PullRequest
           version: a-random-version
           changed-files-path: tests/test_resources/repository/changed_files.json
-          config-path: tests/test_resources/mpyl_config.yml
+          config-path: mpyl_config.example.yml
 
       - uses: ./actions/run-stage
         with:
@@ -105,4 +104,4 @@ jobs:
           environment: pull-request
           deploy-target: PullRequest
           version: a-random-version
-          config-path: tests/test_resources/mpyl_config.yml
+          config-path: mpyl_config.example.yml

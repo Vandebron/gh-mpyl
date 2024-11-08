@@ -101,27 +101,6 @@ class RunProperties:
     """Stages and projects for this run"""
 
     @staticmethod
-    def for_local_run(
-        config: dict,
-        run_plan: RunPlan,
-        revision: str,
-        branch: Optional[str],
-        stages: list[Stage],
-        all_projects: set[Project],
-        tag: Optional[str],
-    ):
-        return RunProperties(
-            details=RunContext("", "", "", "", "", None),
-            target=Target.PULL_REQUEST,
-            versioning=VersioningProperties(revision, branch, 123, tag),
-            config=config,
-            console=ConsoleProperties("INFO", True, 130),
-            run_plan=run_plan,
-            stages=stages,
-            projects=all_projects,
-        )
-
-    @staticmethod
     def from_configuration(
         run_properties: dict,
         config: dict,

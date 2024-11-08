@@ -1,5 +1,4 @@
 import logging
-import shutil
 
 from click.testing import CliRunner
 
@@ -10,9 +9,9 @@ from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps import Step, Meta, ArtifactType, Input, Output
 from src.mpyl.steps.build import STAGE_NAME
 from src.mpyl.steps.run import RunResult
-from src.mpyl.steps.run_properties import construct_run_properties
 from src.mpyl.steps.steps import Steps, StepsCollection
 from tests import root_test_path
+from tests.steps.test_models import stub_run_properties
 from tests.test_resources.test_data import (
     get_minimal_project,
     RUN_PROPERTIES,
@@ -91,7 +90,7 @@ class TestBuildCommand:
         run_plan = RunPlan.from_plan(
             {TestStage.build(): {ProjectExecution.run(p) for p in projects}}
         )
-        run_properties = construct_run_properties(
+        run_properties = stub_run_properties(
             config=config_values,
             properties=properties_values,
             run_plan=run_plan,
@@ -114,7 +113,7 @@ class TestBuildCommand:
     def test_build_clean_output(self):
         result = self.runner.invoke(
             main_group,
-            [
+            args=[
                 "build",
                 "-c",
                 str(self.config_path),
@@ -124,6 +123,9 @@ class TestBuildCommand:
                 "--filter",
                 "non_existing_project",
             ],
+            env={
+                "CHANGED_FILES_PATH": f"{root_test_path}/test_resources/repository/changed_files.json"
+            },
         )
 
         assert "Nothing to clean" in result.output
