@@ -18,7 +18,6 @@ from src.mpyl.steps.models import (
     ArtifactType,
     Artifact,
 )
-from src.mpyl.steps.run_properties import construct_run_properties
 from src.mpyl.utilities.docker import DockerImageSpec
 from src.mpyl.utilities.pyaml_env import parse_config
 from src.mpyl.utilities.repo import Repository, RepoConfig
@@ -29,9 +28,11 @@ resource_path = root_test_path / "test_resources"
 config_values = parse_config(resource_path / DEFAULT_CONFIG_FILE_NAME)
 properties_values = parse_config(resource_path / DEFAULT_RUN_PROPERTIES_FILE_NAME)
 
-RUN_PROPERTIES = construct_run_properties(
+RUN_PROPERTIES = stub_run_properties(
     config=config_values,
     properties=properties_values,
+    run_plan=RunPlan.empty(),
+    all_projects=set(),
     root_dir=resource_path,
 )
 
