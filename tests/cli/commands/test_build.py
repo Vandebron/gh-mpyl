@@ -125,7 +125,7 @@ class TestBuildCommand:
             ],
             env={
                 "CHANGED_FILES_PATH": f"{root_test_path}/test_resources/repository/changed_files.json"
-            }
+            },
         )
 
         assert "Nothing to clean" in result.output
