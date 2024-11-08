@@ -109,7 +109,7 @@ class RepoConfig:
 class Repository:
     def __init__(self, config: RepoConfig, repo: Union[Repo, None] = None):
         self.config = config
-        self._repo = repo or Repo(path=Git().rev_parse("--show-toplevel"))
+        self._repo = repo or Repo(path=Path(""))
 
     def __enter__(self):
         return self
