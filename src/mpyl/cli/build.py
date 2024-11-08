@@ -23,7 +23,6 @@ from ..constants import (
     RUN_RESULT_FILE_GLOB,
 )
 from ..project import load_project
-from ..run_plan import RunPlan
 from ..steps.run_properties import construct_run_properties
 from ..utilities.pyaml_env import parse_config
 from ..utilities.repo import Repository, RepoConfig
@@ -65,8 +64,6 @@ def build(ctx, config, properties, verbose):
     console_config = construct_run_properties(
         properties=parsed_properties,
         config=parsed_config,
-        run_plan=RunPlan.empty(),
-        all_projects=set(),
     ).console
     console = create_console_logger(
         show_path=console_config.show_paths,
