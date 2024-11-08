@@ -10,13 +10,13 @@ RUN apt-get update && apt-get install -y \
 
 # USER vdbnonroot  # Enable again after removing git from the src code
 
-# Switch to mpyl source code directory
-WORKDIR /app/mpyl
-
 # Install the dependencies.
 RUN pip install pipenv
 COPY Pipfile Pipfile.lock ./
 RUN pipenv install --system --deploy
+
+# Switch to mpyl source code directory
+WORKDIR /app/mpyl
 
 # Copy the source code into the container.
 COPY src/mpyl ./
