@@ -52,7 +52,6 @@ class ProjectsContext:
     envvar="MPYL_CONFIG_PATH",
     default=DEFAULT_CONFIG_FILE_NAME,
 )
-@click.option("--verbose", "-v", is_flag=True, default=False)
 @click.option(
     "--filter",
     "-f",
@@ -62,9 +61,9 @@ class ProjectsContext:
     help="Filter based on filepath ",
 )
 @click.pass_context
-def projects(ctx, config, verbose, filter_):
+def projects(ctx, config, filter_):
     """Commands related to MPyL project configurations (project.yml)"""
-    console = create_console_logger(show_path=False, verbose=verbose, max_width=0)
+    console = create_console_logger(show_path=False, max_width=0)
     parsed_config = parse_config(config)
     ctx.obj = ProjectsContext(
         cli=CliContext(
@@ -73,7 +72,6 @@ def projects(ctx, config, verbose, filter_):
                 Repository(config=RepoConfig.from_config(parsed_config))
             ),
             console=console,
-            verbose=verbose,
             run_properties={},
         ),
         filter=filter_ if filter_ else "",

@@ -20,7 +20,6 @@ def __load_project(
     console: Optional[Console],
     root_dir: Path,
     project_path: str,
-    verbose: bool = False,
     strict: bool = True,
 ) -> Optional[Project]:
     try:
@@ -33,7 +32,7 @@ def __load_project(
         if console:
             console.print(f"❌ {project_path}: {exc}")
         return None
-    if console and verbose:
+    if console:
         console.print(f"✅ {project_path}")
     return project
 

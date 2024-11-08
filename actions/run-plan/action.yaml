@@ -20,10 +20,6 @@ inputs:
     required: true
   # the following inputs do not actually need to be exposed, but since unfortunately we can't access the github or runner
   # context in runs.env.* we're forced to declare them as inputs
-  debug:
-    description: Whether to run mpyl in debug mode
-    required: false
-    default: ${{ runner.debug }}
   commit:
     description: The commit SHA that triggered the current workflow run
     required: false
@@ -37,7 +33,6 @@ runs:
   image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.3.8
   args:
     - build
-    - ${{ inputs.debug != '' && '--verbose' || null }}
     - status
   env:
     MPYL_CONFIG_PATH: ${{ inputs.config-path }}

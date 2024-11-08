@@ -24,7 +24,6 @@ def main(args: argparse.Namespace):
     properties = parse_config("run_properties.yml")
     cli_parameters = MpylCliParameters(
         tag=args.tag,
-        verbose=args.verbose,
         dryrun=args.dryrun,
     )
     run_properties = construct_run_properties(
@@ -50,13 +49,6 @@ if __name__ == "__main__":
         default=False,
         action="store_true",
     )
-    parser.add_argument(
-        "--verbose",
-        "-v",
-        help="switch to DEBUG level logging",
-        default=False,
-        action="store_true",
-    )
     FORMAT = "%(name)s  %(message)s"
 
     parsed_args = parser.parse_args()
@@ -69,7 +61,7 @@ if __name__ == "__main__":
     )
     logging.raiseExceptions = False
     logging.basicConfig(
-        level="DEBUG" if parsed_args.verbose else "INFO",
+        level="INFO",
         format=FORMAT,
         datefmt="[%X]",
         handlers=[

@@ -5,7 +5,6 @@ Usage: mpyl projects [OPTIONS] COMMAND [ARGS]...
 Options:
   -c, --config PATH  Path to the config.yml. Can be set via `MPYL_CONFIG_PATH`
                      env var.   [required]
-  -v, --verbose
   -f, --filter TEXT  Filter based on filepath
   --help             Show this message and exit.
 

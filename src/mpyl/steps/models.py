@@ -1,5 +1,5 @@
 """ Model representation of run-specific configuration. """
-
+import os
 import pkgutil
 from dataclasses import dataclass
 from enum import Enum
@@ -69,9 +69,13 @@ class ConsoleProperties:
     @staticmethod
     def from_configuration(build_config: dict):
         console_config = build_config["console"]
+        if os.environ.get("GITHUB_RUNNER_DEBUG", "0") == "1":
+            log_level = "DEBUG"
+        else:
+            log_level = console_config.get("logLevel", "INFO")
         width = console_config.get("width", 130)
         return ConsoleProperties(
-            log_level=console_config.get("logLevel", "INFO"),
+            log_level=log_level,
             show_paths=console_config.get("showPaths", False),
             width=None if width == 0 else width,
         )

@@ -48,16 +48,8 @@ from ..utilities.repo import Repository, RepoConfig
     default=DEFAULT_RUN_PROPERTIES_FILE_NAME,
     show_default=True,
 )
-@click.option(
-    "--verbose",
-    "-v",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Verbose output",
-)
 @click.pass_context
-def build(ctx, config, properties, verbose):
+def build(ctx, config, properties):
     """Pipeline build commands"""
     parsed_properties = parse_config(properties)
     parsed_config = parse_config(config)
@@ -67,12 +59,11 @@ def build(ctx, config, properties, verbose):
     ).console
     console = create_console_logger(
         show_path=console_config.show_paths,
-        verbose=verbose,
         max_width=console_config.width,
     )
 
     repo = ctx.with_resource(Repository(config=RepoConfig.from_config(parsed_config)))
-    ctx.obj = CliContext(parsed_config, repo, console, verbose, parsed_properties)
+    ctx.obj = CliContext(parsed_config, repo, console, parsed_properties)
 
 
 class CustomValidation(click.Command):
@@ -124,7 +115,6 @@ def run(
         run_result_file.unlink()
 
     parameters = MpylCliParameters(
-        verbose=obj.verbose,
         tag=tag,
         stage=stage,
         projects=projects,
