@@ -12,7 +12,8 @@ on:  # yamllint disable-line rule:truthy
       - actions/**
       - Dockerfile
       - entrypoint.sh
-      - requirements.txt
+      - Pipfile
+      - Pipfile.lock
 
 jobs:
   release:
