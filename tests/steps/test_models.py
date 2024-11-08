@@ -5,12 +5,12 @@ import pytest
 from jsonschema import ValidationError
 from ruamel.yaml import YAML  # type: ignore
 
-from mpyl.cli import MpylCliParameters
-from mpyl.project import Project
+from src.mpyl.cli import MpylCliParameters
 from src.mpyl.constants import (
     DEFAULT_CONFIG_FILE_NAME,
     DEFAULT_RUN_PROPERTIES_FILE_NAME,
 )
+from src.mpyl.project import Project
 from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps.models import VersioningProperties, RunProperties
 from src.mpyl.steps.run_properties import construct_run_properties
