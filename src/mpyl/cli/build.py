@@ -23,7 +23,6 @@ from ..constants import (
     RUN_RESULT_FILE_GLOB,
 )
 from ..project import load_project
-from ..run_plan import RunPlan
 from ..steps.run_properties import construct_run_properties
 from ..utilities.pyaml_env import parse_config
 from ..utilities.repo import Repository
@@ -65,8 +64,6 @@ def build(ctx, config, properties, verbose):
     console_config = construct_run_properties(
         properties=parsed_properties,
         config=parsed_config,
-        run_plan=RunPlan.empty(),
-        all_projects=set(),
     ).console
     console = create_console_logger(
         show_path=console_config.show_paths,
@@ -91,17 +88,6 @@ class CustomValidation(click.Command):
 
 
 @build.command(help="Run an MPyL build", cls=CustomValidation)
-@click.option(
-    "--ci",
-    is_flag=True,
-    help="Run as CI build instead of local. Ignores untracked changes.",
-)
-@click.option(
-    "--all",
-    "all_",
-    is_flag=True,
-    help="Build all projects, regardless of changes on branch",
-)
 @click.option("--tag", "-t", help="Tag to build", type=click.STRING, required=False)
 @click.option(
     "--stage",
@@ -127,8 +113,6 @@ class CustomValidation(click.Command):
 @click.pass_obj
 def run(
     obj: CliContext,
-    ci,
-    all_,
     tag,
     stage,
     projects,
@@ -139,9 +123,6 @@ def run(
         run_result_file.unlink()
 
     parameters = MpylCliParameters(
-        local=not ci,
-        pull_main=all_,
-        all=all_,
         verbose=obj.verbose,
         tag=tag,
         stage=stage,
@@ -169,12 +150,6 @@ def run(
 
 @build.command(help="The status of the current local branch from MPyL's perspective")
 @click.option(
-    "--all",
-    "all_",
-    is_flag=True,
-    help="Build all projects, regardless of changes on branch",
-)
-@click.option(
     "--projects",
     "-p",
     type=str,
@@ -191,11 +166,9 @@ def run(
 @click.option("--tag", "-t", help="Tag to build", type=click.STRING, required=False)
 @click.option("--explain", "-e", is_flag=True, help="Explain the current run plan")
 @click.pass_obj
-def status(obj: CliContext, all_, projects, stage, tag, explain):
+def status(obj: CliContext, projects, stage, tag, explain):
     try:
-        parameters = MpylCliParameters(
-            local=sys.stdout.isatty(), all=all_, projects=projects, stage=stage, tag=tag
-        )
+        parameters = MpylCliParameters(projects=projects, stage=stage, tag=tag)
         print_status(obj, parameters, explain)
     except asyncio.exceptions.TimeoutError:
         pass

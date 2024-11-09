@@ -41,18 +41,6 @@ class Changeset:
         return Changeset(sha, changes)
 
     @staticmethod
-    def with_untracked_files(sha: str, diff: set[str], untracked_files: set[str]):
-        changes = {}
-        for line in diff:
-            parts = line.split("\t")
-            changes[parts[1]] = parts[0]
-
-        for file in untracked_files:
-            changes[file] = "U"
-
-        return Changeset(sha, changes)
-
-    @staticmethod
     def empty(sha: str):
         return Changeset(sha=sha, _files_touched={})
 

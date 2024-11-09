@@ -1,0 +1,126 @@
+---
+name: Validate MPyL code
+
+on:
+  pull_request:
+    paths:
+      - src/**
+      - tests/**
+      - Pipfile
+      - Pipfile.lock
+
+# If multiple commits are pushed simultaneously, only build the last one.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: 🧽 Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-python@v5.3.0
+        id: cache-dependencies
+        with:
+          python-version: '3.11'
+          cache: pipenv
+          cache-dependency-path: |
+            Pipfile.lock
+
+      - name: Install pipenv
+        run: pip install pipenv
+
+      - name: Install dependencies
+        if: steps.cache-dependencies.outputs.cache-hit != 'true'
+        run: pipenv install -d --deploy
+
+      - name: Check formatting
+        run: pipenv run format
+
+      - name: Run lint
+        run: pipenv run lint
+
+      - name: Run test code lint
+        run: pipenv run lint-test
+
+  type-check:
+    name: 🧐 Check types
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-python@v5.3.0
+        id: cache-dependencies
+        with:
+          python-version: '3.11'
+          cache: pipenv
+          cache-dependency-path: |
+            Pipfile.lock
+
+      - name: Install pipenv
+        run: pip install pipenv
+
+      - name: Install dependencies
+        if: steps.cache-dependencies.outputs.cache-hit != 'true'
+        run: pipenv install -d --deploy
+
+      - name: Check types
+        run: pipenv run check-types
+
+      - name: Check types test
+        run: pipenv run check-types-test
+
+  test:
+    name: 🧪 Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        id: cache-dependencies
+        with:
+          python-version: '3.11'
+          cache: pipenv
+          cache-dependency-path: |
+            Pipfile.lock
+
+      - name: Install pipenv
+        run: pip install pipenv
+
+      - name: Install dependencies
+        if: steps.cache-dependencies.outputs.cache-hit != 'true'
+        run: pipenv install -d --deploy
+
+      - name: Test
+        run: pipenv run test-ci
+
+      - uses: mikepenz/action-junit-report@v4.3.1
+        if: success() || failure()
+        with:
+          report_paths: build/test-result/test.xml
+          annotate_only: true
+          detailed_summary: true
+
+      - name: Validate Config Example
+        run: pipenv run validate-config-example
+
+      - name: Coverage to xml
+        run: pipenv run test-ci-coverage
+
+      - name: Code Coverage Report
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: build/coverage.xml
+          badge: true
+          fail_below_min: true
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: true
+          indicators: true
+          output: both
+          thresholds: 79 99
+
+      - name: Add Coverage PR Comment
+        uses: marocchino/sticky-pull-request-comment@v2.9.0
+        with:
+          number: ${{ github.event.pull_request.number }}
+          path: code-coverage-results.md

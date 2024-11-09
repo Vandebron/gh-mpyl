@@ -18,17 +18,17 @@ from src.mpyl.steps.models import (
     ArtifactType,
     Artifact,
 )
-from src.mpyl.steps.run_properties import construct_run_properties
 from src.mpyl.utilities.docker import DockerImageSpec
 from src.mpyl.utilities.pyaml_env import parse_config
 from src.mpyl.utilities.repo import Repository, RepoConfig
 from tests import root_test_path
+from tests.steps.test_models import stub_run_properties
 
 resource_path = root_test_path / "test_resources"
 config_values = parse_config(resource_path / DEFAULT_CONFIG_FILE_NAME)
 properties_values = parse_config(resource_path / DEFAULT_RUN_PROPERTIES_FILE_NAME)
 
-RUN_PROPERTIES = construct_run_properties(
+RUN_PROPERTIES = stub_run_properties(
     config=config_values,
     properties=properties_values,
     run_plan=RunPlan.empty(),
@@ -97,7 +97,7 @@ def safe_load_project(name: str) -> Project:
 
 
 def run_properties_with_plan(plan: RunPlan) -> RunProperties:
-    run_properties = construct_run_properties(
+    run_properties = stub_run_properties(
         config=config_values,
         properties=properties_values,
         run_plan=plan,
@@ -111,7 +111,7 @@ def run_properties_prod_with_plan() -> RunProperties:
     plan = RunPlan.from_plan(
         {TestStage.deploy(): {ProjectExecution.run(get_minimal_project())}}
     )
-    run_properties_prod = construct_run_properties(
+    run_properties_prod = stub_run_properties(
         config=config_values,
         properties=properties_values,
         run_plan=plan,

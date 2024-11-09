@@ -28,7 +28,7 @@ class DeploySet:
 
 
 def file_belongs_to_project(project: Project, path: str) -> bool:
-    return path.startswith(str(project.root_path))
+    return path.startswith(str(project.root_path) + "/")
 
 
 def is_file_in_project(logger: logging.Logger, project: Project, path: str) -> bool:
@@ -262,11 +262,9 @@ def create_run_plan(
     logger: logging.Logger,
     all_projects: set[Project],
     all_stages: list[Stage],
-    build_all: bool,
-    local: bool,
-    changed_files_path: str,
     selected_projects: set[Project],
     selected_stage: Optional[Stage] = None,
+    changed_files_path: Optional[str] = None,
 ) -> RunPlan:
     run_plan_file = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.pickle"
 
@@ -283,19 +281,20 @@ def create_run_plan(
             logger.debug(f"Run plan: {existing_run_plan}")
         return existing_run_plan
 
-    run_plan = _discover_run_plan(
-        logger=logger,
-        all_projects=all_projects,
-        all_stages=all_stages,
-        build_all=build_all,
-        selected_projects=selected_projects,
-        selected_stage=selected_stage,
-        changed_files_path=changed_files_path,
-    )
+    if changed_files_path:
+        run_plan = _discover_run_plan(
+            logger=logger,
+            all_projects=all_projects,
+            all_stages=all_stages,
+            selected_projects=selected_projects,
+            selected_stage=selected_stage,
+            changed_files_path=changed_files_path,
+        )
 
-    if not local:
         _store_run_plan(logger, run_plan, run_plan_file)
-    return run_plan
+        return run_plan
+
+    raise ValueError("Unable to discover run plan without a changed_files JSON file.")
 
 
 # pylint: disable=too-many-arguments
@@ -303,24 +302,16 @@ def _discover_run_plan(
     logger: logging.Logger,
     all_projects: set[Project],
     all_stages: list[Stage],
-    build_all: bool,
-    changed_files_path: str,
     selected_projects: set[Project],
     selected_stage: Optional[Stage],
+    changed_files_path: str,
 ) -> RunPlan:
     logger.info("Discovering run plan...")
     changeset = Changeset.from_file(logger=logger, sha="FIXME ptab", changed_files_path=changed_files_path)
     plan = {}
 
     def add_projects_to_plan(stage: Stage):
-        if build_all:
-            project_executions = to_project_executions(
-                logger=logger,
-                projects=for_stage(all_projects, stage),
-                stage=stage.name,
-                changeset=changeset,
-            )
-        elif selected_projects:
+        if selected_projects:
             project_executions = to_project_executions(
                 logger=logger,
                 projects=for_stage(selected_projects, stage),
