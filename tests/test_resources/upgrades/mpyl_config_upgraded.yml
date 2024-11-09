@@ -1,17 +1,4 @@
 mpylVersion: 1.4.12
-vcs:
-  git:
-    mainBranch: 'main'
-    remote:
-      url: 'https://github.com/acme/repo.git'
-      userName: !ENV ${GIT_CREDENTIALS_USR:git-user}
-      password: !ENV ${GIT_CREDENTIALS_PSW:git-password}
-  github:
-    repository: 'Vandebron/mpyl'
-    token: !ENV ${GITHUB_TOKEN}
-    app:
-      privateKeyPath: 'mpyl-pipeline.private-key.pem'
-      appId: '295700'
 slack:
   botToken: !ENV ${SLACK_TOKEN}
   icons:

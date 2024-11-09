@@ -6,11 +6,11 @@ import hashlib
 import logging
 import os
 import pickle
-from dataclasses import dataclass
+import subprocess
 from pathlib import Path
 from typing import Optional
 
-from ..constants import RUN_ARTIFACTS_FOLDER
+from ..constants import RUN_ARTIFACTS_FOLDER, ROOT_PATH
 from ..project import Project
 from ..project import Stage
 from ..project_execution import ProjectExecution
@@ -21,10 +21,28 @@ from ..steps.models import Output, ArtifactType
 from ..utilities.repo import Changeset
 
 
-@dataclass(frozen=True)
-class DeploySet:
-    all_projects: set[Project]
-    projects_to_deploy: set[Project]
+def find_projects() -> list[Path]:
+    # Ideally we'd use globbing here, as it's super easy to read:
+    #   projects = root.rglob(f"deployment/project.yml")
+    #
+    # However, because monorepo, this takes literally minutes to scan the entire repository, which we can't afford to
+    # do every time we run a command on mpyl. For this reason, I decided to go with an optimized find command, which
+    # is a bit harder to read but completes in a couple of seconds.
+    # If you find a faster way to list all files, please raise a PR.
+
+    command = (
+        f"find {Path(ROOT_PATH)}"
+        " -type d ( -name target -o -name .git ) -prune"
+        " -o ("
+        f" -path **/deployment/{Project.project_yaml_file_name()}"
+        f" -o -path **/deployment/{Project.project_overrides_yaml_file_pattern()}"
+        " )"
+        " -print"
+    )
+    files = subprocess.run(
+        command.split(" "), capture_output=True, text=True, check=True, shell=False
+    ).stdout.splitlines()
+    return list(map(Path, sorted(files)))
 
 
 def file_belongs_to_project(project: Project, path: str) -> bool:
@@ -260,6 +278,7 @@ def find_projects_to_execute(
 # pylint: disable=too-many-arguments
 def create_run_plan(
     logger: logging.Logger,
+    revision: str,
     all_projects: set[Project],
     all_stages: list[Stage],
     selected_projects: set[Project],
@@ -284,6 +303,7 @@ def create_run_plan(
     if changed_files_path:
         run_plan = _discover_run_plan(
             logger=logger,
+            revision=revision,
             all_projects=all_projects,
             all_stages=all_stages,
             selected_projects=selected_projects,
@@ -300,6 +320,7 @@ def create_run_plan(
 # pylint: disable=too-many-arguments
 def _discover_run_plan(
     logger: logging.Logger,
+    revision: str,
     all_projects: set[Project],
     all_stages: list[Stage],
     selected_projects: set[Project],
@@ -307,7 +328,9 @@ def _discover_run_plan(
     changed_files_path: str,
 ) -> RunPlan:
     logger.info("Discovering run plan...")
-    changeset = Changeset.from_file(logger=logger, sha="FIXME ptab", changed_files_path=changed_files_path)
+    changeset = Changeset.from_file(
+        logger=logger, sha=revision, changed_files_path=changed_files_path
+    )
     plan = {}
 
     def add_projects_to_plan(stage: Stage):

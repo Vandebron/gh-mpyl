@@ -26,7 +26,7 @@ import jsonschema
 from mypy.checker import Generic
 from ruamel.yaml import YAML
 
-from .constants import RUN_ARTIFACTS_FOLDER
+from .constants import RUN_ARTIFACTS_FOLDER, ROOT_PATH
 from .validation import validate
 
 T = TypeVar("T")
@@ -640,10 +640,10 @@ def load_possible_parent(
 
 
 def load_project(
-    root_dir: Path,
     project_path: Path,
     strict: bool = True,
     log: bool = True,
+    root_dir: Path = Path(ROOT_PATH),
 ) -> Project:
     """
     Load a `project.yml` to `Project` data class

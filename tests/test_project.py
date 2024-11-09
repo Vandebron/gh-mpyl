@@ -10,13 +10,15 @@ from tests import root_test_path
 
 class TestMpylSchema:
     resource_path = root_test_path / "test_resources"
-    project = load_project(resource_path, Path("test_projects", "test_project.yml"))
+    project = load_project(
+        Path("test_projects", "test_project.yml"), root_dir=resource_path
+    )
 
     def test_schema_load(self):
         os.environ["CHANGE_ID"] = "123"
         project = load_project(
-            self.resource_path,
             self.resource_path / "test_projects" / "test_project.yml",
+            root_dir=self.resource_path,
         )
 
         assert project.name == "dockertest"
@@ -79,7 +81,8 @@ class TestMpylSchema:
     def test_schema_load_validation(self):
         with pytest.raises(ValidationError) as exc:
             load_project(
-                self.resource_path, self.resource_path / "test_project_invalid.yml"
+                self.resource_path / "test_project_invalid.yml",
+                root_dir=self.resource_path,
             )
         assert exc.value.message == "'maintainer' is a required property"
 
@@ -118,7 +121,7 @@ class TestMpylSchema:
 
     def test_dynamic_stages(self):
         project = load_project(
-            self.resource_path / "dynamic_stages",
             Path("deployment/test_project.yml"),
+            root_dir=self.resource_path / "dynamic_stages",
         )
         assert project.path == "deployment/test_project.yml"

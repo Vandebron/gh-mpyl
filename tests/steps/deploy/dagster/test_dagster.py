@@ -40,7 +40,9 @@ class TestDagster:
         step_input = Input(
             ProjectExecution.run(
                 project=load_project(
-                    test_resource_path, self.resource_path / "project.yml", True
+                    self.resource_path / "project.yml",
+                    True,
+                    root_dir=test_resource_path,
                 )
             ),
             test_data.RUN_PROPERTIES,
@@ -66,7 +68,9 @@ class TestDagster:
         step_input = Input(
             ProjectExecution.run(
                 project=load_project(
-                    test_resource_path, Path(self.resource_path, "project.yml"), True
+                    Path(self.resource_path, "project.yml"),
+                    True,
+                    root_dir=test_resource_path,
                 ),
             ),
             test_data.RUN_PROPERTIES_PROD,
@@ -90,7 +94,9 @@ class TestDagster:
         step_input = Input(
             ProjectExecution.run(
                 project=load_project(
-                    test_resource_path, Path(self.resource_path, "project.yml"), True
+                    Path(self.resource_path, "project.yml"),
+                    True,
+                    root_dir=test_resource_path,
                 )
             ),
             test_data.RUN_PROPERTIES,
@@ -117,9 +123,9 @@ class TestDagster:
         step_input = Input(
             ProjectExecution.run(
                 project=load_project(
-                    self.config_resource_path,
                     project_folder / "project_with_sealed_secret.yml",
                     True,
+                    root_dir=self.config_resource_path,
                 )
             ),
             test_data.RUN_PROPERTIES,

@@ -4,13 +4,14 @@ from typing import Optional
 
 from src.mpyl.project import Project, load_project
 from src.mpyl.projects import ProjectWithDependents, Protocol, Contract, Dependency
+from src.mpyl.stages.discovery import find_projects
 from src.mpyl.steps import test
 
 
-def load_projects(
-    root_dir: Path, paths: list[str], strict: bool = False
-) -> set[Project]:
-    return set(map(lambda p: load_project(root_dir, Path(p), strict), paths))
+def load_projects(paths: Optional[list[Path]] = None) -> set[Project]:
+    if not paths:
+        paths = find_projects()
+    return set(map(lambda p: load_project(p, strict=False), paths))
 
 
 def find_by_contract_dep(

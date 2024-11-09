@@ -6,9 +6,8 @@ from typing import Optional
 
 from ..cli import MpylCliParameters
 from ..project import load_project, Stage, Project
-from ..stages.discovery import create_run_plan
+from ..stages.discovery import create_run_plan, find_projects
 from ..steps.models import RunProperties
-from ..utilities.repo import Repository
 
 
 def construct_run_properties(
@@ -21,12 +20,11 @@ def construct_run_properties(
     all_projects = set(
         map(
             lambda p: load_project(
-                root_dir=root_dir,
-                project_path=Path(p),
+                project_path=p,
                 strict=False,
                 log=True,
             ),
-            Repository(root_dir).find_projects(),
+            find_projects(),
         )
     )
 
@@ -34,13 +32,14 @@ def construct_run_properties(
     run_plan_logger = logging.getLogger("mpyl")
     if explain_run_plan:
         run_plan_logger.setLevel("DEBUG")
-    changed_files_path = config["vcs"].get("changedFilesPath", None)
+
     run_plan = _create_run_plan(
         cli_parameters=cli_parameters,
         all_projects=all_projects,
         all_stages=stages,
         explain_run_plan=explain_run_plan,
-        changed_files_path=changed_files_path,
+        changed_files_path=config["vcs"].get("changedFilesPath", None),
+        revision=config["versioning"]["revision"],
     )
 
     return RunProperties.from_configuration(
@@ -58,6 +57,7 @@ def _create_run_plan(
     all_projects: set[Project],
     all_stages: list[Stage],
     explain_run_plan: bool,
+    revision: str,
     changed_files_path: Optional[str] = None,
 ):
     run_plan_logger = logging.getLogger("mpyl")
@@ -80,6 +80,7 @@ def _create_run_plan(
 
     return create_run_plan(
         logger=run_plan_logger,
+        revision=revision,
         all_projects=all_projects,
         all_stages=all_stages,
         selected_stage=selected_stage,

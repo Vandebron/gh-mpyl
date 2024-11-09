@@ -13,18 +13,16 @@ from ....project import Project, load_project, Target
 from ....steps.deploy import STAGE_NAME
 from ....steps.deploy.k8s import substitute_namespaces
 from ....steps.deploy.k8s.chart import ChartBuilder
-from ....utilities.repo import Repository
 
 
 def __load_project(
     console: Optional[Console],
-    root_dir: Path,
-    project_path: str,
+    project_path: Path,
     verbose: bool = False,
     strict: bool = True,
 ) -> Optional[Project]:
     try:
-        project = load_project(root_dir, Path(project_path), strict, False)
+        project = load_project(project_path, strict, False)
     except jsonschema.exceptions.ValidationError as exc:
         if console:
             console.print(f"❌ {project_path}: {exc.message}")
@@ -39,11 +37,10 @@ def __load_project(
 
 
 def _check_and_load_projects(
-    console: Optional[Console], repo: Repository, project_paths: list[str], strict: bool
+    console: Optional[Console], project_paths: list[Path], strict: bool
 ) -> list[Project]:
     projects = [
-        __load_project(console, repo.path, project_path, strict)
-        for project_path in project_paths
+        __load_project(console, project_path, strict) for project_path in project_paths
     ]
     valid_projects = [project for project in projects if project]
     num_invalid = len(projects) - len(valid_projects)
@@ -91,19 +88,17 @@ def _assert_correct_project_linkup(
     console: Console,
     target: Target,
     projects: list[Project],
-    all_projects: list[Project],
     pr_identifier: Optional[int],
 ) -> list[WrongLinkupPerProject]:
     console.print("")
     console.print("Checking namespace substitution: ")
     wrong_substitutions = __get_wrong_substitutions_per_project(
-        all_projects, projects, pr_identifier, target
+        projects, pr_identifier, target
     )
     return wrong_substitutions
 
 
 def __get_wrong_substitutions_per_project(
-    all_projects: list[Project],
     projects: list[Project],
     pr_identifier: Optional[int],
     target: Target,
@@ -116,7 +111,7 @@ def __get_wrong_substitutions_per_project(
             )
             substituted: dict[str, str] = substitute_namespaces(
                 env_vars=env,
-                all_projects=set(map(lambda p: p.to_name, all_projects)),
+                all_projects=set(map(lambda p: p.to_name, projects)),
                 projects_to_deploy=set(map(lambda p: p.to_name, projects)),
                 pr_identifier=pr_identifier,
             )

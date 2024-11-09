@@ -23,9 +23,9 @@ from ..constants import (
     RUN_RESULT_FILE_GLOB,
 )
 from ..project import load_project
+from ..stages.discovery import find_projects
 from ..steps.run_properties import construct_run_properties
 from ..utilities.pyaml_env import parse_config
-from ..utilities.repo import Repository
 
 
 @click.group("build")
@@ -71,7 +71,7 @@ def build(ctx, config, properties, verbose):
         max_width=console_config.width,
     )
 
-    ctx.obj = CliContext(parsed_config, Repository(), console, verbose, parsed_properties)
+    ctx.obj = CliContext(parsed_config, console, verbose, parsed_properties)
 
 
 class CustomValidation(click.Command):
@@ -175,28 +175,16 @@ def status(obj: CliContext, projects, stage, tag, explain):
 
 
 @build.command(help=f"Clean all MPyL metadata in `{RUN_ARTIFACTS_FOLDER}` folders")
-@click.option(
-    "--filter",
-    "-f",
-    "filter_",
-    required=False,
-    type=click.STRING,
-    help="Filter based on filepath ",
-)
 @click.pass_obj
-def clean(obj: CliContext, filter_):
-    root_path = Path(RUN_ARTIFACTS_FOLDER)
-    if root_path.is_dir():
-        shutil.rmtree(root_path)
-        obj.console.print(f"🧹 Cleaned up {root_path}")
+def clean(obj: CliContext):
+    artifacts_path = Path(RUN_ARTIFACTS_FOLDER)
+    if artifacts_path.is_dir():
+        shutil.rmtree(artifacts_path)
+        obj.console.print(f"🧹 Cleaned up {artifacts_path}")
 
     found_projects: list[Path] = [
-        Path(
-            load_project(
-                obj.repo.path, Path(project_path), strict=False
-            ).target_path
-        )
-        for project_path in obj.repo.find_projects(filter_ if filter_ else "")
+        Path(load_project(project_path, strict=False).target_path)
+        for project_path in find_projects()
     ]
 
     paths_to_clean = [path for path in found_projects if path.exists()]
