@@ -11,7 +11,6 @@ on:  # yamllint disable-line rule:truthy
       - src/**
       - actions/**
       - Dockerfile
-      - entrypoint.sh
       - requirements.txt
 
 jobs:

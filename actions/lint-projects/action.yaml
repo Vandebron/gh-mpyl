@@ -8,6 +8,7 @@ inputs:
 runs:
   using: docker
   image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.3.8
+  pre-entrypoint: actions/pre-entrypoint.sh
   args:
     - projects
     - lint
