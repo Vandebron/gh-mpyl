@@ -107,7 +107,7 @@ def create_console_logger(show_path: bool, max_width: Optional[int] = None) -> C
         log_time=False,
         color_system="256",
     )
-    verbose = os.environ.get("GITHUB_RUNNER_DEBUG", "0") == "1"
+    verbose = os.environ.get("RUNNER_DEBUG", "0") == "1"
     logging.basicConfig(
         level="DEBUG" if verbose else "INFO",
         format=FORMAT,

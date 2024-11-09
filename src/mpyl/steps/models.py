@@ -69,7 +69,7 @@ class ConsoleProperties:
     @staticmethod
     def from_configuration(build_config: dict):
         console_config = build_config["console"]
-        if os.environ.get("GITHUB_RUNNER_DEBUG", "0") == "1":
+        if os.environ.get("RUNNER_DEBUG", "0") == "1":
             log_level = "DEBUG"
         else:
             log_level = console_config.get("logLevel", "INFO")
