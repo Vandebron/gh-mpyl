@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 import pytest
 from jsonschema import ValidationError
@@ -9,7 +8,6 @@ from src.mpyl.cli import MpylCliParameters
 from src.mpyl.constants import (
     DEFAULT_CONFIG_FILE_NAME,
     DEFAULT_RUN_PROPERTIES_FILE_NAME,
-    ROOT_PATH,
 )
 from src.mpyl.project import Project
 from src.mpyl.run_plan import RunPlan

@@ -1,7 +1,6 @@
 """Module to initiate run properties"""
 
 import logging
-from pathlib import Path
 from typing import Optional
 
 from ..cli import MpylCliParameters
@@ -14,7 +13,6 @@ def construct_run_properties(
     config: dict,
     properties: dict,
     cli_parameters: MpylCliParameters = MpylCliParameters(),
-    root_dir: Path = Path(""),
     explain_run_plan: bool = False,
 ) -> RunProperties:
     all_projects = set(
@@ -32,7 +30,7 @@ def construct_run_properties(
         all_stages=stages,
         explain_run_plan=explain_run_plan,
         changed_files_path=config["vcs"].get("changedFilesPath", None),
-        revision=config["versioning"]["revision"],
+        revision=properties["build"]["versioning"]["revision"],
     )
 
     return RunProperties.from_configuration(
@@ -41,7 +39,6 @@ def construct_run_properties(
         run_plan=run_plan,
         all_projects=all_projects,
         cli_tag=cli_parameters.tag or properties["build"]["versioning"].get("tag"),
-        root_dir=root_dir,
     )
 
 

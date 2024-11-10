@@ -6,7 +6,6 @@ import pkgutil
 from dataclasses import dataclass
 from datetime import datetime
 from logging import Logger
-from pathlib import Path
 from typing import Optional
 
 from ruamel.yaml import YAML  # type: ignore
