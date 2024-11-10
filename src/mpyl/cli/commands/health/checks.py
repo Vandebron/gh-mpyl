@@ -16,6 +16,7 @@ from ....constants import (
     DEFAULT_CONFIG_FILE_NAME,
     DEFAULT_RUN_PROPERTIES_FILE_NAME,
     DEFAULT_STAGES_SCHEMA_FILE_NAME,
+    ROOT_PATH,
 )
 from ....utilities.pyaml_env import parse_config
 from ....validation import validate
@@ -119,7 +120,14 @@ def __validate_config_path(
     return None
 
 
-def _validate_config(console: HealthConsole, config_file_path: Path, schema_path: str):
+# root_dir is necessary because we load mpyl_stages.schema.yml dynamically (but only on tests?!)
+# It would be good to move mpyl_stages back to src/mpyl/schemas (next to the other schemas) and simplify this
+def _validate_config(
+    console: HealthConsole,
+    config_file_path: Path,
+    schema_path: str,
+    root_dir: Path = Path(ROOT_PATH),
+):
     if load_dotenv(Path(".env")):
         console.check("Set env variables via .env file", success=True)
 
@@ -127,7 +135,7 @@ def _validate_config(console: HealthConsole, config_file_path: Path, schema_path
     schema_dict = pkgutil.get_data(__name__, schema_path)
     if schema_dict:
         try:
-            validate(parsed, schema_dict.decode("utf-8"))
+            validate(parsed, schema_dict.decode("utf-8"), root_dir=root_dir)
             console.check(f"{config_file_path} is valid", success=True)
         except jsonschema.exceptions.ValidationError as exc:
             console.check(

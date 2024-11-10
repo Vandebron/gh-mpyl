@@ -26,6 +26,7 @@ class TestHealthCommand:
             HealthConsole(test_console),
             self.resource_path / "run_properties.yml",
             "../../../schema/run_properties.schema.yml",
+            root_dir=self.resource_path,
         )
 
         assert "is valid" in test_console.output()
@@ -36,6 +37,7 @@ class TestHealthCommand:
             HealthConsole(test_console),
             self.resource_path / "run_properties_incorrect_stage_name.yml",
             "../../../schema/run_properties.schema.yml",
+            root_dir=self.resource_path,
         )
 
         assert (
