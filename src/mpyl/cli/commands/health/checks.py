@@ -131,7 +131,6 @@ def _validate_config(console: HealthConsole, config_file_path: Path, schema_path
             console.check(f"{config_file_path} is valid", success=True)
         except jsonschema.exceptions.ValidationError as exc:
             console.check(
-                f"{config_file_path} is invalid: {exc.message} at '{'.'.join(map(str, exc.path))}'."
-                f" 🤔 Did you rebase your branch onto {parsed.get('vcs', {}).get('git', {}).get('mainBranch')}?",
+                f"{config_file_path} is invalid: {exc.message} at '{'.'.join(map(str, exc.path))}'",
                 success=False,
             )
