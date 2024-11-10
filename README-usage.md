@@ -45,7 +45,7 @@ If you use MPyL in a github action, a build will be triggered automatically and 
 ```
 
 Top level commands options are passed on to sub commands and need to be specified *before* the sub command.
-In ```mpyl projects --filter <name> list ```, the `--filter` option applies to all `project` commands, like `list`
+In ```mpyl projects --config <path> list ```, the `--config` option applies to all `project` commands, like `list`
 or `lint`.
 
 <details>
