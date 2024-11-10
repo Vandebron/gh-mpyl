@@ -1,5 +1,6 @@
 ARG PYTHON_VERSION=3.11
 FROM public.ecr.aws/vdb-public/python:${PYTHON_VERSION}-slim-bookworm AS base
+
 USER root
 
 # Switch to mpyl source code directory
@@ -9,7 +10,6 @@ COPY requirements.txt .
 
 # Install the dependencies.
 RUN python -m pip install -r requirements.txt
-#USER vdbnonroot
 
 # Copy the source code into the container.
 COPY src/mpyl ./
