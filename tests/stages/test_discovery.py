@@ -21,7 +21,6 @@ from src.mpyl.steps.collection import StepsCollection
 from src.mpyl.steps.models import Artifact
 from src.mpyl.utilities.docker import DockerImageSpec
 from src.mpyl.utilities.repo import Changeset
-from tests import test_resource_path
 from tests.projects.find import load_projects
 from tests.test_resources.test_data import TestStage
 
@@ -237,11 +236,10 @@ class TestDiscovery:
         assert not is_file_a_dependency(
             self.logger,
             load_project(
-                Path("../projects/sbt-service/deployment/project.yml"),
-                root_dir=test_resource_path,
+                Path("tests/projects/sbt-service/deployment/project.yml"), strict=True
             ),
             stage="build",
-            path="projects/sbt-service-other/file.py",
+            path="tests/projects/sbt-service-other/file.py",
             steps=self.steps,
         )
 

@@ -1,6 +1,7 @@
 """ Entry point of MPyL. Loads all available Step implementations and triggers their execution based on the specified
 Project and Stage.
 """
+
 import pkgutil
 from dataclasses import dataclass
 from datetime import datetime
@@ -60,7 +61,6 @@ class Steps:
         logger: Logger,
         properties: RunProperties,
         steps_collection: Optional[StepsCollection] = None,
-        root_dir: Path = Path("."),
     ) -> None:
         self._logger = logger
         self._properties = properties
@@ -69,7 +69,7 @@ class Steps:
         schema_dict = pkgutil.get_data(__name__, "../schema/mpyl_config.schema.yml")
 
         if schema_dict:
-            validate(properties.config, schema_dict.decode("utf-8"), root_dir=root_dir)
+            validate(properties.config, schema_dict.decode("utf-8"))
 
     def _execute(
         self,

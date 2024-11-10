@@ -119,9 +119,7 @@ def __validate_config_path(
     return None
 
 
-def _validate_config(
-    console: HealthConsole, config_file_path: Path, schema_path: str, root_dir=Path(".")
-):
+def _validate_config(console: HealthConsole, config_file_path: Path, schema_path: str):
     if load_dotenv(Path(".env")):
         console.check("Set env variables via .env file", success=True)
 
@@ -129,7 +127,7 @@ def _validate_config(
     schema_dict = pkgutil.get_data(__name__, schema_path)
     if schema_dict:
         try:
-            validate(parsed, schema_dict.decode("utf-8"), root_dir)
+            validate(parsed, schema_dict.decode("utf-8"))
             console.check(f"{config_file_path} is valid", success=True)
         except jsonschema.exceptions.ValidationError as exc:
             console.check(

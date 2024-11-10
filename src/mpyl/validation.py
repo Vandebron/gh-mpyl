@@ -10,7 +10,7 @@ from jsonschema.validators import Draft7Validator
 from referencing import Registry, Resource
 from ruamel.yaml import YAML
 
-from .constants import DEFAULT_STAGES_SCHEMA_FILE_NAME
+from .constants import DEFAULT_STAGES_SCHEMA_FILE_NAME, ROOT_PATH
 
 yaml = YAML()
 
@@ -71,6 +71,6 @@ def load_schema(schema_string: str, root_dir: Path) -> Draft7Validator:
     return extended_validator(schema=schema, registry=registry)
 
 
-def validate(values: dict, schema_string: str, root_dir=Path(".")):
+def validate(values: dict, schema_string: str, root_dir=Path(ROOT_PATH)):
     schema = load_schema(schema_string, root_dir)
     return schema.validate(values)

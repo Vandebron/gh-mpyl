@@ -183,8 +183,7 @@ def clean(obj: CliContext):
         obj.console.print(f"🧹 Cleaned up {artifacts_path}")
 
     found_projects: list[Path] = [
-        Path(load_project(project_path, strict=False).target_path)
-        for project_path in find_projects()
+        Path(load_project(project_path).target_path) for project_path in find_projects()
     ]
 
     paths_to_clean = [path for path in found_projects if path.exists()]

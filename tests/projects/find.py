@@ -1,4 +1,5 @@
 """ Loads all projects inside a repository. """
+
 from pathlib import Path
 from typing import Optional
 
@@ -11,7 +12,7 @@ from src.mpyl.steps import test
 def load_projects(paths: Optional[list[Path]] = None) -> set[Project]:
     if not paths:
         paths = find_projects()
-    return set(map(lambda p: load_project(p, strict=False), paths))
+    return set(map(load_project, paths))
 
 
 def find_by_contract_dep(

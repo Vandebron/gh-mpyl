@@ -73,7 +73,7 @@ def list_projects(obj: ProjectsContext):
     found_projects = find_projects()
 
     for proj in found_projects:
-        project = load_project(proj, False)
+        project = load_project(proj, log=False)
         obj.cli.console.print(Markdown(f"{proj} `{project.name}`"))
 
 
@@ -82,7 +82,7 @@ def list_projects(obj: ProjectsContext):
 def list_project_names(obj: ProjectsContext):
     found_projects = find_projects()
 
-    names = sorted([load_project(proj, False).name for proj in found_projects])
+    names = sorted([load_project(proj, log=False).name for proj in found_projects])
 
     for name in names:
         obj.cli.console.print(name)
@@ -93,9 +93,7 @@ def list_project_names(obj: ProjectsContext):
 # pylint: disable=too-many-branches
 def lint(obj: ProjectsContext):
     all_projects = _check_and_load_projects(
-        console=obj.cli.console,
-        project_paths=find_projects(),
-        strict=True,
+        console=obj.cli.console, project_paths=find_projects()
     )
 
     console = obj.cli.console

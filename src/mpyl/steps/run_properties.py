@@ -18,14 +18,7 @@ def construct_run_properties(
     explain_run_plan: bool = False,
 ) -> RunProperties:
     all_projects = set(
-        map(
-            lambda p: load_project(
-                project_path=p,
-                strict=False,
-                log=True,
-            ),
-            find_projects(),
-        )
+        map(lambda p: load_project(project_path=p, log=True), find_projects())
     )
 
     stages = [Stage(stage["name"], stage["icon"]) for stage in properties["stages"]]

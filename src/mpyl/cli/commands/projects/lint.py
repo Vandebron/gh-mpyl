@@ -19,10 +19,9 @@ def __load_project(
     console: Optional[Console],
     project_path: Path,
     verbose: bool = False,
-    strict: bool = True,
 ) -> Optional[Project]:
     try:
-        project = load_project(project_path, strict, False)
+        project = load_project(project_path, strict=True, log=False)
     except jsonschema.exceptions.ValidationError as exc:
         if console:
             console.print(f"❌ {project_path}: {exc.message}")
@@ -37,18 +36,16 @@ def __load_project(
 
 
 def _check_and_load_projects(
-    console: Optional[Console], project_paths: list[Path], strict: bool
+    console: Optional[Console], project_paths: list[Path]
 ) -> list[Project]:
-    projects = [
-        __load_project(console, project_path, strict) for project_path in project_paths
-    ]
+    projects = [__load_project(console, project_path) for project_path in project_paths]
     valid_projects = [project for project in projects if project]
     num_invalid = len(projects) - len(valid_projects)
     if console:
         console.print(
             f"Validated {len(projects)} projects. {len(valid_projects)} valid, {num_invalid} invalid"
         )
-    if num_invalid > 0 and strict:
+    if num_invalid > 0:
         click.get_current_context().exit(1)
     return valid_projects
 

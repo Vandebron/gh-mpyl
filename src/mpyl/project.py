@@ -610,6 +610,9 @@ class Project:
         )
 
 
+# root_dir is necessary because we load mpyl_stages.schema.yml dynamically
+# Follow-up question: why do we allow different repositories to define their own stages schema, but the project schema
+# (and other schemas) are hardcoded in src/mpyl ? Can we inline mpyl_stages as well to simplify this?
 def validate_project(yaml_values: dict, root_dir: Path) -> dict:
     """
     :type yaml_values: the yaml dictionary to validate
@@ -641,29 +644,30 @@ def load_possible_parent(
 
 def load_project(
     project_path: Path,
-    strict: bool = True,
+    strict: bool = False,
     log: bool = True,
-    root_dir: Path = Path(ROOT_PATH),
+    schemas_dir: Path = Path(ROOT_PATH),
 ) -> Project:
     """
     Load a `project.yml` to `Project` data class
-    :param root_dir: is the root of the project path. It contains the mpyl_config.yml and run_properties.yml files
-    :param project_path: relative path from `root_dir` to the `project.yml`
+    :param schemas_dir: directory where to find extra schemas to validate (usually the root directory)
+    :param project_path: path to the `project.yml`
     :param strict: indicates whether the schema should be validated
     :param log: indicates whether problems should be logged as warning
     :return: `Project` data class
     """
     log_level = logging.WARNING if log else logging.DEBUG
-    full_path = root_dir / project_path
-    with open(full_path, encoding="utf-8") as file:
+    with open(project_path, encoding="utf-8") as file:
         try:
             start = time.time()
             loader: YAML = YAML()
             yaml_values: dict = loader.load(file)
-            parent_yaml_values: Optional[dict] = load_possible_parent(full_path, loader)
+            parent_yaml_values: Optional[dict] = load_possible_parent(
+                project_path, loader
+            )
             yaml_values = merge_dicts(yaml_values, parent_yaml_values, True)
             if strict:
-                validate_project(yaml_values, root_dir=root_dir)
+                validate_project(yaml_values, schemas_dir)
             project = Project.from_config(yaml_values, project_path)
             logging.debug(
                 f"Loaded project {project.path} in {(time.time() - start) * 1000} ms"
