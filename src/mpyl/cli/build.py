@@ -24,6 +24,7 @@ from ..constants import (
 )
 from ..project import load_project
 from ..stages.discovery import find_projects
+from ..steps import deploy
 from ..steps.run_properties import construct_run_properties
 from ..utilities.pyaml_env import parse_config
 
@@ -90,18 +91,17 @@ class CustomValidation(click.Command):
 @build.command(help="Run an MPyL build", cls=CustomValidation)
 @click.option("--tag", "-t", help="Tag to build", type=click.STRING, required=False)
 @click.option(
-    "--stage",
-    default=None,
-    type=str,
-    required=False,
-    help="Stage to run",
+    "--stage", default=None, type=click.STRING, required=False, help="Stage to run"
 )
 @click.option(
     "--projects",
     "-p",
-    type=str,
+    type=click.STRING,
     required=False,
     help="Comma separated list of the projects to build",
+)
+@click.option(
+    "--image", type=click.STRING, required=False, help="Docker image to deploy"
 )
 @click.pass_obj
 def run(
@@ -109,16 +109,24 @@ def run(
     tag,
     stage,
     projects,
+    image,
 ):  # pylint: disable=invalid-name
     run_result_files = list(Path(RUN_ARTIFACTS_FOLDER).glob(RUN_RESULT_FILE_GLOB))
     for run_result_file in run_result_files:
         run_result_file.unlink()
 
+    if image:
+        if stage != deploy.STAGE_NAME:
+            raise click.ClickException(
+                message="Images can only be passed when deploying"
+            )
+        if len(projects) != 1:
+            raise click.ClickException(
+                message="Need to pass exactly one project to deploy when passing an image"
+            )
+
     parameters = MpylCliParameters(
-        verbose=obj.verbose,
-        tag=tag,
-        stage=stage,
-        projects=projects,
+        verbose=obj.verbose, tag=tag, stage=stage, projects=projects, deploy_image=image
     )
     obj.console.log(parameters)
 
@@ -127,9 +135,7 @@ def run(
         properties=obj.run_properties,
         cli_parameters=parameters,
     )
-    run_result = run_mpyl(
-        run_properties=run_properties, cli_parameters=parameters, reporter=None
-    )
+    run_result = run_mpyl(run_properties=run_properties, cli_parameters=parameters)
 
     Path(RUN_ARTIFACTS_FOLDER).mkdir(parents=True, exist_ok=True)
     run_result_file = Path(RUN_ARTIFACTS_FOLDER) / f"run_result-{uuid.uuid4()}.pickle"
@@ -143,14 +149,14 @@ def run(
 @click.option(
     "--projects",
     "-p",
-    type=str,
+    type=click.STRING,
     required=False,
     help="Comma separated list of the projects to build",
 )
 @click.option(
     "--stage",
     default=None,
-    type=str,
+    type=click.STRING,
     required=False,
     help="Stage to get status for",
 )
