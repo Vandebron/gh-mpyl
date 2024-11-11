@@ -89,7 +89,6 @@ def write_run_plan(run_properties: RunProperties):
 
 def run_mpyl(
     run_properties: RunProperties,
-    cli_parameters: MpylCliParameters,
     reporter: Optional[Reporter],
 ) -> RunResult:
     console_properties = run_properties.console

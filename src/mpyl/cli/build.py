@@ -117,9 +117,7 @@ def run(
         properties=obj.run_properties,
         cli_parameters=parameters,
     )
-    run_result = run_mpyl(
-        run_properties=run_properties, cli_parameters=parameters, reporter=None
-    )
+    run_result = run_mpyl(run_properties=run_properties, reporter=None)
 
     Path(RUN_ARTIFACTS_FOLDER).mkdir(parents=True, exist_ok=True)
     run_result_file = Path(RUN_ARTIFACTS_FOLDER) / f"run_result-{uuid.uuid4()}.pickle"
