@@ -99,6 +99,8 @@ class RunProperties:
     """All projects"""
     run_plan: RunPlan
     """Stages and projects for this run"""
+    deploy_image: Optional[str] = None
+    """The docker image to deploy"""
 
     @staticmethod
     def from_configuration(
@@ -107,6 +109,7 @@ class RunProperties:
         run_plan: RunPlan,
         all_projects: set[Project],
         cli_tag: Optional[str] = None,
+        deploy_image: Optional[str] = None,
     ):
         build_dict = pkgutil.get_data(__name__, "../schema/run_properties.schema.yml")
 
@@ -118,14 +121,14 @@ class RunProperties:
 
         tag: Optional[str] = cli_tag or versioning_config.get("tag")
         pr_from_config: Optional[str] = versioning_config.get("pr_number")
-        pr_num: Optional[int] = (
+        pr_number: Optional[int] = (
             None if tag else (int(pr_from_config) if pr_from_config else None)
         )
 
         versioning = VersioningProperties(
             revision=versioning_config["revision"],
             branch=versioning_config["branch"],
-            pr_number=pr_num,
+            pr_number=pr_number,
             tag=tag,
         )
         console = ConsoleProperties.from_configuration(build)
@@ -145,6 +148,7 @@ class RunProperties:
                 for stage in run_properties["stages"]
             ],
             projects=all_projects,
+            deploy_image=deploy_image,
         )
 
     def to_stage(self, stage_name: str) -> Stage:
