@@ -57,7 +57,7 @@ class TestBuildCommand:
             run_properties,
             StepsCollection(logging.getLogger()),
         )
-        result = run_build(self.logger, accumulator, executor, None)
+        result = run_build(self.logger, accumulator, executor)
         assert not result.has_results
         assert result.is_success
         assert result.status_line == "🦥 Nothing to do"
@@ -79,7 +79,7 @@ class TestBuildCommand:
             run_properties,
             collection,
         )
-        result = run_build(self.logger, accumulator, executor, None)
+        result = run_build(self.logger, accumulator, executor)
         assert result.exception is None
         assert result.status_line == "✅ Successful"
         assert result.is_success
@@ -101,7 +101,7 @@ class TestBuildCommand:
         collection = StepsCollection(logger)
         executor = Steps(logger, run_properties, collection)
 
-        result = run_build(self.logger, accumulator, executor, None)
+        result = run_build(self.logger, accumulator, executor)
         assert not result.has_results
         assert result.status_line == "❗ Failed with exception"
 
