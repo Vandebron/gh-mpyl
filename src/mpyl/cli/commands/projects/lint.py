@@ -21,7 +21,7 @@ def __load_project(
     verbose: bool = False,
 ) -> Optional[Project]:
     try:
-        project = load_project(project_path, strict=True, log=False)
+        project = load_project(project_path, validate_project_yaml=True, log=False)
     except jsonschema.exceptions.ValidationError as exc:
         if console:
             console.print(f"❌ {project_path}: {exc.message}")
