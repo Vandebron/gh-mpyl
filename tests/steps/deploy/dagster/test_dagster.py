@@ -33,10 +33,9 @@ class TestDagster:
         file_name: Path,
         chart: str,
         actual_values: dict,
-        overwrite: bool = False,
     ):
         name_chart = file_name / f"{chart}.yaml"
-        assert_roundtrip(name_chart, yaml_to_string(actual_values, yaml), overwrite)
+        assert_roundtrip(name_chart, yaml_to_string(actual_values, yaml))
 
     def test_generate_correct_values_yaml_with_service_account_override(self):
         step_input = Input(

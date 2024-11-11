@@ -49,11 +49,10 @@ class TestKubernetesChart:
         file_name: Path,
         chart: str,
         resources: dict[str, CustomResourceDefinition],
-        overwrite: bool = False,
     ):
         name_chart = file_name / f"{chart}.yaml"
         resource = resources[chart]
-        assert_roundtrip(name_chart, to_yaml(resource), overwrite)
+        assert_roundtrip(name_chart, to_yaml(resource))
 
     @staticmethod
     def _get_builder(project: Project, run_properties=None):

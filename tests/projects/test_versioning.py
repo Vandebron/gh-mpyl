@@ -23,12 +23,10 @@ class TestVersioning:
     latest_release_file = "test_project_1_4_20.yml"
 
     @staticmethod
-    def __roundtrip(
-        source: Path, target: Path, upgraders: list[Upgrader], overwrite: bool = False
-    ):
+    def __roundtrip(source: Path, target: Path, upgraders: list[Upgrader]):
         upgraded = upgrade_file(source, upgraders)
         assert upgraded is not None
-        assert_roundtrip(target, upgraded, overwrite)
+        assert_roundtrip(target, upgraded)
 
     def test_get_upgrader_index(self):
         assert get_entry_upgrader_index("1.0.8", PROJECT_UPGRADERS) == 0
