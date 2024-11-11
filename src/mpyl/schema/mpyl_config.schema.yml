@@ -171,7 +171,6 @@ definitions:
     required: [clusterId, clusterEnv, context]
   VCS:
     type: object
-    additionalProperties: false
     properties:
       changedFilesPath:
         type: [string, null]
