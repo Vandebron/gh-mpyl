@@ -1,5 +1,5 @@
 ---
-$schema: http://json-schema.org/draft-07/schema#
+$schema: https://json-schema.org/draft/2020-12/schema#
 $id: schema/project.schema.yml
 description: Description of a buildable artifact
 required:
@@ -7,7 +7,6 @@ required:
   - stages
   - description
   - maintainer
-additionalProperties: false
 dependencies:
   deployment:
     - maintainer
@@ -89,22 +88,6 @@ properties:
         description: host name which refers to the docker registry, as defined in the mpyl config, used by this project
         examples:
           - example.azurecr.io
-        type: string
-  sbt:
-    description: Defines SBT related configuration
-    type: object
-    additionalProperties: false
-    properties:
-      command:
-        description: Name of the sbt executable
-        examples:
-          - sbt
-        type: string
-      javaOpts:
-        description: Java options to run with
-        type: string
-      sbtOpts:
-        description: Java options to run with
         type: string
   build:
     type: object
