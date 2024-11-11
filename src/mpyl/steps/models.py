@@ -217,7 +217,6 @@ class Input:
     run_properties: RunProperties
     """Run specific properties"""
     required_artifact: Optional[Artifact] = None
-    dry_run: bool = False
 
     def as_spec(self, spec_type: Type[ArtifactSpec]):
         """Returns the artifact spec as type :param typ:"""
@@ -229,7 +228,7 @@ class Input:
 
 
 @yaml_object(yaml)
-@dataclass()
+@dataclass(frozen=False)  # yaml_object classes can't be frozen
 class Output:
     success: bool
     message: str

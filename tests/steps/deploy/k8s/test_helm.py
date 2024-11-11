@@ -21,7 +21,6 @@ class TestHelm:
                 RunPlan.from_plan({TestStage.deploy(): {get_project_execution()}})
             ),
             required_artifact=output.produced_artifact,
-            dry_run=True,
         )
         with tempfile.TemporaryDirectory() as tempdir:
             builder = ChartBuilder(step_input)

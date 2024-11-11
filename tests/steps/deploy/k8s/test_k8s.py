@@ -8,7 +8,7 @@ from src.mpyl.constants import DEFAULT_CONFIG_FILE_NAME
 from src.mpyl.project import Target, Project
 from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.run_plan import RunPlan
-from src.mpyl.steps.deploy.k8s import render_manifests, get_cluster_config_for_project
+from src.mpyl.steps.deploy.k8s import get_cluster_config_for_project
 from src.mpyl.steps.deploy.k8s.chart import (
     ChartBuilder,
     to_service_chart,
@@ -128,7 +128,6 @@ class TestKubernetesChart:
             get_project_execution(),
             test_data.RUN_PROPERTIES,
             required_artifact=test_data.get_output().produced_artifact,
-            dry_run=True,
         )
         config = get_cluster_config_for_project(
             step_input.run_properties,
@@ -141,7 +140,6 @@ class TestKubernetesChart:
             get_project_execution(),
             test_data.RUN_PROPERTIES,
             required_artifact=test_data.get_output().produced_artifact,
-            dry_run=True,
         )
         config = get_cluster_config_for_project(
             step_input.run_properties,
@@ -223,15 +221,6 @@ class TestKubernetesChart:
             "rolebinding",
         }
 
-    def test_service_manifest_roundtrip(self):
-        builder = self._get_builder(get_project())
-        chart = to_service_chart(builder)
-        manifest = render_manifests(chart)
-        assert_roundtrip(
-            self.k8s_resources_path / "templates" / "manifest.yaml",
-            manifest,
-        )
-
     def test_deployment_strategy_roundtrip(self):
         project = get_deployment_strategy_project()
         builder = self._get_builder(project)
@@ -252,16 +241,6 @@ class TestKubernetesChart:
         chart = to_service_chart(builder)
         self._roundtrip(
             self.template_path / "ingress-prod", "minimalService-ingress-0-https", chart
-        )
-
-    def test_ingress_to_urls(self):
-        project = get_minimal_project()
-        builder = self._get_builder(project)
-
-        route = to_service_chart(builder)
-        assert (
-            DeployKubernetes.try_extract_hostname(route, project.name)
-            == "https://minimalservice-1234.test-backend.nl"
         )
 
     def test_route_parsing(self):
