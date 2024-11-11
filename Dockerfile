@@ -6,10 +6,10 @@ USER root
 # Switch to mpyl source code directory
 WORKDIR /app/mpyl
 
-COPY requirements.txt .
-
 # Install the dependencies.
-RUN python -m pip install -r requirements.txt
+RUN pip install pipenv
+COPY Pipfile Pipfile.lock ./
+RUN pipenv install --system --deploy
 
 # Copy the source code into the container.
 COPY src/mpyl ./

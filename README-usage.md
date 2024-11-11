@@ -200,23 +200,6 @@ jobs:
         run: mpyl build run
 ```
 
-### Dagster
-Although [dagster](https://dagster.io/)'s primary focus is data processing and lineage, it can be used as a runner for MPyL.
-It provides a nice UI to inspect the flow and logs. It supports concurrent execution of steps in a natural way.
-These features make it a convenient runner for local development and debugging.
-
-<details>
-  <summary>Dagster flow runner</summary>
-```python
-.. include:: mpyl-dagster-example.py
-```
-</details>
-
-It can be started from the command line with `dagit --workspace workspace.yml`.
-
-![Dagster flow](documentation_images/dagster-flow-min.png)
-![Dagster run](documentation_images/dagster-run-min.png)
-
 ## ..caching build artifacts
 
 #### Docker images
