@@ -10,7 +10,7 @@ from jsonschema.validators import Draft7Validator
 from referencing import Registry, Resource
 from ruamel.yaml import YAML
 
-from .constants import DEFAULT_STAGES_SCHEMA_FILE_NAME, ROOT_PATH
+from .constants import ROOT_PATH
 
 yaml = YAML()
 
@@ -27,20 +27,11 @@ def __load_schemas_from_local(local_uris: list[str]):
 
 
 @lru_cache(maxsize=10)
-def load_schema(schema_string: str, root_dir: Path) -> Draft7Validator:
+def load_schema(schema_string: str) -> Draft7Validator:
     schema = yaml.load(schema_string)
 
     local_schema_dictionary = __load_schemas_from_local(
-        ["project.schema.yml", "k8s_api_core.schema.yml"]
-    )
-    local_schema_dictionary.update(
-        {
-            DEFAULT_STAGES_SCHEMA_FILE_NAME: Resource.from_contents(
-                yaml.load(
-                    Path(root_dir, DEFAULT_STAGES_SCHEMA_FILE_NAME).read_text("utf-8")
-                )
-            )
-        }
+        ["project.schema.yml", "mpyl_stages.schema.yml", "k8s_api_core.schema.yml"]
     )
 
     def load_schema_from_local(uri):
@@ -71,6 +62,6 @@ def load_schema(schema_string: str, root_dir: Path) -> Draft7Validator:
     return extended_validator(schema=schema, registry=registry)
 
 
-def validate(values: dict, schema_string: str, root_dir=Path(ROOT_PATH)):
-    schema = load_schema(schema_string, root_dir)
+def validate(values: dict, schema_string: str):
+    schema = load_schema(schema_string)
     return schema.validate(values)

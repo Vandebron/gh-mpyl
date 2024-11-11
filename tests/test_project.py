@@ -122,14 +122,3 @@ class TestMpylSchema:
             self.project.project_overrides_yaml_file_pattern()
             == "project-override-*.yml"
         )
-
-    def test_dynamic_stages(self):
-        project = load_project(
-            self.resource_path / "dynamic_stages" / "deployment" / "test_project.yml",
-            strict=True,
-            schemas_dir=self.resource_path / "dynamic_stages",
-        )
-        assert (
-            project.path
-            == f"{self.resource_path}/dynamic_stages/deployment/test_project.yml"
-        )

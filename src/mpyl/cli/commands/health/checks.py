@@ -15,7 +15,6 @@ from ....cli import get_latest_publication, get_meta_version
 from ....constants import (
     DEFAULT_CONFIG_FILE_NAME,
     DEFAULT_RUN_PROPERTIES_FILE_NAME,
-    DEFAULT_STAGES_SCHEMA_FILE_NAME,
     ROOT_PATH,
 )
 from ....utilities.pyaml_env import parse_config
@@ -49,7 +48,7 @@ def perform_health_checks(bare_console: Console):
         os.environ.get("MPYL_RUN_PROPERTIES_PATH") or DEFAULT_RUN_PROPERTIES_FILE_NAME
     )
 
-    stages_schema = properties_schema_path.parent / DEFAULT_STAGES_SCHEMA_FILE_NAME
+    stages_schema = properties_schema_path.parent / "mpyl_stages.schema.yml"
     stages_schema_exists = Path(stages_schema).exists()
     if not stages_schema_exists:
         console.check(
@@ -120,13 +119,10 @@ def __validate_config_path(
     return None
 
 
-# root_dir is necessary because we load mpyl_stages.schema.yml dynamically (but only on tests?!)
-# It would be good to move mpyl_stages back to src/mpyl/schemas (next to the other schemas) and simplify this
 def _validate_config(
     console: HealthConsole,
     config_file_path: Path,
     schema_path: str,
-    root_dir: Path = Path(ROOT_PATH),
 ):
     if load_dotenv(Path(".env")):
         console.check("Set env variables via .env file", success=True)
@@ -135,7 +131,7 @@ def _validate_config(
     schema_dict = pkgutil.get_data(__name__, schema_path)
     if schema_dict:
         try:
-            validate(parsed, schema_dict.decode("utf-8"), root_dir=root_dir)
+            validate(parsed, schema_dict.decode("utf-8"))
             console.check(f"{config_file_path} is valid", success=True)
         except jsonschema.exceptions.ValidationError as exc:
             console.check(

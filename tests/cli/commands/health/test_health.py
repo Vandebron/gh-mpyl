@@ -17,7 +17,7 @@ class TestConsole(Console):
 
 
 class TestHealthCommand:
-    resource_path = root_test_path / "test_resources" / "dynamic_stages"
+    resource_path = root_test_path / "test_resources"
 
     def test_validate_run_properties(self):
         test_console = TestConsole()
@@ -26,7 +26,6 @@ class TestHealthCommand:
             HealthConsole(test_console),
             self.resource_path / "run_properties.yml",
             "../../../schema/run_properties.schema.yml",
-            root_dir=self.resource_path,
         )
 
         assert "is valid" in test_console.output()
@@ -35,12 +34,11 @@ class TestHealthCommand:
         test_console = TestConsole()
         _validate_config(
             HealthConsole(test_console),
-            self.resource_path / "run_properties_incorrect_stage_name.yml",
+            self.resource_path / "run_properties_invalid_stage.yml",
             "../../../schema/run_properties.schema.yml",
-            root_dir=self.resource_path,
         )
 
         assert (
-            "'invalidStage' is not one of ['firstStage', 'secondStage']"
+            "'invalidStage' is not one of ['build', 'test', 'deploy', 'postdeploy']"
             in test_console.output()
         )

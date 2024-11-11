@@ -610,20 +610,16 @@ class Project:
         )
 
 
-# root_dir is necessary because we load mpyl_stages.schema.yml dynamically
-# Follow-up question: why do we allow different repositories to define their own stages schema, but the project schema
-# (and other schemas) are hardcoded in src/mpyl ? Can we inline mpyl_stages as well to simplify this?
-def validate_project(yaml_values: dict, root_dir: Path) -> dict:
+def validate_project(yaml_values: dict) -> dict:
     """
     :type yaml_values: the yaml dictionary to validate
-    :type root_dir: the root dir
     :return: the validated schema
     :raises `jsonschema.exceptions.ValidationError` when validation fails
     """
     template = pkgutil.get_data(__name__, "schema/project.schema.yml")
     if not template:
         raise ValueError("Schema project.schema.yml not found in package")
-    validate(yaml_values, template.decode("utf-8"), root_dir)
+    validate(yaml_values, template.decode("utf-8"))
 
     return yaml_values
 
@@ -646,11 +642,9 @@ def load_project(
     project_path: Path,
     strict: bool = False,
     log: bool = True,
-    schemas_dir: Path = Path(ROOT_PATH),
 ) -> Project:
     """
     Load a `project.yml` to `Project` data class
-    :param schemas_dir: directory where to find extra schemas to validate (usually the root directory)
     :param project_path: path to the `project.yml`
     :param strict: indicates whether the schema should be validated
     :param log: indicates whether problems should be logged as warning
@@ -667,7 +661,7 @@ def load_project(
             )
             yaml_values = merge_dicts(yaml_values, parent_yaml_values, True)
             if strict:
-                validate_project(yaml_values, schemas_dir)
+                validate_project(yaml_values)
             project = Project.from_config(yaml_values, project_path)
             logging.debug(
                 f"Loaded project {project.path} in {(time.time() - start) * 1000} ms"

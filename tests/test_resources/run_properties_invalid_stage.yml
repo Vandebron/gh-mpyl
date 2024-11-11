@@ -16,7 +16,5 @@ build:
     width: 0
     logLevel: INFO
 stages:
-  - name: 'firstStage'
-    icon: '🏗️'
-  - name : 'secondStage'
-    icon: '🚀'
+  - name: 'invalidStage'
+    icon: '❌'
