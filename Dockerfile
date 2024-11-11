@@ -3,20 +3,13 @@ FROM public.ecr.aws/vdb-public/python:${PYTHON_VERSION}-slim-bookworm AS base
 
 USER root
 
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
-# USER vdbnonroot  # Enable again after removing git from the src code
+# Switch to mpyl source code directory
+WORKDIR /app/mpyl
 
 # Install the dependencies.
 RUN pip install pipenv
 COPY Pipfile Pipfile.lock ./
 RUN pipenv install --system --deploy
-
-# Switch to mpyl source code directory
-WORKDIR /app/mpyl
 
 # Copy the source code into the container.
 COPY src/mpyl ./

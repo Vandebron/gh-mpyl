@@ -120,8 +120,6 @@ class TestBuildCommand:
                 "-p",
                 str(self.run_properties_path),
                 "clean",
-                "--filter",
-                "non_existing_project",
             ],
             env={
                 "CHANGED_FILES_PATH": f"{root_test_path}/test_resources/repository/changed_files.json"

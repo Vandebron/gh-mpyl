@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 import pytest
 from jsonschema import ValidationError
@@ -25,7 +24,6 @@ def stub_run_properties(
     run_plan: RunPlan,
     all_projects: set[Project],
     cli_parameters: MpylCliParameters = MpylCliParameters(),
-    root_dir: Path = Path(""),
 ):
     return RunProperties.from_configuration(
         run_properties=properties,
@@ -33,7 +31,6 @@ def stub_run_properties(
         run_plan=run_plan,
         all_projects=all_projects,
         cli_tag=cli_parameters.tag or properties["build"]["versioning"].get("tag"),
-        root_dir=root_dir,
     )
 
 
@@ -53,7 +50,6 @@ class TestModels:
                 ),
                 run_plan=RunPlan.empty(),
                 all_projects=set(),
-                root_dir=self.resource_path,
             )
 
         assert "'stages' is a required property" in excinfo.value.message
@@ -68,7 +64,6 @@ class TestModels:
             properties=valid_run_properties_values,
             run_plan=RunPlan.empty(),
             all_projects=set(),
-            root_dir=self.resource_path,
         )
 
         assert run_properties

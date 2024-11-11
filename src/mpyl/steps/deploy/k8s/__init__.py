@@ -176,15 +176,15 @@ def substitute_namespaces(
     ```
 
     When the env var is substituted, first the referenced service (serviceName) is looked up in the list of projects.
-    If it is part of the deploy set, and we're in deploying to target PullRequest,
+    If it is part of the run plan, and we're in deploying to target PullRequest,
     the namespace is substituted with the PR namespace (pr-XXXX).
     Else is substituted with the namespace of the referenced project.
 
     Note that the name of the service in the env var is case-sensitive!
 
     :param env_vars: environment variables to substitute
-    :param all_projects: all project in repo
-    :param projects_to_deploy: projects in deploy set
+    :param all_projects: all projects in repo
+    :param projects_to_deploy: projects in run plan
     :param pr_identifier: PR number if applicable
     :return: dictionary of substituted env vars
     """

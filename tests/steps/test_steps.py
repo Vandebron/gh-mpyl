@@ -38,7 +38,6 @@ class TestSteps:
         logger=logging.getLogger(),
         properties=test_data.RUN_PROPERTIES,
         steps_collection=StepsCollection(logging.getLogger()),
-        root_dir=resource_path,
     )
 
     docker_image = get_output()
@@ -125,7 +124,6 @@ class TestSteps:
         steps = Steps(
             logger=Logger.manager.getLogger("logger"),
             properties=test_data.RUN_PROPERTIES,
-            root_dir=self.resource_path,
         )
         stages = Stages(
             {"build": None, "test": None, "deploy": None, "postdeploy": None}
@@ -157,7 +155,6 @@ class TestSteps:
             Steps(
                 logger=Logger.manager.getLogger("logger"),
                 properties=properties,
-                root_dir=self.resource_path,
             )
         assert "{} is not of type 'string'" in excinfo.value.message
 
