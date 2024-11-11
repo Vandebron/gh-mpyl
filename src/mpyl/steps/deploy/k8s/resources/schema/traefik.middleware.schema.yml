@@ -1,6 +1,6 @@
 ---
 # source: "https://raw.githubusercontent.com/sleighzy/k3s-traefik-v2-kubernetes-crd/master/001-crd.yaml"
-$schema: http://json-schema.org/draft-07/schema#
+$schema: https://json-schema.org/draft/2020-12/schema#
 $id: http://vandebron.nl/treaffik.middleware.schema.yaml
 description: 'Middleware is the CRD implementation of a Traefik Middleware. More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/overview/'
 properties:
