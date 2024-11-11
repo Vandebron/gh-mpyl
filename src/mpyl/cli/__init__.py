@@ -36,7 +36,6 @@ class MpylCliParameters:
     verbose: bool = False
     stage: Optional[str] = None
     projects: Optional[str] = None
-    dryrun: bool = True
 
 
 async def load_url(test: bool = False):

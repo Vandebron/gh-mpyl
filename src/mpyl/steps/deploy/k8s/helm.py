@@ -68,24 +68,6 @@ def write_chart(
             file.write(f"{GENERATED_WARNING}\n{template_content}")
 
 
-def __remove_existing_chart(
-    logger: Logger, chart_name: str, name_space: str, kube_context: str
-) -> Output:
-    found_chart = custom_check_output(
-        logger,
-        f"helm list -f ^{chart_name}$ -n {name_space} --kube-context {kube_context}",
-        capture_stdout=True,
-    )
-    if chart_name in found_chart.message:
-        cmd = (
-            f"helm uninstall {chart_name} -n {name_space} --kube-context {kube_context}"
-        )
-        return custom_check_output(Logger("helm"), cmd)
-    return Output(
-        success=True, message=f"No existing chart {chart_name} found to delete"
-    )
-
-
 def write_helm_chart(
     logger: Logger,
     chart: dict[str, CustomResourceDefinition],
@@ -101,58 +83,21 @@ def write_helm_chart(
     return chart_path
 
 
-def template(logger: Logger, chart_path: Path, name_space: str) -> Path:
-    cmd = f"helm template -n {name_space} {chart_path}"
-    output = custom_check_output(logger, cmd, capture_stdout=True)
-    template_file = chart_path / "template.yml"
-    template_file.write_text(f"{GENERATED_WARNING}\n{output.message}")
-    return template_file
-
-
 def __execute_install_cmd(
     logger: Logger,
-    dry_run: bool,
     chart_name: str,
     name_space: str,
     kube_context: str,
     additional_args: str = "",
 ) -> Output:
     cmd = f"helm upgrade -i {chart_name} -n {name_space} --kube-context {kube_context} {additional_args}"
-    if dry_run:
-        cmd = (
-            f"helm upgrade -i {chart_name} -n {name_space} --kube-context {kube_context} {additional_args} "
-            f"--debug --dry-run"
-        )
+
     return custom_check_output(logger, cmd)
-
-
-def install(
-    logger: Logger,
-    chart_path: Path,
-    dry_run: bool,
-    chart_name: str,
-    name_space: str,
-    kube_context: str,
-    delete_existing: bool = False,
-) -> Output:
-    if delete_existing:
-        removed = __remove_existing_chart(logger, chart_name, name_space, kube_context)
-        if not removed.success:
-            return removed
-    return __execute_install_cmd(
-        logger,
-        dry_run,
-        chart_name,
-        name_space,
-        kube_context,
-        additional_args=str(chart_path),
-    )
 
 
 def install_chart_with_values(
     logger: Logger,
     values_path: Path,
-    dry_run: bool,
     release_name: str,
     chart_version: str,
     chart_name: str,
@@ -162,7 +107,6 @@ def install_chart_with_values(
     values_path_arg = f"-f {values_path} --version {chart_version} {chart_name}"
     return __execute_install_cmd(
         logger,
-        dry_run,
         release_name,
         namespace,
         kube_context,
