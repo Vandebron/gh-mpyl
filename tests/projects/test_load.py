@@ -12,7 +12,7 @@ class TestProjectLoad:
     def test_load_all_projects(self):
         for project in find_projects():
             try:
-                load_project(project, strict=True)
+                load_project(project, validate_project_yaml=True)
             except jsonschema.exceptions.ValidationError as exc:
                 traceback.print_exc()
                 assert exc == project

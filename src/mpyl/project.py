@@ -640,13 +640,13 @@ def load_possible_parent(
 
 def load_project(
     project_path: Path,
-    strict: bool = False,
+    validate_project_yaml: bool,
     log: bool = True,
 ) -> Project:
     """
     Load a `project.yml` to `Project` data class
     :param project_path: path to the `project.yml`
-    :param strict: indicates whether the schema should be validated
+    :param validate_project_yaml: indicates whether the schema should be validated
     :param log: indicates whether problems should be logged as warning
     :return: `Project` data class
     """
@@ -660,7 +660,7 @@ def load_project(
                 project_path, loader
             )
             yaml_values = merge_dicts(yaml_values, parent_yaml_values, True)
-            if strict:
+            if validate_project_yaml:
                 validate_project(yaml_values)
             project = Project.from_config(yaml_values, project_path)
             logging.debug(

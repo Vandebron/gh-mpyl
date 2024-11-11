@@ -41,7 +41,9 @@ class TestDagster:
     def test_generate_correct_values_yaml_with_service_account_override(self):
         step_input = Input(
             ProjectExecution.run(
-                project=load_project(self.resource_path / "project.yml", strict=True)
+                project=load_project(
+                    self.resource_path / "project.yml", validate_project_yaml=True
+                )
             ),
             test_data.RUN_PROPERTIES,
             None,
@@ -66,7 +68,7 @@ class TestDagster:
         step_input = Input(
             ProjectExecution.run(
                 project=load_project(
-                    Path(self.resource_path, "project.yml"), strict=True
+                    Path(self.resource_path, "project.yml"), validate_project_yaml=True
                 )
             ),
             test_data.RUN_PROPERTIES_PROD,
@@ -90,7 +92,7 @@ class TestDagster:
         step_input = Input(
             ProjectExecution.run(
                 project=load_project(
-                    Path(self.resource_path, "project.yml"), strict=True
+                    Path(self.resource_path, "project.yml"), validate_project_yaml=True
                 )
             ),
             test_data.RUN_PROPERTIES,
@@ -117,7 +119,7 @@ class TestDagster:
             ProjectExecution.run(
                 project=load_project(
                     self.dagster_project_folder / "project_with_sealed_secret.yml",
-                    strict=True,
+                    validate_project_yaml=True,
                 )
             ),
             test_data.RUN_PROPERTIES,

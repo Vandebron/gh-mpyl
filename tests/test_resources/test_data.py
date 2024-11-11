@@ -94,7 +94,7 @@ def get_cron_job_project() -> Project:
 
 
 def safe_load_project(name: str) -> Project:
-    return load_project(Path(name), strict=True, log=False)
+    return load_project(Path(name), validate_project_yaml=True, log=False)
 
 
 def run_properties_with_plan(plan: RunPlan) -> RunProperties:

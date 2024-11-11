@@ -103,20 +103,12 @@ class CustomValidation(click.Command):
     required=False,
     help="Comma separated list of the projects to build",
 )
-@click.option(
-    "--dryrun",
-    "dryrun_",
-    is_flag=True,
-    default=False,
-    help="don't push or deploy images",
-)
 @click.pass_obj
 def run(
     obj: CliContext,
     tag,
     stage,
     projects,
-    dryrun_,
 ):  # pylint: disable=invalid-name
     run_result_files = list(Path(RUN_ARTIFACTS_FOLDER).glob(RUN_RESULT_FILE_GLOB))
     for run_result_file in run_result_files:
@@ -127,7 +119,6 @@ def run(
         tag=tag,
         stage=stage,
         projects=projects,
-        dryrun=dryrun_,
     )
     obj.console.log(parameters)
 
@@ -183,7 +174,8 @@ def clean(obj: CliContext):
         obj.console.print(f"🧹 Cleaned up {artifacts_path}")
 
     found_projects: list[Path] = [
-        Path(load_project(project_path).target_path) for project_path in find_projects()
+        Path(load_project(project_path, validate_project_yaml=False).target_path)
+        for project_path in find_projects()
     ]
 
     paths_to_clean = [path for path in found_projects if path.exists()]

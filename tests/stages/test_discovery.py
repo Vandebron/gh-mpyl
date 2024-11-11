@@ -236,7 +236,8 @@ class TestDiscovery:
         assert not is_file_a_dependency(
             self.logger,
             load_project(
-                Path("tests/projects/sbt-service/deployment/project.yml"), strict=True
+                Path("tests/projects/sbt-service/deployment/project.yml"),
+                validate_project_yaml=True,
             ),
             stage="build",
             path="tests/projects/sbt-service-other/file.py",

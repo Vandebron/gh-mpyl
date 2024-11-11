@@ -76,7 +76,6 @@ class Steps:
         project_execution: ProjectExecution,
         properties: RunProperties,
         artifact: Optional[Artifact],
-        dry_run: bool = False,
     ) -> Output:
         self._logger.info(
             f"Executing {executor.meta.name} for '{project_execution.name}'"
@@ -99,7 +98,6 @@ class Steps:
                 project_execution=project_execution,
                 run_properties=properties,
                 required_artifact=artifact,
-                dry_run=dry_run,
             )
         )
         if result.success:
@@ -138,29 +136,29 @@ class Steps:
         step: Step,
         project_execution: ProjectExecution,
         stage: Stage,
-        dry_run: bool = False,
     ) -> Output:
-        main_step_artifact = main_result.produced_artifact
+        combined_artifact = main_result.produced_artifact
         after_result = self._execute(
             executor=step,
             project_execution=project_execution,
             properties=self._properties,
-            artifact=main_step_artifact,
-            dry_run=dry_run,
+            artifact=combined_artifact,
         )
+
         if (
             after_result.produced_artifact
             and after_result.produced_artifact.artifact_type != ArtifactType.NONE
         ):
             after_result.write(project_execution.project.target_path, stage.name)
-        else:
-            after_result.produced_artifact = main_step_artifact
+            combined_artifact = after_result.produced_artifact
 
-        if not main_result.success:
-            after_result.message = main_result.message
-            after_result.success = False
+        combined_result = Output(
+            success=main_result.success and after_result.success,
+            message=f"{main_result.message}\n{after_result.message}",
+            produced_artifact=combined_artifact,
+        )
 
-        return after_result
+        return combined_result
 
     def _validate_project_against_config(self, project: Project) -> Optional[Output]:
         allowed_maintainers = set(
@@ -175,10 +173,7 @@ class Steps:
         return None
 
     def _execute_stage(
-        self,
-        stage: Stage,
-        project_execution: ProjectExecution,
-        dry_run: bool = False,
+        self, stage: Stage, project_execution: ProjectExecution
     ) -> Output:
         step_name = project_execution.project.stages.for_stage(stage.name)
         if step_name is None:
@@ -223,7 +218,6 @@ class Steps:
                         self._properties.stages,
                         executor.before.required_artifact,
                     ),
-                    dry_run=dry_run,
                 )
                 if not before_result.success:
                     return before_result
@@ -233,13 +227,12 @@ class Steps:
                 project_execution=project_execution,
                 properties=self._properties,
                 artifact=artifact,
-                dry_run=dry_run,
             )
             result.write(project_execution.project.target_path, stage.name)
 
             if executor.after and result.success:
                 return self._execute_after_(
-                    result, executor.after, project_execution, stage, dry_run
+                    result, executor.after, project_execution, stage
                 )
 
             return result
@@ -254,24 +247,16 @@ class Steps:
                 project_execution.name, executor.meta.name, stage.name, message
             ) from exc
 
-    def execute(
-        self,
-        stage: str,
-        project_execution: ProjectExecution,
-        dry_run: bool = False,
-    ) -> StepResult:
+    def execute(self, stage: str, project_execution: ProjectExecution) -> StepResult:
         """
         :param stage: the stage to execute
         :param project_execution: the project execution information
-        :param dry_run: indicates whether artifacts should be submitted or deployed for real
         :return: StepResult
         :raise ExecutionException
         """
         stage_object = self._properties.to_stage(stage)
         step_output = self._execute_stage(
-            stage=stage_object,
-            project_execution=project_execution,
-            dry_run=dry_run,
+            stage=stage_object, project_execution=project_execution
         )
         return StepResult(
             stage=stage_object, project=project_execution.project, output=step_output

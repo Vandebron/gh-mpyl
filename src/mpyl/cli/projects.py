@@ -73,17 +73,18 @@ def list_projects(obj: ProjectsContext):
     found_projects = find_projects()
 
     for proj in found_projects:
-        project = load_project(proj, log=False)
+        project = load_project(proj, validate_project_yaml=False, log=False)
         obj.cli.console.print(Markdown(f"{proj} `{project.name}`"))
 
 
 @projects.command(name="names", help="List found project names")
 @click.pass_obj
 def list_project_names(obj: ProjectsContext):
-    found_projects = find_projects()
-
     names = sorted(
-        [load_project(project, log=False).name for project in found_projects]
+        [
+            load_project(project, validate_project_yaml=False, log=False).name
+            for project in (find_projects())
+        ]
     )
 
     for name in names:
