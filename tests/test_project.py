@@ -10,13 +10,14 @@ from tests import root_test_path
 
 class TestMpylSchema:
     resource_path = root_test_path / "test_resources"
-    project = load_project(resource_path, Path("test_projects", "test_project.yml"))
+    project = load_project(
+        Path(resource_path, "test_projects", "test_project.yml"), strict=True
+    )
 
     def test_schema_load(self):
         os.environ["CHANGE_ID"] = "123"
         project = load_project(
-            self.resource_path,
-            self.resource_path / "test_projects" / "test_project.yml",
+            self.resource_path / "test_projects" / "test_project.yml", strict=True
         )
 
         assert project.name == "dockertest"
@@ -78,9 +79,7 @@ class TestMpylSchema:
 
     def test_schema_load_validation(self):
         with pytest.raises(ValidationError) as exc:
-            load_project(
-                self.resource_path, self.resource_path / "test_project_invalid.yml"
-            )
+            load_project(self.resource_path / "test_project_invalid.yml", strict=True)
         assert exc.value.message == "'maintainer' is a required property"
 
     def test_target_by_value(self):
@@ -88,24 +87,32 @@ class TestMpylSchema:
         assert target == Target.PULL_REQUEST
 
     def test_project_path(self):
-        assert self.project.path == "test_projects/test_project.yml"
+        assert (
+            self.project.path == f"{self.resource_path}/test_projects/test_project.yml"
+        )
 
     def test_project_root_path(self):
-        assert self.project.root_path == Path("./")
+        assert self.project.root_path == self.resource_path
 
     def test_project_deployment_path(self):
-        assert self.project.deployment_path == Path("test_projects")
+        assert self.project.deployment_path == self.resource_path / "test_projects"
 
     def test_project_target_path(self):
-        assert self.project.target_path == Path("test_projects/.mpyl")
+        assert (
+            self.project.target_path == self.resource_path / "test_projects" / ".mpyl"
+        )
 
     def test_project_test_containers_path(self):
-        assert self.project.test_containers_path == Path(
-            "test_projects/docker-compose-test.yml"
+        assert (
+            self.project.test_containers_path
+            == self.resource_path / "test_projects" / "docker-compose-test.yml"
         )
 
     def test_project_test_report_path(self):
-        assert self.project.test_report_path == Path("target/test-reports")
+        assert (
+            self.project.test_report_path
+            == self.resource_path / "target" / "test-reports"
+        )
 
     def test_project_yaml_file_name(self):
         assert self.project.project_yaml_file_name() == "project.yml"
@@ -115,10 +122,3 @@ class TestMpylSchema:
             self.project.project_overrides_yaml_file_pattern()
             == "project-override-*.yml"
         )
-
-    def test_dynamic_stages(self):
-        project = load_project(
-            self.resource_path / "dynamic_stages",
-            Path("deployment/test_project.yml"),
-        )
-        assert project.path == "deployment/test_project.yml"

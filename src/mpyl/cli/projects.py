@@ -1,11 +1,9 @@
 """Commands related to projects and how they relate"""
+
 import sys
 from dataclasses import dataclass
-from pathlib import Path
 
 import click
-from click import ParamType
-from click.shell_completion import CompletionItem
 from rich.markdown import Markdown
 from rich.prompt import Confirm
 
@@ -13,7 +11,6 @@ from . import (
     CliContext,
     CONFIG_PATH_HELP,
     create_console_logger,
-    parse_config_from_supplied_location,
 )
 from ..cli.commands.projects.lint import (
     _check_and_load_projects,
@@ -32,14 +29,13 @@ from ..projects.versioning import (
     upgrade_file,
     PROJECT_UPGRADERS,
 )
+from ..stages.discovery import find_projects
 from ..utilities.pyaml_env import parse_config
-from ..utilities.repo import Repository, RepoConfig
 
 
 @dataclass
 class ProjectsContext:
     cli: CliContext
-    filter: str
 
 
 @click.group("projects")
@@ -53,30 +49,18 @@ class ProjectsContext:
     default=DEFAULT_CONFIG_FILE_NAME,
 )
 @click.option("--verbose", "-v", is_flag=True, default=False)
-@click.option(
-    "--filter",
-    "-f",
-    "filter_",
-    required=False,
-    type=click.STRING,
-    help="Filter based on filepath ",
-)
 @click.pass_context
-def projects(ctx, config, verbose, filter_):
+def projects(ctx, config, verbose):
     """Commands related to MPyL project configurations (project.yml)"""
-    console = create_console_logger(show_path=False, verbose=verbose, max_width=0)
-    parsed_config = parse_config(config)
     ctx.obj = ProjectsContext(
         cli=CliContext(
-            config=parsed_config,
-            repo=ctx.with_resource(
-                Repository(config=RepoConfig.from_config(parsed_config))
+            config=parse_config(config),
+            console=create_console_logger(
+                show_path=False, verbose=verbose, max_width=0
             ),
-            console=console,
             verbose=verbose,
             run_properties={},
         ),
-        filter=filter_ if filter_ else "",
     )
 
 
@@ -86,60 +70,32 @@ OVERRIDE_PATTERN = "project-override"
 @projects.command(name="list", help="List found projects")
 @click.pass_obj
 def list_projects(obj: ProjectsContext):
-    found_projects = obj.cli.repo.find_projects(obj.filter)
+    found_projects = find_projects()
 
     for proj in found_projects:
-        project = load_project(obj.cli.repo.root_dir, Path(proj), False)
+        project = load_project(proj, log=False)
         obj.cli.console.print(Markdown(f"{proj} `{project.name}`"))
 
 
 @projects.command(name="names", help="List found project names")
 @click.pass_obj
 def list_project_names(obj: ProjectsContext):
-    found_projects = obj.cli.repo.find_projects(obj.filter)
+    found_projects = find_projects()
 
     names = sorted(
-        [
-            load_project(obj.cli.repo.root_dir, Path(proj), False).name
-            for proj in found_projects
-        ]
+        [load_project(project, log=False).name for project in found_projects]
     )
 
     for name in names:
         obj.cli.console.print(name)
 
 
-class ProjectPath(ParamType):
-    name = "project_path"
-
-    def shell_complete(self, ctx: click.Context, param, incomplete: str):
-        parsed_config = parse_config_from_supplied_location(ctx, param)
-        repo = ctx.with_resource(
-            Repository(config=RepoConfig.from_config(parsed_config))
-        )
-        found_projects = repo.find_projects(incomplete)
-        return [CompletionItem(value=proj) for proj in found_projects]
-
-
 @projects.command(help="Validate the yaml of changed projects against their schema")
 @click.pass_obj
 # pylint: disable=too-many-branches
 def lint(obj: ProjectsContext):
-    loaded_projects = _check_and_load_projects(
-        console=obj.cli.console,
-        repo=obj.cli.repo,
-        project_paths=obj.cli.repo.find_projects(obj.filter),
-        strict=True,
-    )
-    all_projects = (
-        _check_and_load_projects(
-            console=None,
-            repo=obj.cli.repo,
-            project_paths=obj.cli.repo.find_projects(""),
-            strict=False,
-        )
-        if obj.filter != ""
-        else loaded_projects
+    all_projects = _check_and_load_projects(
+        console=obj.cli.console, project_paths=find_projects()
     )
 
     console = obj.cli.console
@@ -171,8 +127,7 @@ def lint(obj: ProjectsContext):
     wrong_substitutions = _assert_correct_project_linkup(
         console=console,
         target=Target.PULL_REQUEST,
-        projects=loaded_projects,
-        all_projects=all_projects,
+        projects=all_projects,
         pr_identifier=123,
     )
     if len(wrong_substitutions) == 0:
@@ -184,7 +139,7 @@ def lint(obj: ProjectsContext):
     for target in Target:
         wrong_whitelists = _lint_whitelisting_rules(
             console=console,
-            projects=loaded_projects,
+            projects=all_projects,
             config=obj.cli.config,
             target=target,
         )
@@ -220,8 +175,8 @@ def lint(obj: ProjectsContext):
 )
 @click.pass_obj
 def upgrade(obj: ProjectsContext, apply: bool):
-    paths = map(Path, obj.cli.repo.find_projects(""))
-    candidates = check_upgrades_needed(list(paths), PROJECT_UPGRADERS)
+    paths = find_projects()
+    candidates = check_upgrades_needed(paths, PROJECT_UPGRADERS)
     console = obj.cli.console
     if not apply:
         upgradable = check_upgrade(console, candidates)

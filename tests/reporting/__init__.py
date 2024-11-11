@@ -47,7 +47,6 @@ def create_test_result_with_plan() -> RunResult:
                 }
             ),
             all_projects=set(),
-            root_dir=resource_path,
         ),
     )
 

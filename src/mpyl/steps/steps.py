@@ -6,7 +6,6 @@ import pkgutil
 from dataclasses import dataclass
 from datetime import datetime
 from logging import Logger
-from pathlib import Path
 from typing import Optional
 
 from ruamel.yaml import YAML  # type: ignore
@@ -61,7 +60,6 @@ class Steps:
         logger: Logger,
         properties: RunProperties,
         steps_collection: Optional[StepsCollection] = None,
-        root_dir: Path = Path("."),
     ) -> None:
         self._logger = logger
         self._properties = properties
@@ -70,7 +68,7 @@ class Steps:
         schema_dict = pkgutil.get_data(__name__, "../schema/mpyl_config.schema.yml")
 
         if schema_dict:
-            validate(properties.config, schema_dict.decode("utf-8"), root_dir=root_dir)
+            validate(properties.config, schema_dict.decode("utf-8"))
 
     def _execute(
         self,

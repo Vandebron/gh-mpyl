@@ -21,9 +21,7 @@ from src.mpyl.steps.collection import StepsCollection
 from src.mpyl.steps.models import Artifact
 from src.mpyl.utilities.docker import DockerImageSpec
 from src.mpyl.utilities.repo import Changeset
-from tests import root_test_path, test_resource_path
 from tests.projects.find import load_projects
-from tests.test_resources import test_data
 from tests.test_resources.test_data import TestStage
 
 yaml = YAML()
@@ -72,7 +70,7 @@ class TestDiscovery:
         "tests/projects/service/deployment/project.yml",
         "tests/projects/sbt-service/deployment/project.yml",
     ]
-    projects = set(load_projects(root_test_path.parent, project_paths))
+    projects = load_projects(list(map(Path, project_paths)))
 
     def _helper_find_projects_to_execute(
         self,
@@ -91,59 +89,59 @@ class TestDiscovery:
         )
 
     def test_changed_files_from_file(self):
-        with test_data.get_repo() as repo:
-            changeset = repo.changes_from_file(
-                self.logger, "tests/test_resources/repository/changed_files.json"
-            )
-            assert len(changeset._files_touched) == 1
-            assert "tests/projects/job/src/hello-world.py" in changeset._files_touched
+        changeset = Changeset.from_file(
+            self.logger,
+            sha="a git commit",
+            changed_files_path="tests/test_resources/repository/changed_files.json",
+        )
+        assert len(changeset.files_touched()) == 1
+        assert "tests/projects/job/src/hello-world.py" in changeset.files_touched()
 
     def test_find_projects_to_execute_for_each_stage(self):
-        with test_data.get_repo() as repo:
-            changeset = Changeset(
-                sha="revision",
-                _files_touched={
-                    "tests/projects/service/file.py": "A",
-                    "tests/some_file.txt": "A",
-                },
-            )
-            projects = set(load_projects(repo.root_dir, repo.find_projects()))
-            assert (
-                len(
-                    find_projects_to_execute(
-                        self.logger,
-                        projects,
-                        build.STAGE_NAME,
-                        changeset,
-                        self.steps,
-                    )
+        changeset = Changeset(
+            sha="revision",
+            _files_touched={
+                "tests/projects/service/file.py": "A",
+                "tests/some_file.txt": "A",
+            },
+        )
+        projects = load_projects()
+        assert (
+            len(
+                find_projects_to_execute(
+                    self.logger,
+                    projects,
+                    build.STAGE_NAME,
+                    changeset,
+                    self.steps,
                 )
-                == 1
             )
-            assert (
-                len(
-                    find_projects_to_execute(
-                        self.logger,
-                        projects,
-                        test.STAGE_NAME,
-                        changeset,
-                        self.steps,
-                    )
+            == 1
+        )
+        assert (
+            len(
+                find_projects_to_execute(
+                    self.logger,
+                    projects,
+                    test.STAGE_NAME,
+                    changeset,
+                    self.steps,
                 )
-                == 0
             )
-            assert (
-                len(
-                    find_projects_to_execute(
-                        self.logger,
-                        projects,
-                        deploy.STAGE_NAME,
-                        changeset,
-                        self.steps,
-                    )
+            == 0
+        )
+        assert (
+            len(
+                find_projects_to_execute(
+                    self.logger,
+                    projects,
+                    deploy.STAGE_NAME,
+                    changeset,
+                    self.steps,
                 )
-                == 1
             )
+            == 1
+        )
 
     def test_stage_with_files_changed(self):
         project_executions = self._helper_find_projects_to_execute(
@@ -238,11 +236,10 @@ class TestDiscovery:
         assert not is_file_a_dependency(
             self.logger,
             load_project(
-                test_resource_path,
-                Path("../projects/sbt-service/deployment/project.yml"),
+                Path("tests/projects/sbt-service/deployment/project.yml"), strict=True
             ),
             stage="build",
-            path="projects/sbt-service-other/file.py",
+            path="tests/projects/sbt-service-other/file.py",
             steps=self.steps,
         )
 
@@ -322,37 +319,36 @@ class TestDiscovery:
         ), "should be cached if hash matches"
 
     def test_listing_override_files(self):
-        with test_data.get_repo() as repo:
-            touched_files = {"tests/projects/overriden-project/file.py": "A"}
-            projects = load_projects(repo.root_dir, repo.find_projects())
-            projects_for_build = find_projects_to_execute(
-                self.logger,
-                projects,
-                build.STAGE_NAME,
-                Changeset("revision", touched_files),
-                self.steps,
-            )
-            projects_for_test = find_projects_to_execute(
-                self.logger,
-                projects,
-                test.STAGE_NAME,
-                Changeset("revision", touched_files),
-                self.steps,
-            )
-            projects_for_deploy = find_projects_to_execute(
-                self.logger,
-                projects,
-                deploy.STAGE_NAME,
-                Changeset("revision", touched_files),
-                self.steps,
-            )
-            assert len(projects_for_build) == 1
-            assert len(projects_for_test) == 1
-            assert len(projects_for_deploy) == 2
-            assert projects_for_deploy.pop().project.kubernetes.port_mappings == {
-                8088: 8088,
-                8089: 8089,
-            }
-            # as the env variables are not key value pair, they are a bit tricky to merge
-            # 1 in overriden-project and 1 in parent project
-            # assert(len(projects_for_deploy.pop().deployment.properties.env) == 2)
+        touched_files = {"tests/projects/overriden-project/file.py": "A"}
+        projects = load_projects()
+        projects_for_build = find_projects_to_execute(
+            self.logger,
+            projects,
+            build.STAGE_NAME,
+            Changeset("revision", touched_files),
+            self.steps,
+        )
+        projects_for_test = find_projects_to_execute(
+            self.logger,
+            projects,
+            test.STAGE_NAME,
+            Changeset("revision", touched_files),
+            self.steps,
+        )
+        projects_for_deploy = find_projects_to_execute(
+            self.logger,
+            projects,
+            deploy.STAGE_NAME,
+            Changeset("revision", touched_files),
+            self.steps,
+        )
+        assert len(projects_for_build) == 1
+        assert len(projects_for_test) == 1
+        assert len(projects_for_deploy) == 2
+        assert projects_for_deploy.pop().project.kubernetes.port_mappings == {
+            8088: 8088,
+            8089: 8089,
+        }
+        # as the env variables are not key value pair, they are a bit tricky to merge
+        # 1 in overriden-project and 1 in parent project
+        # assert(len(projects_for_deploy.pop().deployment.properties.env) == 2)

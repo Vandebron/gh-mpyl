@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 
 from attr import dataclass
-from git import Repo
 
 from src.mpyl.constants import (
     DEFAULT_CONFIG_FILE_NAME,
@@ -20,7 +19,6 @@ from src.mpyl.steps.models import (
 )
 from src.mpyl.utilities.docker import DockerImageSpec
 from src.mpyl.utilities.pyaml_env import parse_config
-from src.mpyl.utilities.repo import Repository, RepoConfig
 from tests import root_test_path
 from tests.steps.test_models import stub_run_properties
 
@@ -33,7 +31,6 @@ RUN_PROPERTIES = stub_run_properties(
     properties=properties_values,
     run_plan=RunPlan.empty(),
     all_projects=set(),
-    root_dir=resource_path,
 )
 
 RUN_PROPERTIES_PROD = dataclasses.replace(
@@ -65,7 +62,7 @@ def get_config_values() -> dict:
 
 
 def get_project() -> Project:
-    return safe_load_project("test_projects/test_project.yml")
+    return safe_load_project(f"{resource_path}/test_projects/test_project.yml")
 
 
 def get_project_execution() -> ProjectExecution:
@@ -73,27 +70,31 @@ def get_project_execution() -> ProjectExecution:
 
 
 def get_deployment_strategy_project() -> Project:
-    return safe_load_project("test_projects/test_project_deployment_strategy.yml")
+    return safe_load_project(
+        f"{resource_path}/test_projects/test_project_deployment_strategy.yml"
+    )
 
 
 def get_minimal_project() -> Project:
-    return safe_load_project("test_projects/test_minimal_project.yml")
+    return safe_load_project(f"{resource_path}/test_projects/test_minimal_project.yml")
 
 
 def get_project_without_swagger() -> Project:
-    return safe_load_project("test_projects/test_project_without_swagger.yml")
+    return safe_load_project(
+        f"{resource_path}/test_projects/test_project_without_swagger.yml"
+    )
 
 
 def get_job_project() -> Project:
-    return safe_load_project("test_projects/test_job_project.yml")
+    return safe_load_project(f"{resource_path}/test_projects/test_job_project.yml")
 
 
 def get_cron_job_project() -> Project:
-    return safe_load_project("test_projects/test_cron_job_project.yml")
+    return safe_load_project(f"{resource_path}/test_projects/test_cron_job_project.yml")
 
 
 def safe_load_project(name: str) -> Project:
-    return load_project(resource_path, Path(name), True, False)
+    return load_project(Path(name), strict=True, log=False)
 
 
 def run_properties_with_plan(plan: RunPlan) -> RunProperties:
@@ -149,36 +150,6 @@ def get_project_with_stages(
     return Project(
         "test", "Test project", path, None, stages, maintainers, None, None, None, None
     )
-
-
-class MockRepository(Repository):
-    def __init__(self, config: RepoConfig):
-        self._config = config
-        self._repo = Repo(Path("."))
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        return self
-
-    def find_projects(
-        self, folder_pattern: str = "", config_folder: str = "deployment"
-    ) -> list[str]:
-        projects = Path(os.path.basename(root_test_path)).glob(
-            f"*{folder_pattern}*/{config_folder}/{Project.project_yaml_file_name()}"
-        )
-        return sorted(map(str, projects))
-
-
-def get_repo() -> Repository:
-    config = RepoConfig.from_config(get_config_values())
-
-    if "GITHUB_JOB" in os.environ:
-        print("Running in github, falling back onto mock repository bypassing Git")
-        return MockRepository(config)
-
-    return Repository(config)
 
 
 def assert_roundtrip(file_path: Path, actual_contents: str, overwrite: bool = False):

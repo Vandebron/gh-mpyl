@@ -610,17 +610,16 @@ class Project:
         )
 
 
-def validate_project(yaml_values: dict, root_dir: Path) -> dict:
+def validate_project(yaml_values: dict) -> dict:
     """
     :type yaml_values: the yaml dictionary to validate
-    :type root_dir: the root dir
     :return: the validated schema
     :raises `jsonschema.exceptions.ValidationError` when validation fails
     """
     template = pkgutil.get_data(__name__, "schema/project.schema.yml")
     if not template:
         raise ValueError("Schema project.schema.yml not found in package")
-    validate(yaml_values, template.decode("utf-8"), root_dir)
+    validate(yaml_values, template.decode("utf-8"))
 
     return yaml_values
 
@@ -640,30 +639,29 @@ def load_possible_parent(
 
 
 def load_project(
-    root_dir: Path,
     project_path: Path,
-    strict: bool = True,
+    strict: bool = False,
     log: bool = True,
 ) -> Project:
     """
     Load a `project.yml` to `Project` data class
-    :param root_dir: is the root of the project path. It contains the mpyl_config.yml and run_properties.yml files
-    :param project_path: relative path from `root_dir` to the `project.yml`
+    :param project_path: path to the `project.yml`
     :param strict: indicates whether the schema should be validated
     :param log: indicates whether problems should be logged as warning
     :return: `Project` data class
     """
     log_level = logging.WARNING if log else logging.DEBUG
-    full_path = root_dir / project_path
-    with open(full_path, encoding="utf-8") as file:
+    with open(project_path, encoding="utf-8") as file:
         try:
             start = time.time()
             loader: YAML = YAML()
             yaml_values: dict = loader.load(file)
-            parent_yaml_values: Optional[dict] = load_possible_parent(full_path, loader)
+            parent_yaml_values: Optional[dict] = load_possible_parent(
+                project_path, loader
+            )
             yaml_values = merge_dicts(yaml_values, parent_yaml_values, True)
             if strict:
-                validate_project(yaml_values, root_dir=root_dir)
+                validate_project(yaml_values)
             project = Project.from_config(yaml_values, project_path)
             logging.debug(
                 f"Loaded project {project.path} in {(time.time() - start) * 1000} ms"
