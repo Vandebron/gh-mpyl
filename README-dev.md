@@ -94,7 +94,7 @@ For a shorter feedback loop, you can run the mpyl sourcecode against another rep
 To test the mpyl sourcecode against the peculiarities of your own repository, you can run the following command:
 
 ```shell
-PIPENV_PIPFILE=/<absolute_path_to_mpyl_repo>/Pipfile pipenv run cli build status
+PIPENV_PIPFILE=/<absolute_path_to_mpyl_repo>/Pipfile pipenv run cli-ext build status
 ```
 Assign PIPENV_PIPFILE to the absolute path of your Pipfile and run the command.
 ⚠️Note that an `.env` file needs to be present in the root if this repository, containing the following variable:
