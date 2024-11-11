@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 
 from attr import dataclass
+from mpyl.cli import MpylCliParameters
 
 from src.mpyl.constants import (
     DEFAULT_CONFIG_FILE_NAME,
@@ -97,12 +98,15 @@ def safe_load_project(name: str) -> Project:
     return load_project(Path(name), validate_project_yaml=True, log=False)
 
 
-def run_properties_with_plan(plan: RunPlan) -> RunProperties:
+def run_properties_with_plan(
+    plan: RunPlan, cli_parameters=MpylCliParameters()
+) -> RunProperties:
     run_properties = stub_run_properties(
         config=config_values,
         properties=properties_values,
         run_plan=plan,
         all_projects={get_minimal_project()},
+        cli_parameters=cli_parameters,
     )
 
     return run_properties
