@@ -15,7 +15,6 @@ from ....cli import get_latest_publication, get_meta_version
 from ....constants import (
     DEFAULT_CONFIG_FILE_NAME,
     DEFAULT_RUN_PROPERTIES_FILE_NAME,
-    ROOT_PATH,
 )
 from ....utilities.pyaml_env import parse_config
 from ....validation import validate
@@ -44,19 +43,6 @@ def perform_health_checks(bare_console: Console):
     __check_version(console)
 
     console.title("Run configuration")
-    properties_schema_path = Path(
-        os.environ.get("MPYL_RUN_PROPERTIES_PATH") or DEFAULT_RUN_PROPERTIES_FILE_NAME
-    )
-
-    stages_schema = properties_schema_path.parent / "mpyl_stages.schema.yml"
-    stages_schema_exists = Path(stages_schema).exists()
-    if not stages_schema_exists:
-        console.check(
-            f"{stages_schema} does not exist. See _Stage configuration_ in documentation for an example.",
-            False,
-        )
-    else:
-        console.check(f"{stages_schema} is present", True)
 
     if properties_path := __validate_config_path(
         console,

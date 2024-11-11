@@ -10,7 +10,7 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
-from ..constants import RUN_ARTIFACTS_FOLDER, ROOT_PATH
+from ..constants import RUN_ARTIFACTS_FOLDER
 from ..project import Project
 from ..project import Stage
 from ..project_execution import ProjectExecution
@@ -31,7 +31,7 @@ def find_projects() -> list[Path]:
     # If you find a faster way to list all files, please raise a PR.
 
     command = (
-        f"find {Path(ROOT_PATH)}"
+        f"find {Path('.')}"
         " -type d ( -name target -o -name .git ) -prune"
         " -o ("
         f" -path **/deployment/{Project.project_yaml_file_name()}"

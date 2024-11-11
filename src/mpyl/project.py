@@ -26,7 +26,7 @@ import jsonschema
 from mypy.checker import Generic
 from ruamel.yaml import YAML
 
-from .constants import RUN_ARTIFACTS_FOLDER, ROOT_PATH
+from .constants import RUN_ARTIFACTS_FOLDER
 from .validation import validate
 
 T = TypeVar("T")

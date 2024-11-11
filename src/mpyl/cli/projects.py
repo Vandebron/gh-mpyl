@@ -82,7 +82,9 @@ def list_projects(obj: ProjectsContext):
 def list_project_names(obj: ProjectsContext):
     found_projects = find_projects()
 
-    names = sorted([load_project(project, log=False).name for project in found_projects])
+    names = sorted(
+        [load_project(project, log=False).name for project in found_projects]
+    )
 
     for name in names:
         obj.cli.console.print(name)

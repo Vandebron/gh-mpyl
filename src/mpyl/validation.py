@@ -2,15 +2,12 @@
 
 import pkgutil
 from functools import lru_cache
-from pathlib import Path
 
 import jsonschema
 from jsonschema.validators import Draft7Validator
 
 from referencing import Registry, Resource
 from ruamel.yaml import YAML
-
-from .constants import ROOT_PATH
 
 yaml = YAML()
 
