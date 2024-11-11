@@ -3,8 +3,8 @@ import os
 from pathlib import Path
 
 from attr import dataclass
-from mpyl.cli import MpylCliParameters
 
+from src.mpyl.cli import MpylCliParameters
 from src.mpyl.constants import (
     DEFAULT_CONFIG_FILE_NAME,
     DEFAULT_RUN_PROPERTIES_FILE_NAME,
