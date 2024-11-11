@@ -45,7 +45,7 @@ If you use MPyL in a github action, a build will be triggered automatically and 
 ```
 
 Top level commands options are passed on to sub commands and need to be specified *before* the sub command.
-In ```mpyl projects --filter <name> list ```, the `--filter` option applies to all `project` commands, like `list`
+In ```mpyl projects --config <path> list ```, the `--config` option applies to all `project` commands, like `list`
 or `lint`.
 
 <details>
@@ -199,23 +199,6 @@ jobs:
       - name: Build run
         run: mpyl build run
 ```
-
-### Dagster
-Although [dagster](https://dagster.io/)'s primary focus is data processing and lineage, it can be used as a runner for MPyL.
-It provides a nice UI to inspect the flow and logs. It supports concurrent execution of steps in a natural way.
-These features make it a convenient runner for local development and debugging.
-
-<details>
-  <summary>Dagster flow runner</summary>
-```python
-.. include:: mpyl-dagster-example.py
-```
-</details>
-
-It can be started from the command line with `dagit --workspace workspace.yml`.
-
-![Dagster flow](documentation_images/dagster-flow-min.png)
-![Dagster run](documentation_images/dagster-run-min.png)
 
 ## ..caching build artifacts
 

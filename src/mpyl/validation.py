@@ -2,15 +2,13 @@
 
 import pkgutil
 from functools import lru_cache
-from pathlib import Path
 
 import jsonschema
-from jsonschema.validators import Draft7Validator
+from jsonschema.protocols import Validator
+from jsonschema.validators import Draft202012Validator
 
 from referencing import Registry, Resource
 from ruamel.yaml import YAML
-
-from .constants import DEFAULT_STAGES_SCHEMA_FILE_NAME
 
 yaml = YAML()
 
@@ -27,20 +25,11 @@ def __load_schemas_from_local(local_uris: list[str]):
 
 
 @lru_cache(maxsize=10)
-def load_schema(schema_string: str, root_dir: Path) -> Draft7Validator:
+def load_schema(schema_string: str) -> Validator:
     schema = yaml.load(schema_string)
 
     local_schema_dictionary = __load_schemas_from_local(
-        ["project.schema.yml", "k8s_api_core.schema.yml"]
-    )
-    local_schema_dictionary.update(
-        {
-            DEFAULT_STAGES_SCHEMA_FILE_NAME: Resource.from_contents(
-                yaml.load(
-                    Path(root_dir, DEFAULT_STAGES_SCHEMA_FILE_NAME).read_text("utf-8")
-                )
-            )
-        }
+        ["project.schema.yml", "mpyl_stages.schema.yml", "k8s_api_core.schema.yml"]
     )
 
     def load_schema_from_local(uri):
@@ -50,7 +39,7 @@ def load_schema(schema_string: str, root_dir: Path) -> Draft7Validator:
 
     registry: Registry = Registry(retrieve=load_schema_from_local)  # type: ignore[call-arg]
 
-    all_validators = dict(Draft7Validator.VALIDATORS)
+    all_validators = dict(Draft202012Validator.VALIDATORS)
     existing_validator = all_validators["type"]
 
     def allow_none_validator(validator, types, instance, yaml_schema):
@@ -61,16 +50,16 @@ def load_schema(schema_string: str, root_dir: Path) -> Draft7Validator:
         return existing_validator(validator, types, instance, yaml_schema)
 
     all_validators["type"] = allow_none_validator
-    type_checker = Draft7Validator.TYPE_CHECKER
+    type_checker = Draft202012Validator.TYPE_CHECKER
 
     extended_validator = jsonschema.validators.extend(
-        validator=jsonschema.validators.Draft7Validator,
+        validator=jsonschema.validators.Draft202012Validator,
         validators=all_validators,
         type_checker=type_checker,
     )
     return extended_validator(schema=schema, registry=registry)
 
 
-def validate(values: dict, schema_string: str, root_dir=Path(".")):
-    schema = load_schema(schema_string, root_dir)
+def validate(values: dict, schema_string: str):
+    schema = load_schema(schema_string)
     return schema.validate(values)

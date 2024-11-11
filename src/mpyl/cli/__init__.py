@@ -17,7 +17,6 @@ from rich.console import Console
 from rich.logging import RichHandler
 
 from ..utilities.pyaml_env import parse_config
-from ..utilities.repo import Repository
 
 CONFIG_PATH_HELP = "Path to the config.yml. Can be set via `MPYL_CONFIG_PATH` env var. "
 
@@ -25,7 +24,6 @@ CONFIG_PATH_HELP = "Path to the config.yml. Can be set via `MPYL_CONFIG_PATH` en
 @dataclass(frozen=True)
 class CliContext:
     config: dict
-    repo: Repository
     console: Console
     run_properties: dict
 
@@ -35,7 +33,6 @@ class MpylCliParameters:
     tag: Optional[str] = None
     stage: Optional[str] = None
     projects: Optional[str] = None
-    dryrun: bool = True
 
 
 async def load_url(test: bool = False):

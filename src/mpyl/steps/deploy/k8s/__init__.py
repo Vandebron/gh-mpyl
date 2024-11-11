@@ -1,22 +1,20 @@
 """Kubernetes deployment related helper methods"""
 
 import datetime
-import os
 from dataclasses import dataclass
 from logging import Logger
 from pathlib import Path
 from typing import Optional
 
 import yaml as dict_to_yaml_str
-from kubernetes import config, client
+from kubernetes import client
 from kubernetes.client import V1ConfigMap, ApiException, V1Deployment
 from ruamel.yaml import yaml_object, YAML
 
-from .deploy_config import DeployConfig, DeployAction, get_namespace
 from .helm import write_helm_chart, GENERATED_WARNING
 from ...deploy.k8s.resources import CustomResourceDefinition
-from ...models import RunProperties, input_to_artifact, ArtifactType, ArtifactSpec
-from ....project import ProjectName
+from ...models import input_to_artifact, ArtifactType, ArtifactSpec, RunProperties
+from ....project import ProjectName, Project, Target
 from ....steps import Input, Output
 from ....steps.deploy.k8s import helm
 from ....steps.deploy.k8s.cluster import (
@@ -42,13 +40,6 @@ class DeployedHelmAppSpec(ArtifactSpec):
 class RenderedHelmChartSpec(ArtifactSpec):
     yaml_tag = "!RenderedHelmChartSpec"
     chart_path: str
-
-
-@yaml_object(yaml)
-@dataclass
-class KubernetesManifestSpec(ArtifactSpec):
-    yaml_tag = "!KubernetesManifestSpec"
-    manifest_file_path: str
 
 
 def rollout_restart_deployment(
@@ -81,66 +72,6 @@ def rollout_restart_deployment(
             message=f"Exception when calling AppsV1Api -> patch_namespaced_deployment: {api_exception}\n"
             f"{deployment} was NOT restarted",
         )
-
-
-def upsert_namespace(
-    logger: Logger,
-    namespace: str,
-    project_id: str,
-    dry_run: bool,
-    run_properties: RunProperties,
-    cluster_config: ClusterConfig,
-) -> None:
-    config.load_kube_config(context=cluster_config.context)
-    logger.info(
-        f"Deploying target {run_properties.target} and k8s context {cluster_config.context}"
-    )
-    api = client.CoreV1Api()
-
-    meta_data = get_namespace_metadata(
-        namespace=namespace, cluster_config=cluster_config, project_id=project_id
-    )
-    namespaces = api.list_namespace(field_selector=f"metadata.name={namespace}")
-
-    if len(namespaces.items) == 0 and not dry_run:
-        try:
-            api.create_namespace(
-                client.V1Namespace(
-                    api_version="v1", kind="Namespace", metadata=meta_data
-                )
-            )
-        except ApiException as error:
-            # when concurrently deploying multiple services of the same PR, we can sometimes still try to create a
-            # namespace that already exists. if that happens, ignore the error
-            if error.status == 409:
-                logger.info(f"Found namespace {namespace}")
-            else:
-                raise error
-    else:
-        logger.info(f"Found namespace {namespace}")
-
-
-def render_manifests(chart: dict[str, CustomResourceDefinition]):
-    result = f"{GENERATED_WARNING}\n"
-    for name, template_content in sorted(chart.items()):
-        manifest = render_crd(name, template_content)
-        result += manifest
-    return result
-
-
-def render_crd(name: str, crd: CustomResourceDefinition):
-    return f"---\n# {name}\n{to_yaml(crd)}"
-
-
-def write_manifest(
-    target_path: Path, chart: dict[str, CustomResourceDefinition]
-) -> Path:
-    if not target_path.exists():
-        os.makedirs(target_path, exist_ok=True)
-    manifests = render_manifests(chart)
-    manifest_file = target_path / "manifest.yaml"
-    manifest_file.write_text(manifests, "utf-8")
-    return manifest_file
 
 
 def get_config_map(
@@ -189,88 +120,43 @@ def replace_config_map(
         )
 
 
-def deploy_helm_chart(  # pylint: disable=too-many-locals
+def generate_helm_charts(  # pylint: disable=too-many-locals
     logger: Logger,
     chart: dict[str, CustomResourceDefinition],
     step_input: Input,
     release_name: str,
-    delete_existing: bool = False,
 ) -> Output:
     run_properties = step_input.run_properties
     project = step_input.project_execution.project
-    deployment_config = DeployConfig.from_config(values=run_properties.config)
-
-    action = deployment_config.action.value
-    if action == DeployAction.KUBERNETES_MANIFEST.value:  # pylint: disable=no-member
-        path = Path(project.root_path, deployment_config.output_path)
-        file_path = write_manifest(target_path=path, chart=chart)
-        artifact = input_to_artifact(
-            artifact_type=ArtifactType.KUBERNETES_MANIFEST,
-            step_input=step_input,
-            spec=KubernetesManifestSpec(str(file_path)),
-        )
-
-        return Output(
-            success=True,
-            message=f"Wrote kubectl manifest to {path}",
-            produced_artifact=artifact,
-        )
-
     chart_path = write_helm_chart(
         logger, chart, Path(project.target_path), run_properties, release_name
     )
 
-    if action == DeployAction.HELM_TEMPLATE.value:  # pylint: disable=no-member
-        template_path = helm.template(logger, chart_path, release_name)
-        artifact = input_to_artifact(
-            ArtifactType.HELM_CHART,
-            step_input,
-            spec=RenderedHelmChartSpec(str(template_path)),
-        )
-        return Output(
-            success=True,
-            message=f"Chart templated to {template_path}",
-            produced_artifact=artifact,
-        )
-
-    namespace = get_namespace(run_properties, project)
-    dry_run = (
-        step_input.dry_run
-        or action == DeployAction.HELM_DRY_RUN.value  # pylint: disable=no-member
-    )
-    project_id: str = (
-        project.deployment.kubernetes.rancher.project_id.get_value(
-            target=run_properties.target
-        )
-        if project.deployment
-        and project.deployment.kubernetes
-        and project.deployment.kubernetes.rancher
-        and project.deployment.kubernetes.rancher.project_id
-        else ""
+    artifact = input_to_artifact(
+        ArtifactType.HELM_CHART,
+        step_input,
+        spec=RenderedHelmChartSpec(str(chart_path)),
     )
 
-    cluster_config: ClusterConfig = get_cluster_config_for_project(
-        run_properties, project
+    return Output(
+        success=True,
+        message=f"Helm charts written to {chart_path}",
+        produced_artifact=artifact,
     )
 
-    upsert_namespace(
-        logger=logger,
-        namespace=namespace,
-        project_id=project_id,
-        dry_run=dry_run,
-        run_properties=run_properties,
-        cluster_config=cluster_config,
-    )
 
-    return helm.install(
-        logger,
-        chart_path,
-        dry_run,
-        release_name,
-        namespace,
-        cluster_config.context,
-        delete_existing,
-    )
+def get_namespace(run_properties: RunProperties, project: Project) -> str:
+    if run_properties.target == Target.PULL_REQUEST:
+        return run_properties.versioning.identifier
+
+    return __get_namespace_from_project(project) or project.name
+
+
+def __get_namespace_from_project(project: Project) -> Optional[str]:
+    if project.deployment and project.deployment.namespace:
+        return project.deployment.namespace
+
+    return None
 
 
 def substitute_namespaces(
@@ -290,15 +176,15 @@ def substitute_namespaces(
     ```
 
     When the env var is substituted, first the referenced service (serviceName) is looked up in the list of projects.
-    If it is part of the deploy set, and we're in deploying to target PullRequest,
+    If it is part of the run plan, and we're in deploying to target PullRequest,
     the namespace is substituted with the PR namespace (pr-XXXX).
     Else is substituted with the namespace of the referenced project.
 
     Note that the name of the service in the env var is case-sensitive!
 
     :param env_vars: environment variables to substitute
-    :param all_projects: all project in repo
-    :param projects_to_deploy: projects in deploy set
+    :param all_projects: all projects in repo
+    :param projects_to_deploy: projects in run plan
     :param pr_identifier: PR number if applicable
     :return: dictionary of substituted env vars
     """

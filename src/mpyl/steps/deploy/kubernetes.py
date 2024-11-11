@@ -1,18 +1,13 @@
 """Deploys the docker image produced in the build stage to Kubernetes, using HELM. """
+
 import re
 from logging import Logger
-from typing import Optional
 
 from . import STAGE_NAME
-from .k8s import deploy_helm_chart, CustomResourceDefinition, DeployedHelmAppSpec
+from .k8s import generate_helm_charts
 from .k8s.chart import ChartBuilder, to_service_chart
 from .. import Step, Meta
-from ..models import (
-    Input,
-    Output,
-    ArtifactType,
-    input_to_artifact,
-)
+from ..models import Input, Output, ArtifactType
 from ...project import Target
 
 
@@ -33,18 +28,6 @@ class DeployKubernetes(Step):
     @staticmethod
     def match_to_url(match: str) -> str:
         return "https://" + next(iter(re.findall(r"`(.*)`", match.split(",")[-1])))
-
-    @staticmethod
-    def try_extract_hostname(
-        chart: dict[str, CustomResourceDefinition], service_name: str
-    ) -> Optional[str]:
-        ingress = chart.get(f"{service_name}-ingress-0-https")
-        if ingress:
-            routes = ingress.spec.get("routes", {})
-            if routes:
-                match = routes[0].get("match")
-                return DeployKubernetes.match_to_url(match)
-        return None
 
     @staticmethod
     def get_endpoint(builder: ChartBuilder) -> str:
@@ -70,25 +53,6 @@ class DeployKubernetes(Step):
         builder = ChartBuilder(step_input)
         chart = to_service_chart(builder)
 
-        deploy_result = deploy_helm_chart(
+        return generate_helm_charts(
             self._logger, chart, step_input, builder.release_name
         )
-        if deploy_result.success:
-            hostname = self.try_extract_hostname(chart, builder.project.name)
-            url = None
-            if hostname:
-                self._logger.info(
-                    f"Service {step_input.project_execution.name} reachable at: {hostname}"
-                )
-                endpoint = self.get_endpoint(builder)
-                url = f"{hostname}{endpoint}"
-            artifact = input_to_artifact(
-                ArtifactType.DEPLOYED_HELM_APP,
-                step_input,
-                spec=DeployedHelmAppSpec(url=f"{url}"),
-            )
-            return Output(
-                success=True, message=deploy_result.message, produced_artifact=artifact
-            )
-
-        return deploy_result

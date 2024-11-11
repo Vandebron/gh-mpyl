@@ -3,18 +3,13 @@ FROM public.ecr.aws/vdb-public/python:${PYTHON_VERSION}-slim-bookworm AS base
 
 USER root
 
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
 # Switch to mpyl source code directory
 WORKDIR /app/mpyl
 
-COPY requirements.txt requirements.txt
-
 # Install the dependencies.
-RUN python -m pip install -r requirements.txt
+RUN pip install pipenv
+COPY Pipfile Pipfile.lock ./
+RUN pipenv install --system --deploy
 
 # Copy the source code into the container.
 COPY src/mpyl ./
@@ -24,8 +19,6 @@ ENV PYTHONPATH=/app
 
 # Switch to the directory of the calling repo
 WORKDIR /repo
-
-# USER vdbnonroot  # Enable again after removing git from the src code
 
 # Prevents Python from writing pyc files.
 ENV PYTHONDONTWRITEBYTECODE=1

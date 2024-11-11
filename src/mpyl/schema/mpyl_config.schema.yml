@@ -1,10 +1,9 @@
 ---
-$schema: http://json-schema.org/draft-07/schema#
+$schema: https://json-schema.org/draft/2020-12/schema#
 $ref: '#/definitions/Config'
 definitions:
   Config:
     type: object
-    additionalProperties: false
     properties:
       mpylVersion:
         description: >-
@@ -23,12 +22,6 @@ definitions:
         $ref: '#/definitions/Kubernetes'
       project:
         $ref: '#/definitions/Project'
-      sbt:
-        $ref: '#/definitions/Sbt'
-      slack:
-        $ref: '#/definitions/Slack'
-      jira:
-        $ref: '#/definitions/Jira'
       camunda:
         $ref: '#/definitions/Camunda'
     required:
@@ -93,7 +86,6 @@ definitions:
                 type: string
   Kubernetes:
     type: object
-    additionalProperties: false
     required:
       - defaultCluster
       - clusters
@@ -101,25 +93,9 @@ definitions:
     properties:
       deploymentStrategy:
         $ref: k8s_api_core.schema.yml#/definitions/io.k8s.api.apps.v1.DeploymentStrategy
-      deployAction:
-        type: string
-        pattern: ((HelmDeploy)|(HelmDryrun)|(HelmTemplate)|(KubectlManifest))|(!ENV.*)
-        description: >-
-          Defines the action to take in the deploy step. Defaults to helmDeploy.
-          If set to HelmDeploy, the helm chart will be deployed to the cluster.
-          If set to HelmDryRun, a helm chart deployment to the cluster will be simulated.
-          If set to HelmTemplate, the helm chart will be rendered and the result will be written to the folder specified in the helmTemplateOutputPath property
-          If set to KubectlManifest, a k8s manifest be written to the file specified in the kubectlManifestOutputPath property. This manifest can be deployd with kubectl apply -f <manifest>
-        default: HelmDeploy
-      outputPath:
-        type: string
-        default: .mpyl/kubernetes
-        description: >-
-          The path to the folder where the rendered helm chart or kubectl manifest will be written.
-          Defaults to target/kubernetes under the root folder of the project.
       defaultCluster:
         type: object
-        description: Default cluster to deploy to. Can be overriden in the project.yaml
+        description: Default cluster to deploy to. Can be overridden in the project.yaml
         properties:
           test:
             type: string
@@ -171,78 +147,11 @@ definitions:
     required: [clusterId, clusterEnv, context]
   VCS:
     type: object
-    additionalProperties: false
     properties:
       changedFilesPath:
         type: [string, null]
         description: Path to the file that contains the changed files
-      git:
-        $ref: '#/definitions/Git'
-      github:
-        $ref: '#/definitions/Github'
-    required:
-      - git
     title: VCS
-  Git:
-    type: object
-    additionalProperties: false
-    properties:
-      remote:
-        type: object
-        additionalProperties: false
-        required: [url, userName, password, email]
-        properties:
-          url:
-            type: [string]
-          userName:
-            type: [string, null]
-          email:
-            description: The email address to use when committing changes
-            type: [string, null]
-          password:
-            type: [string, null]
-      mainBranch:
-        description: The main branch of the repository, against which changes are compared
-        type: string
-      ignorePatterns:
-        description: Patterns to ignore when checking for changes
-        type: array
-        default: [.md, '*.svg']
-        items:
-          type: string
-      projectSubFolder:
-        description: The project subfolder in which the `project.yml` file resides
-        type: string
-        default: deployment
-    required:
-      - mainBranch
-    title: Git
-  Github:
-    type: object
-    additionalProperties: false
-    properties:
-      repository:
-        type: string
-      token:
-        type: [string, null]
-      app:
-        type: object
-        properties:
-          privateKeyPath:
-            description: Used to authenticate with github if the app is used (https://github.com/apps/mpyl-pipeline)
-            type: string
-          privateKeyBase64Encoded:
-            description: Used to authenticate with github if the app is used (https://github.com/apps/mpyl-pipeline)
-            type: [string, null]
-          appId:
-            description: The id of the github app (https://github.com/apps/mpyl-pipeline) that has permission to update checks
-            type: string
-            default: 295700
-        required:
-          - appId
-    required:
-      - repository
-    title: Github
   Docker:
     type: object
     additionalProperties: false
@@ -332,39 +241,6 @@ definitions:
       - password
       - userName
     title: Registry
-  Sbt:
-    type: object
-    additionalProperties: false
-    properties:
-      command:
-        type: string
-      clientCommand:
-        type: string
-      verbose:
-        default: false
-        type: boolean
-      testWithCoverage:
-        type: string
-      javaOpts:
-        type: string
-      sbtOpts:
-        type: string
-      clientMode:
-        type: object
-        additionalProperties: false
-        properties:
-          build:
-            type: boolean
-            default: true
-          test:
-            type: boolean
-            default: true
-    required:
-      - command
-      - clientCommand
-      - javaOpts
-      - sbtOpts
-    title: Sbt
   Project:
     type: object
     additionalProperties: false
@@ -415,45 +291,6 @@ definitions:
       tls:
         type: string
     required: [httpMiddleware, tls]
-  Slack:
-    type: object
-    additionalProperties: false
-    properties:
-      botToken:
-        type: [string, null]
-      icons:
-        type: object
-        properties:
-          building:
-            type: string
-          success:
-            type: string
-          failure:
-            type: string
-        required: [success, failure, building]
-    required:
-      - botToken
-      - icons
-  Jira:
-    type: object
-    additionalProperties: false
-    properties:
-      site:
-        description: Only works with the cloud version of Jira
-        type: [string, null]
-        format: uri
-      userName:
-        type: string
-      password:
-        type: string
-      token:
-        type: string
-      ticketPattern:
-        type: [string, null]
-        default: '[A-Za-z]{2,}-\d+'
-        description: A pattern that extracts a ticket number from the branch name
-    required:
-      - site
   Camunda:
     type: object
     properties:

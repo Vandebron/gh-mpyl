@@ -23,9 +23,9 @@ from ..constants import (
     RUN_RESULT_FILE_GLOB,
 )
 from ..project import load_project
+from ..stages.discovery import find_projects
 from ..steps.run_properties import construct_run_properties
 from ..utilities.pyaml_env import parse_config
-from ..utilities.repo import Repository, RepoConfig
 
 
 @click.group("build")
@@ -62,8 +62,7 @@ def build(ctx, config, properties):
         max_width=console_config.width,
     )
 
-    repo = ctx.with_resource(Repository(config=RepoConfig.from_config(parsed_config)))
-    ctx.obj = CliContext(parsed_config, repo, console, parsed_properties)
+    ctx.obj = CliContext(parsed_config, console, parsed_properties)
 
 
 class CustomValidation(click.Command):
@@ -95,20 +94,12 @@ class CustomValidation(click.Command):
     required=False,
     help="Comma separated list of the projects to build",
 )
-@click.option(
-    "--dryrun",
-    "dryrun_",
-    is_flag=True,
-    default=False,
-    help="don't push or deploy images",
-)
 @click.pass_obj
 def run(
     obj: CliContext,
     tag,
     stage,
     projects,
-    dryrun_,
 ):  # pylint: disable=invalid-name
     run_result_files = list(Path(RUN_ARTIFACTS_FOLDER).glob(RUN_RESULT_FILE_GLOB))
     for run_result_file in run_result_files:
@@ -118,7 +109,6 @@ def run(
         tag=tag,
         stage=stage,
         projects=projects,
-        dryrun=dryrun_,
     )
     obj.console.log(parameters)
 
@@ -166,28 +156,16 @@ def status(obj: CliContext, projects, stage, tag, explain):
 
 
 @build.command(help=f"Clean all MPyL metadata in `{RUN_ARTIFACTS_FOLDER}` folders")
-@click.option(
-    "--filter",
-    "-f",
-    "filter_",
-    required=False,
-    type=click.STRING,
-    help="Filter based on filepath ",
-)
 @click.pass_obj
-def clean(obj: CliContext, filter_):
-    root_path = Path(RUN_ARTIFACTS_FOLDER)
-    if root_path.is_dir():
-        shutil.rmtree(root_path)
-        obj.console.print(f"🧹 Cleaned up {root_path}")
+def clean(obj: CliContext):
+    artifacts_path = Path(RUN_ARTIFACTS_FOLDER)
+    if artifacts_path.is_dir():
+        shutil.rmtree(artifacts_path)
+        obj.console.print(f"🧹 Cleaned up {artifacts_path}")
 
     found_projects: list[Path] = [
-        Path(
-            load_project(
-                obj.repo.root_dir, Path(project_path), strict=False
-            ).target_path
-        )
-        for project_path in obj.repo.find_projects(filter_ if filter_ else "")
+        Path(load_project(project_path, validate_project_yaml=False).target_path)
+        for project_path in find_projects()
     ]
 
     paths_to_clean = [path for path in found_projects if path.exists()]

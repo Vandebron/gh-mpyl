@@ -1,7 +1,6 @@
 import pkgutil
 
 from src.mpyl.validation import validate
-from tests import test_resource_path
 from tests.test_resources.test_data import config_values
 
 
@@ -12,4 +11,4 @@ class TestValidation:
         )
 
         assert schema_dict is not None
-        validate(config_values, schema_dict.decode("utf-8"), test_resource_path)
+        validate(config_values, schema_dict.decode("utf-8"))
