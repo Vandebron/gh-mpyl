@@ -1,5 +1,5 @@
 ---
-name: '[CI] Release'
+name: Release new version
 
 on:  # yamllint disable-line rule:truthy
   pull_request:
@@ -7,6 +7,13 @@ on:  # yamllint disable-line rule:truthy
       - closed
     branches:
       - main
+    paths:
+      - src/**
+      - actions/**
+      - Dockerfile
+      - entrypoint.sh
+      - Pipfile
+      - Pipfile.lock
 
 jobs:
   release:
@@ -40,7 +47,7 @@ jobs:
           registry-type: public
 
       - name: Create repository in ECR
-        uses: int128/create-ecr-repository-action@v1.319.0
+        uses: int128/create-ecr-repository-action@v1.325.0
         with:
           repository: ${{ env.image-name }}
           public: true

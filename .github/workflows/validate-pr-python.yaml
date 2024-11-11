@@ -93,6 +93,13 @@ jobs:
       - name: Test
         run: pipenv run test-ci
 
+      - uses: mikepenz/action-junit-report@v5
+        if: success() || failure()
+        with:
+          report_paths: build/test-result/test.xml
+          annotate_only: true
+          detailed_summary: true
+
       - name: Validate Config Example
         run: pipenv run validate-config-example
 
