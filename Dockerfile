@@ -8,13 +8,15 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Switch to mpyl source code directory
-WORKDIR /app/mpyl
-
-COPY requirements.txt requirements.txt
+# USER vdbnonroot  # Enable again after removing git from the src code
 
 # Install the dependencies.
-RUN python -m pip install -r requirements.txt
+RUN pip install pipenv
+COPY Pipfile Pipfile.lock ./
+RUN pipenv install --system --deploy
+
+# Switch to mpyl source code directory
+WORKDIR /app/mpyl
 
 # Copy the source code into the container.
 COPY src/mpyl ./
@@ -25,8 +27,6 @@ ENV PYTHONPATH=/app
 # Switch to the directory of the calling repo
 WORKDIR /repo
 COPY entrypoint.sh ../entrypoint.sh
-
-# USER vdbnonroot  # Enable again after removing git from the src code
 
 # Prevents Python from writing pyc files.
 ENV PYTHONDONTWRITEBYTECODE=1

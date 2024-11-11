@@ -6,8 +6,9 @@ on:
     paths:
       - Dockerfile
       - entrypoint.sh
-      - requirements.txt
       - src/**
+      - Pipfile
+      - Pipfile.lock
 
 # If multiple commits are pushed simultaneously, only build the last one.
 concurrency:
