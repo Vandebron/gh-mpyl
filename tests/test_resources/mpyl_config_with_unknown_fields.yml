@@ -1,7 +1,7 @@
-this-field: 'does not exist'
+this-field: 'is non the mpyl_config.schema.yml'
 vcs:
   changedFilesPath: !ENV ${CHANGED_FILES_PATH}
-  this-child-field: 'also does not exist'
+  this-child-field: 'is also not in mpyl_config.schema.yml'
 docker:
   defaultRegistry: !ENV ${DOCKER_HOST_NAME:docker_host}
   registries:
