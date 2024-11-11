@@ -10,7 +10,6 @@ from src.mpyl.constants import (
     DEFAULT_RUN_PROPERTIES_FILE_NAME,
 )
 from src.mpyl.project import Project
-from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps.models import VersioningProperties, RunProperties
 from src.mpyl.utilities.pyaml_env import parse_config
 from tests import root_test_path
@@ -21,14 +20,12 @@ yaml = YAML()
 def stub_run_properties(
     config: dict,
     properties: dict,
-    run_plan: RunPlan,
     all_projects: set[Project],
     cli_parameters: MpylCliParameters = MpylCliParameters(),
 ):
     return RunProperties.from_configuration(
         run_properties=properties,
         config=config,
-        run_plan=run_plan,
         all_projects=all_projects,
         cli_tag=cli_parameters.tag or properties["build"]["versioning"].get("tag"),
     )
@@ -48,7 +45,6 @@ class TestModels:
                 properties=parse_config(
                     self.resource_path / "run_properties_invalid.yml"
                 ),
-                run_plan=RunPlan.empty(),
                 all_projects=set(),
             )
 
@@ -62,7 +58,6 @@ class TestModels:
         run_properties = stub_run_properties(
             config=self.config_values,
             properties=valid_run_properties_values,
-            run_plan=RunPlan.empty(),
             all_projects=set(),
         )
 

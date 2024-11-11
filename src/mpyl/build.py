@@ -1,97 +1,35 @@
 """Simple MPyL build runner"""
 
 import datetime
-import json
 import logging
-import os
 import time
-from pathlib import Path
-from typing import Union, Optional
+from typing import Optional
 
 from jsonschema import ValidationError
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.markdown import Markdown
 
-from .cli import CliContext, MpylCliParameters
-from .constants import RUN_ARTIFACTS_FOLDER
-from .reporting.formatting.markdown import (
-    execution_plan_as_markdown,
-    run_result_to_markdown,
-)
+from .reporting.formatting.markdown import run_result_to_markdown
 from .reporting.targets import Reporter
+from .run_plan import RunPlan
 from .steps import deploy
 from .steps.collection import StepsCollection
-from .steps.models import Output, RunProperties
+from .steps.models import Output, RunProperties, ConsoleProperties
 from .steps.run import RunResult
-from .steps.run_properties import construct_run_properties
 from .steps.steps import ExecutionException, StepResult, Steps
-
-
-def print_status(
-    obj: CliContext, cli_params: MpylCliParameters, explain_run_plan: bool
-):
-    run_properties = construct_run_properties(
-        config=obj.config,
-        properties=obj.run_properties,
-        cli_parameters=cli_params,
-        explain_run_plan=explain_run_plan,
-    )
-
-    # Write the run plan as a simple JSON file to be used by Github Actions
-    write_run_plan(run_properties)
-
-    console = obj.console
-    logger = logging.getLogger("mpyl")
-    logger.info(f"MPyL log level is set to {run_properties.console.log_level}")
-
-    result = RunResult(run_properties=run_properties)
-    if result.has_projects_to_run(include_cached_projects=True):
-        console.print(
-            Markdown("**Execution plan:**  \n" + execution_plan_as_markdown(result))
-        )
-    else:
-        logger.info("No changes detected, nothing to do.")
 
 
 FORMAT = "%(name)s  %(message)s"
 
 
-def write_run_plan(run_properties: RunProperties):
-    run_plan: dict = {}
-
-    for stage, executions in run_properties.run_plan.full_plan.items():
-        for execution in executions:
-            stages: list[dict[str, Union[str, bool]]] = run_plan.get(
-                execution.project.name, {}
-            ).get("stages", [])
-            stages.append({"name": stage.name, "cached": execution.cached})
-
-            run_plan.update(
-                {
-                    execution.project.name: {
-                        "service": execution.project.name,
-                        "path": execution.project.path,
-                        "artifacts_path": str(execution.project.target_path),
-                        "base_path": str(execution.project.root_path),
-                        "maintainers": execution.project.maintainer,
-                        "pipeline": execution.project.pipeline,
-                        "stages": stages,
-                    }
-                }
-            )
-
-    run_plan_file = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.json"
-    os.makedirs(os.path.dirname(run_plan_file), exist_ok=True)
-    with open(run_plan_file, "w", encoding="utf-8") as file:
-        json.dump(list(run_plan.values()), file)
-
-
 def run_mpyl(
+    console_properties: ConsoleProperties,
     run_properties: RunProperties,
+    run_plan: RunPlan,
     reporter: Optional[Reporter],
 ) -> RunResult:
-    console_properties = run_properties.console
+    # why does this create another Console when we already have one created in cli/build.py ?
     console = Console(
         markup=False,
         width=console_properties.width,
@@ -111,14 +49,15 @@ def run_mpyl(
     logger = logging.getLogger("mpyl")
     start_time = time.time()
     try:
-        run_result = RunResult(run_properties=run_properties)
+        run_result = RunResult(run_properties=run_properties, run_plan=run_plan)
 
         if not run_result.has_projects_to_run(include_cached_projects=False):
             logger.info("Nothing to do. Exiting..")
             return run_result
 
         logger.info("Run plan:")
-        console.print(Markdown(f"\n\n{run_result_to_markdown(run_result)}"))
+        console.print(Markdown(f"\n\n{run_result.status_line}  \n"))
+        run_plan.print_markdown(console, run_properties.stages)
 
         if reporter:
             reporter.send_report(run_result)

@@ -19,7 +19,6 @@ from tests.test_resources.test_data import (
     TestStage,
     config_values,
     properties_values,
-    run_properties_with_plan,
 )
 
 
@@ -51,10 +50,13 @@ class TestBuildCommand:
 
     def test_run_build_without_plan_should_be_successful(self):
         run_properties = RUN_PROPERTIES
-        accumulator = RunResult(run_properties=run_properties)
+        run_plan = RunPlan.empty()
+
+        accumulator = RunResult(run_properties=run_properties, run_plan=run_plan)
         executor = Steps(
             logging.getLogger(),
             run_properties,
+            run_plan,
             StepsCollection(logging.getLogger()),
         )
         result = run_build(self.logger, accumulator, executor, None)
@@ -71,12 +73,17 @@ class TestBuildCommand:
                 TestStage.deploy(): project_executions,
             }
         )
-        run_properties = run_properties_with_plan(plan=run_plan)
-        accumulator = RunResult(run_properties=run_properties)
+        run_properties = stub_run_properties(
+            config=config_values,
+            properties=properties_values,
+            all_projects={get_minimal_project()},
+        )
+        accumulator = RunResult(run_properties=run_properties, run_plan=run_plan)
         collection = StepsCollection(logging.getLogger())
         executor = Steps(
             logging.getLogger(),
             run_properties,
+            run_plan,
             collection,
         )
         result = run_build(self.logger, accumulator, executor, None)
@@ -93,13 +100,12 @@ class TestBuildCommand:
         run_properties = stub_run_properties(
             config=config_values,
             properties=properties_values,
-            run_plan=run_plan,
             all_projects=projects,
         )
-        accumulator = RunResult(run_properties=run_properties)
+        accumulator = RunResult(run_properties=run_properties, run_plan=run_plan)
         logger = logging.getLogger()
         collection = StepsCollection(logger)
-        executor = Steps(logger, run_properties, collection)
+        executor = Steps(logger, run_properties, run_plan, collection)
 
         result = run_build(self.logger, accumulator, executor, None)
         assert not result.has_results

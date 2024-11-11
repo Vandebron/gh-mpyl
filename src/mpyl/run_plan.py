@@ -1,9 +1,29 @@
 """This module contains the RunPlan class."""
 
+import json
+import logging
+import operator
+import os
+import pickle
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Optional, Union
 
+from rich.console import Console
+from rich.markdown import Markdown
+
+from .cli import CliContext
+from .constants import RUN_ARTIFACTS_FOLDER
 from .project import Project, Stage
 from .project_execution import ProjectExecution
+from .stages.discovery import (
+    find_projects_to_execute,
+)
+from .steps.collection import StepsCollection
+from .utilities.repo import Changeset
+
+RUN_PLAN_PICKLE_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.pickle"
+RUN_PLAN_JSON_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.json"
 
 
 @dataclass(frozen=True)
@@ -81,3 +101,151 @@ class RunPlan:
         if use_full_plan:
             return find_stage(self.full_plan)
         return find_stage(self.selected_plan)
+
+    def write_to_pickled_file(
+        self,
+        logger: logging.Logger,
+    ):
+        os.makedirs(os.path.dirname(RUN_PLAN_PICKLE_FILE), exist_ok=True)
+        with open(RUN_PLAN_PICKLE_FILE, "wb") as file:
+            logger.info(f"Storing run plan in: {RUN_PLAN_PICKLE_FILE}")
+            pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
+
+    def write_to_json_file(self):
+        run_plan: dict = {}
+
+        for stage, executions in self.full_plan.items():
+            for execution in executions:
+                stages: list[dict[str, Union[str, bool]]] = run_plan.get(
+                    execution.project.name, {}
+                ).get("stages", [])
+                stages.append({"name": stage.name, "cached": execution.cached})
+
+                run_plan.update(
+                    {
+                        execution.project.name: {
+                            "service": execution.project.name,
+                            "path": execution.project.path,
+                            "artifacts_path": str(execution.project.target_path),
+                            "base_path": str(execution.project.root_path),
+                            "maintainers": execution.project.maintainer,
+                            "pipeline": execution.project.pipeline,
+                            "stages": stages,
+                        }
+                    }
+                )
+
+        os.makedirs(os.path.dirname(RUN_PLAN_JSON_FILE), exist_ok=True)
+        with open(RUN_PLAN_JSON_FILE, "w", encoding="utf-8") as file:
+            json.dump(list(run_plan.values()), file)
+
+    def print_markdown(self, console: Console, stages: list[Stage]):
+        if self.has_projects_to_run(include_cached_projects=True):
+            result = ""
+
+            for stage in stages:
+                executions = self.get_projects_for_stage(stage)
+                if not executions:
+                    result += "🤷 Nothing to do"
+
+                project_names = [
+                    f"_{execution.name}{' (cached)' if execution.cached else ''}_"
+                    for execution in sorted(executions, key=operator.attrgetter("name"))
+                ]
+
+                result += f'{stage.icon} {stage.name.capitalize()}:  \n{", ".join(project_names)}  \n'
+
+            console.print(Markdown("**Execution plan:**  \n" + result))
+
+        else:
+            logger = logging.getLogger("mpyl")
+            logger.info("No changes detected, nothing to do.")
+
+
+# pylint: disable=too-many-arguments
+def create_run_plan(
+    console: Console,
+    changed_files_path: str,
+    revision: str,
+    all_projects: set[Project],
+    all_stages: list[Stage],
+):
+    run_plan = _discover_run_plan(
+        revision=revision,
+        all_projects=all_projects,
+        all_stages=all_stages,
+        changed_files_path=changed_files_path,
+    )
+
+    run_plan.write_to_json_file()
+    run_plan.print_markdown(console, all_stages)
+
+
+def _discover_run_plan(
+    revision: str,
+    all_projects: set[Project],
+    all_stages: list[Stage],
+    changed_files_path: str,
+) -> RunPlan:
+    logger = logging.getLogger("mpyl")
+    logger.info("Discovering run plan...")
+    changeset = Changeset.from_file(
+        logger=logger, sha=revision, changed_files_path=changed_files_path
+    )
+    plan = {}
+
+    def add_projects_to_plan(stage: Stage):
+        project_executions = find_projects_to_execute(
+            logger=logger,
+            all_projects=all_projects,
+            stage=stage.name,
+            changeset=changeset,
+            steps=StepsCollection(logger=logging.getLogger()),
+        )
+
+        logger.debug(
+            f"Will execute projects for stage {stage.name}: {[p.name for p in project_executions]}"
+        )
+        plan.update({stage: project_executions})
+
+    for stage in all_stages:
+        add_projects_to_plan(stage)
+
+    return RunPlan.from_plan(plan)
+
+
+def print_run_plan(
+    console: Console,
+    all_stages: list[Stage],
+):
+    run_plan = load_run_plan_from_file(selected_projects=None, selected_stage=None)
+    run_plan.print_markdown(console, all_stages)
+
+
+def load_run_plan_from_file(
+    selected_projects: Optional[set[Project]],
+    selected_stage: Optional[Stage],
+):
+    logger = logging.getLogger("mpyl")
+
+    if RUN_PLAN_PICKLE_FILE.is_file():
+        logger.info(f"Loading existing run plan: {RUN_PLAN_PICKLE_FILE}")
+        with open(RUN_PLAN_PICKLE_FILE, "rb") as file:
+            run_plan: RunPlan = pickle.load(file)
+            logger.debug(f"Run plan: {run_plan}")
+            if selected_stage:
+                run_plan = run_plan.select_stage(selected_stage)
+                logger.info(f"Selected stage: {selected_stage.name}")
+                logger.debug(f"Run plan: {run_plan}")
+            if selected_projects:
+                run_plan = run_plan.select_projects(selected_projects)
+                logger.info(
+                    f"Selected projects: {set(p.name for p in selected_projects)}"
+                )
+                logger.debug(f"Run plan: {run_plan}")
+            return run_plan
+
+    else:
+        raise ValueError(
+            f"Unable to find existing run plan at path {RUN_PLAN_PICKLE_FILE}"
+        )

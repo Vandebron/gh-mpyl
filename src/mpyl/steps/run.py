@@ -17,9 +17,9 @@ class RunResult:
     _run_properties: RunProperties
     _exception: Optional[ExecutionException]
 
-    def __init__(self, run_properties: RunProperties):
+    def __init__(self, run_properties: RunProperties, run_plan: RunPlan):
         self._run_properties = run_properties
-        self._run_plan = run_properties.run_plan
+        self._run_plan = run_plan
         self._exception = None
         self._results = []
 

@@ -45,8 +45,8 @@ class TestDagster:
                     self.resource_path / "project.yml", validate_project_yaml=True
                 )
             ),
-            test_data.RUN_PROPERTIES,
-            None,
+            run_properties=test_data.RUN_PROPERTIES,
+            required_artifact=None,
         )
 
         values = to_user_code_values(
@@ -71,8 +71,8 @@ class TestDagster:
                     Path(self.resource_path, "project.yml"), validate_project_yaml=True
                 )
             ),
-            test_data.RUN_PROPERTIES_PROD,
-            None,
+            run_properties=test_data.RUN_PROPERTIES_PROD,
+            required_artifact=None,
         )
 
         values = to_user_code_values(
@@ -95,8 +95,8 @@ class TestDagster:
                     Path(self.resource_path, "project.yml"), validate_project_yaml=True
                 )
             ),
-            test_data.RUN_PROPERTIES,
-            None,
+            run_properties=test_data.RUN_PROPERTIES,
+            required_artifact=None,
         )
 
         values = to_user_code_values(
@@ -122,8 +122,8 @@ class TestDagster:
                     validate_project_yaml=True,
                 )
             ),
-            test_data.RUN_PROPERTIES,
-            None,
+            run_properties=test_data.RUN_PROPERTIES,
+            required_artifact=None,
         )
 
         values = to_user_code_values(

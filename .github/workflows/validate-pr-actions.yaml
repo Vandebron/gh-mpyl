@@ -66,9 +66,6 @@ jobs:
 
       - uses: ./actions/run-plan
         with:
-          environment: pull-request
-          deploy-target: PullRequest
-          version: a-random-version
           changed-files-path: tests/test_resources/repository/changed_files.json
           config-path: mpyl_config.example.yml
 
@@ -86,14 +83,8 @@ jobs:
           yq -i '.runs.image = strenv(IMAGE)' actions/run-plan/action.yaml
           yq -i '.runs.image = strenv(IMAGE)' actions/run-stage/action.yaml
 
-      # To run a stage we always need to create a run plan before
-      # TODO find out if it's possible to write a stub run plan in tests/ so that we can test actions/run-stage in
-      # isolation (without having to run actions/run-plan before)
       - uses: ./actions/run-plan
         with:
-          environment: pull-request
-          deploy-target: PullRequest
-          version: a-random-version
           changed-files-path: tests/test_resources/repository/changed_files.json
           config-path: mpyl_config.example.yml
 

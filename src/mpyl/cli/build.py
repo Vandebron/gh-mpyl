@@ -1,6 +1,5 @@
 """Commands related to build"""
 
-import asyncio
 import pickle
 import shutil
 import sys
@@ -15,7 +14,7 @@ from . import (
     MpylCliParameters,
 )
 from . import create_console_logger
-from ..build import print_status, run_mpyl
+from ..build import run_mpyl
 from ..constants import (
     DEFAULT_CONFIG_FILE_NAME,
     DEFAULT_RUN_PROPERTIES_FILE_NAME,
@@ -23,7 +22,9 @@ from ..constants import (
     RUN_RESULT_FILE_GLOB,
 )
 from ..project import load_project
+from ..run_plan import load_run_plan_from_file
 from ..stages.discovery import find_projects
+from ..steps.models import ConsoleProperties
 from ..steps.run_properties import construct_run_properties
 from ..utilities.pyaml_env import parse_config
 
@@ -53,16 +54,8 @@ def build(ctx, config, properties):
     """Pipeline build commands"""
     parsed_properties = parse_config(properties)
     parsed_config = parse_config(config)
-    console_config = construct_run_properties(
-        properties=parsed_properties,
-        config=parsed_config,
-    ).console
-    console = create_console_logger(
-        show_path=console_config.show_paths,
-        max_width=console_config.width,
-    )
 
-    ctx.obj = CliContext(parsed_config, console, parsed_properties)
+    ctx.obj = CliContext(parsed_config, parsed_properties)
 
 
 class CustomValidation(click.Command):
@@ -110,14 +103,31 @@ def run(
         stage=stage,
         projects=projects,
     )
-    obj.console.log(parameters)
+
+    console_config = ConsoleProperties.from_configuration(obj.run_properties)
+    console = create_console_logger(
+        show_path=console_config.show_paths,
+        max_width=console_config.width,
+    )
+    console.log(parameters)
 
     run_properties = construct_run_properties(
         config=obj.config,
         properties=obj.run_properties,
-        cli_parameters=parameters,
+        tag=parameters.tag,
     )
-    run_result = run_mpyl(run_properties=run_properties, reporter=None)
+
+    run_plan = load_run_plan_from_file(
+        selected_stage=run_properties.selected_stage(stage),
+        selected_projects=run_properties.selected_projects(projects),
+    )
+
+    run_result = run_mpyl(
+        console_properties=console_config,
+        run_properties=run_properties,
+        run_plan=run_plan,
+        reporter=None,
+    )
 
     Path(RUN_ARTIFACTS_FOLDER).mkdir(parents=True, exist_ok=True)
     run_result_file = Path(RUN_ARTIFACTS_FOLDER) / f"run_result-{uuid.uuid4()}.pickle"
@@ -127,39 +137,18 @@ def run(
     sys.exit(0 if run_result.is_success else 1)
 
 
-@build.command(help="The status of the current local branch from MPyL's perspective")
-@click.option(
-    "--projects",
-    "-p",
-    type=str,
-    required=False,
-    help="Comma separated list of the projects to build",
-)
-@click.option(
-    "--stage",
-    default=None,
-    type=str,
-    required=False,
-    help="Stage to get status for",
-)
-@click.option("--tag", "-t", help="Tag to build", type=click.STRING, required=False)
-@click.option("--explain", "-e", is_flag=True, help="Explain the current run plan")
-@click.pass_obj
-def status(obj: CliContext, projects, stage, tag, explain):
-    try:
-        parameters = MpylCliParameters(projects=projects, stage=stage, tag=tag)
-        print_status(obj, parameters, explain)
-    except asyncio.exceptions.TimeoutError:
-        pass
-
-
 @build.command(help=f"Clean all MPyL metadata in `{RUN_ARTIFACTS_FOLDER}` folders")
 @click.pass_obj
 def clean(obj: CliContext):
     artifacts_path = Path(RUN_ARTIFACTS_FOLDER)
+    console_config = ConsoleProperties.from_configuration(obj.run_properties)
+    console = create_console_logger(
+        show_path=console_config.show_paths,
+        max_width=console_config.width,
+    )
     if artifacts_path.is_dir():
         shutil.rmtree(artifacts_path)
-        obj.console.print(f"🧹 Cleaned up {artifacts_path}")
+        console.print(f"🧹 Cleaned up {artifacts_path}")
 
     found_projects: list[Path] = [
         Path(load_project(project_path, validate_project_yaml=False).target_path)
@@ -170,6 +159,6 @@ def clean(obj: CliContext):
     if paths_to_clean:
         for target_path in set(paths_to_clean):
             shutil.rmtree(target_path)
-            obj.console.print(f"🧹 Cleaned up {target_path}")
+            console.print(f"🧹 Cleaned up {target_path}")
     else:
-        obj.console.print("Nothing to clean")
+        console.print("Nothing to clean")

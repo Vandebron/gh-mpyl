@@ -1,20 +1,28 @@
 """Module to initiate run properties"""
 
-import logging
+import pkgutil
 from typing import Optional
 
-from ..cli import MpylCliParameters
-from ..project import load_project, Stage, Project
-from ..stages.discovery import create_run_plan, find_projects
+from ..project import load_project
+from ..stages.discovery import find_projects
 from ..steps.models import RunProperties
+from ..validation import validate
+
+
+def validate_run_properties(properties: dict):
+    build_dict = pkgutil.get_data(__name__, "../schema/run_properties.schema.yml")
+
+    if build_dict:
+        validate(properties, build_dict.decode("utf-8"))
 
 
 def construct_run_properties(
     config: dict,
     properties: dict,
-    cli_parameters: MpylCliParameters = MpylCliParameters(),
-    explain_run_plan: bool = False,
+    tag: Optional[str] = None,
 ) -> RunProperties:
+    validate_run_properties(properties)
+
     all_projects = set(
         map(
             lambda p: load_project(
@@ -24,61 +32,9 @@ def construct_run_properties(
         )
     )
 
-    stages = [Stage(stage["name"], stage["icon"]) for stage in properties["stages"]]
-    run_plan_logger = logging.getLogger("mpyl")
-    if explain_run_plan:
-        run_plan_logger.setLevel("DEBUG")
-
-    run_plan = _create_run_plan(
-        cli_parameters=cli_parameters,
-        all_projects=all_projects,
-        all_stages=stages,
-        explain_run_plan=explain_run_plan,
-        changed_files_path=config["vcs"].get("changedFilesPath", None),
-        revision=properties["build"]["versioning"]["revision"],
-    )
-
     return RunProperties.from_configuration(
         run_properties=properties,
         config=config,
-        run_plan=run_plan,
         all_projects=all_projects,
-        cli_tag=cli_parameters.tag or properties["build"]["versioning"].get("tag"),
-    )
-
-
-def _create_run_plan(
-    cli_parameters: MpylCliParameters,
-    all_projects: set[Project],
-    all_stages: list[Stage],
-    explain_run_plan: bool,
-    revision: str,
-    changed_files_path: Optional[str] = None,
-):
-    run_plan_logger = logging.getLogger("mpyl")
-    if explain_run_plan:
-        run_plan_logger.setLevel("DEBUG")
-
-    if cli_parameters.stage:
-        selected_stage = next(
-            (stage for stage in all_stages if stage.name == cli_parameters.stage), None
-        )
-    else:
-        selected_stage = None
-
-    if cli_parameters.projects:
-        selected_projects = {
-            p for p in all_projects if p.name in cli_parameters.projects.split(",")
-        }
-    else:
-        selected_projects = set()
-
-    return create_run_plan(
-        logger=run_plan_logger,
-        revision=revision,
-        all_projects=all_projects,
-        all_stages=all_stages,
-        selected_stage=selected_stage,
-        selected_projects=selected_projects,
-        changed_files_path=changed_files_path,
+        cli_tag=tag or properties["build"]["versioning"].get("tag"),
     )

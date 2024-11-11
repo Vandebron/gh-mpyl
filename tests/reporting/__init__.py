@@ -15,14 +15,15 @@ from tests.test_resources.test_data import (
     TestStage,
     properties_values,
     config_values,
-    resource_path,
 )
 
 test_resource_path = root_test_path / "reporting" / "formatting" / "test_resources"
 
 
 def create_test_result() -> RunResult:
-    result = RunResult(run_properties=test_data.RUN_PROPERTIES)
+    result = RunResult(
+        run_properties=test_data.RUN_PROPERTIES, run_plan=RunPlan.empty()
+    )
     append_results(result)
     return result
 
@@ -35,18 +36,14 @@ def create_test_result_with_plan() -> RunResult:
         run_properties=stub_run_properties(
             config=config_values,
             properties=properties_values,
-            run_plan=RunPlan.from_plan(
-                {
-                    TestStage.build(): {
-                        ProjectExecution.run(p) for p in build_projects
-                    },
-                    TestStage.test(): {ProjectExecution.run(p) for p in test_projects},
-                    TestStage.deploy(): {
-                        ProjectExecution.run(p) for p in deploy_projects
-                    },
-                }
-            ),
             all_projects=set(),
+        ),
+        run_plan=RunPlan.from_plan(
+            {
+                TestStage.build(): {ProjectExecution.run(p) for p in build_projects},
+                TestStage.test(): {ProjectExecution.run(p) for p in test_projects},
+                TestStage.deploy(): {ProjectExecution.run(p) for p in deploy_projects},
+            }
         ),
     )
 

@@ -1,7 +1,6 @@
 """Commands related to projects and how they relate"""
 
 import sys
-from dataclasses import dataclass
 
 import click
 from rich.markdown import Markdown
@@ -33,11 +32,6 @@ from ..stages.discovery import find_projects
 from ..utilities.pyaml_env import parse_config
 
 
-@dataclass
-class ProjectsContext:
-    cli: CliContext
-
-
 @click.group("projects")
 @click.option(
     "--config",
@@ -51,31 +45,26 @@ class ProjectsContext:
 @click.pass_context
 def projects(ctx, config):
     """Commands related to MPyL project configurations (project.yml)"""
-    ctx.obj = ProjectsContext(
-        cli=CliContext(
-            config=parse_config(config),
-            console=create_console_logger(show_path=False, max_width=0),
-            run_properties={},
-        ),
+    ctx.obj = CliContext(
+        config=parse_config(config),
+        run_properties={},
     )
 
 
-OVERRIDE_PATTERN = "project-override"
-
-
 @projects.command(name="list", help="List found projects")
-@click.pass_obj
-def list_projects(obj: ProjectsContext):
+def list_projects():
+    console = create_console_logger(show_path=False, max_width=0)
+
     found_projects = find_projects()
 
     for proj in found_projects:
         project = load_project(proj, validate_project_yaml=False, log=False)
-        obj.cli.console.print(Markdown(f"{proj} `{project.name}`"))
+        console.print(Markdown(f"{proj} `{project.name}`"))
 
 
 @projects.command(name="names", help="List found project names")
-@click.pass_obj
-def list_project_names(obj: ProjectsContext):
+def list_project_names():
+    console = create_console_logger(show_path=False, max_width=0)
     names = sorted(
         [
             load_project(project, validate_project_yaml=False, log=False).name
@@ -84,18 +73,18 @@ def list_project_names(obj: ProjectsContext):
     )
 
     for name in names:
-        obj.cli.console.print(name)
+        console.print(name)
 
 
 @projects.command(help="Validate the yaml of changed projects against their schema")
 @click.pass_obj
 # pylint: disable=too-many-branches
-def lint(obj: ProjectsContext):
+def lint(cli: CliContext):
+    console = create_console_logger(show_path=False, max_width=0)
     all_projects = _check_and_load_projects(
-        console=obj.cli.console, project_paths=find_projects()
+        console=console, project_paths=find_projects()
     )
 
-    console = obj.cli.console
     failed = False
 
     duplicates = _assert_unique_project_names(
@@ -137,7 +126,7 @@ def lint(obj: ProjectsContext):
         wrong_whitelists = _lint_whitelisting_rules(
             console=console,
             projects=all_projects,
-            config=obj.cli.config,
+            config=cli.config,
             target=target,
         )
         if len(wrong_whitelists) == 0:
@@ -170,11 +159,11 @@ def lint(obj: ProjectsContext):
     is_flag=True,
     help="Apply upgrade operations to the project files",
 )
-@click.pass_obj
-def upgrade(obj: ProjectsContext, apply: bool):
+def upgrade(apply: bool):
+    console = create_console_logger(show_path=False, max_width=0)
+
     paths = find_projects()
     candidates = check_upgrades_needed(paths, PROJECT_UPGRADERS)
-    console = obj.cli.console
     if not apply:
         upgradable = check_upgrade(console, candidates)
         number_in_need_of_upgrade = len(upgradable)

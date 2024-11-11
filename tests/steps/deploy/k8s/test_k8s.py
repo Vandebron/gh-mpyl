@@ -1,3 +1,4 @@
+import dataclasses
 from pathlib import Path
 
 import pytest
@@ -7,7 +8,6 @@ from pyaml_env import parse_config
 from src.mpyl.constants import DEFAULT_CONFIG_FILE_NAME
 from src.mpyl.project import Target, Project
 from src.mpyl.project_execution import ProjectExecution
-from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps.deploy.k8s import get_cluster_config_for_project
 from src.mpyl.steps.deploy.k8s.chart import (
     ChartBuilder,
@@ -21,6 +21,7 @@ from src.mpyl.steps.deploy.kubernetes import DeployKubernetes
 from src.mpyl.steps.models import Input, Artifact, ArtifactType
 from src.mpyl.utilities.docker import DockerConfig, DockerImageSpec
 from tests import root_test_path
+from tests.steps.test_models import stub_run_properties
 from tests.test_resources import test_data
 from tests.test_resources.test_data import (
     assert_roundtrip,
@@ -29,8 +30,10 @@ from tests.test_resources.test_data import (
     get_job_project,
     get_cron_job_project,
     get_minimal_project,
-    TestStage,
     get_project_execution,
+    config_values,
+    properties_values,
+    RUN_PROPERTIES,
 )
 
 
@@ -60,15 +63,11 @@ class TestKubernetesChart:
         project_execution = ProjectExecution.run(project)
 
         if not run_properties:
-            project_executions = {project_execution}
-            run_plan = RunPlan.from_plan(
-                {
-                    TestStage.build(): project_executions,
-                    TestStage.test(): project_executions,
-                    TestStage.deploy(): project_executions,
-                }
+            run_properties = stub_run_properties(
+                config=config_values,
+                properties=properties_values,
+                all_projects={get_minimal_project()},
             )
-            run_properties = test_data.run_properties_with_plan(plan=run_plan)
 
         required_artifact = Artifact(
             artifact_type=ArtifactType.DOCKER_IMAGE,
@@ -237,7 +236,20 @@ class TestKubernetesChart:
 
     def test_production_ingress(self):
         project = get_minimal_project()
-        builder = self._get_builder(project, test_data.run_properties_prod_with_plan())
+        run_properties_prod = stub_run_properties(
+            config=config_values,
+            properties=properties_values,
+            all_projects={project},
+        )
+        run_properties_prod = dataclasses.replace(
+            run_properties_prod,
+            target=Target.PRODUCTION,
+            versioning=dataclasses.replace(
+                RUN_PROPERTIES.versioning, tag="20230829-1234", pr_number=None
+            ),
+        )
+
+        builder = self._get_builder(project, run_properties_prod)
         chart = to_service_chart(builder)
         self._roundtrip(
             self.template_path / "ingress-prod", "minimalService-ingress-0-https", chart

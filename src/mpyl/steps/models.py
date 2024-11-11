@@ -1,6 +1,6 @@
 """ Model representation of run-specific configuration. """
+
 import os
-import pkgutil
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -10,8 +10,6 @@ from ruamel.yaml import YAML, yaml_object  # type: ignore
 
 from ..project import Project, Stage, Target
 from ..project_execution import ProjectExecution
-from ..run_plan import RunPlan
-from ..validation import validate
 
 yaml = YAML()
 
@@ -67,8 +65,8 @@ class ConsoleProperties:
     width: Optional[int]
 
     @staticmethod
-    def from_configuration(build_config: dict):
-        console_config = build_config["console"]
+    def from_configuration(config: dict):
+        console_config = config["build"]["console"]
         if os.environ.get("RUNNER_DEBUG", "0") == "1":
             log_level = "DEBUG"
         else:
@@ -95,28 +93,18 @@ class RunProperties:
     """Globally specified configuration, to be used by specific steps. Complies with the schema as
     specified in `mpyl_config.schema.yml`
      """
-    console: ConsoleProperties
-    """Settings for the console output"""
     stages: list[Stage]
     """All stage definitions"""
     projects: set[Project]
     """All projects"""
-    run_plan: RunPlan
-    """Stages and projects for this run"""
 
     @staticmethod
     def from_configuration(
         run_properties: dict,
         config: dict,
-        run_plan: RunPlan,
         all_projects: set[Project],
         cli_tag: Optional[str] = None,
     ):
-        build_dict = pkgutil.get_data(__name__, "../schema/run_properties.schema.yml")
-
-        if build_dict:
-            validate(run_properties, build_dict.decode("utf-8"))
-
         build = run_properties["build"]
         versioning_config = build["versioning"]
 
@@ -132,7 +120,6 @@ class RunProperties:
             pr_number=pr_num,
             tag=tag,
         )
-        console = ConsoleProperties.from_configuration(build)
 
         return RunProperties(
             details=RunContext.from_configuration(build["run"]),
@@ -142,8 +129,6 @@ class RunProperties:
             ),
             versioning=versioning,
             config=config,
-            console=console,
-            run_plan=run_plan,
             stages=[
                 Stage(stage["name"], stage["icon"])
                 for stage in run_properties["stages"]
@@ -156,6 +141,16 @@ class RunProperties:
         if stage_by_name:
             return stage_by_name
         raise ValueError(f"Stage {stage_name} not found")
+
+    def selected_stage(self, selected_stage_name: Optional[str]):
+        return self.to_stage(selected_stage_name) if selected_stage_name else None
+
+    def selected_projects(self, selected_project_names: Optional[str]):
+        return (
+            {p for p in self.stages if p.name in selected_project_names.split(",")}
+            if selected_project_names
+            else set()
+        )
 
 
 @yaml_object(yaml)

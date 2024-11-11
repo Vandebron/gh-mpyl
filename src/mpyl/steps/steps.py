@@ -16,6 +16,7 @@ from .models import Output, Input, RunProperties, ArtifactType, Artifact
 from ..project import Project
 from ..project import Stage
 from ..project_execution import ProjectExecution
+from ..run_plan import RunPlan
 from ..validation import validate
 
 yaml = YAML()
@@ -53,6 +54,7 @@ class Steps:
 
     _logger: Logger
     _properties: RunProperties
+    _run_plan: RunPlan
     _steps_collection: StepsCollection
 
     def __init__(

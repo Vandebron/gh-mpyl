@@ -29,7 +29,6 @@ properties_values = parse_config(resource_path / DEFAULT_RUN_PROPERTIES_FILE_NAM
 RUN_PROPERTIES = stub_run_properties(
     config=config_values,
     properties=properties_values,
-    run_plan=RunPlan.empty(),
     all_projects=set(),
 )
 
@@ -95,36 +94,6 @@ def get_cron_job_project() -> Project:
 
 def safe_load_project(name: str) -> Project:
     return load_project(Path(name), validate_project_yaml=True, log=False)
-
-
-def run_properties_with_plan(plan: RunPlan) -> RunProperties:
-    run_properties = stub_run_properties(
-        config=config_values,
-        properties=properties_values,
-        run_plan=plan,
-        all_projects={get_minimal_project()},
-    )
-
-    return run_properties
-
-
-def run_properties_prod_with_plan() -> RunProperties:
-    plan = RunPlan.from_plan(
-        {TestStage.deploy(): {ProjectExecution.run(get_minimal_project())}}
-    )
-    run_properties_prod = stub_run_properties(
-        config=config_values,
-        properties=properties_values,
-        run_plan=plan,
-        all_projects={get_minimal_project()},
-    )
-    return dataclasses.replace(
-        run_properties_prod,
-        target=Target.PRODUCTION,
-        versioning=dataclasses.replace(
-            RUN_PROPERTIES.versioning, tag="20230829-1234", pr_number=None
-        ),
-    )
 
 
 def get_output() -> Output:
