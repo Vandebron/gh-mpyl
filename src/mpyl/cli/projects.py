@@ -80,10 +80,8 @@ def list_projects(obj: ProjectsContext):
 @projects.command(name="names", help="List found project names")
 @click.pass_obj
 def list_project_names(obj: ProjectsContext):
-    found_projects = find_projects()
-
     names = sorted(
-        [load_project(project, log=False).name for project in found_projects]
+        [load_project(project, log=False).name for project in (find_projects())]
     )
 
     for name in names:
