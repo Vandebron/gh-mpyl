@@ -73,6 +73,9 @@ jobs:
   test:
     name: 🧪 Test
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write  # required for Dependabot to run marocchino/sticky-pull-request-comment
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -121,6 +124,7 @@ jobs:
 
       - name: Add Coverage PR Comment
         uses: marocchino/sticky-pull-request-comment@v2.9.0
+        continue-on-error: true
         with:
           number: ${{ github.event.pull_request.number }}
           path: code-coverage-results.md
