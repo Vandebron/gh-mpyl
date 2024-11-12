@@ -17,7 +17,7 @@ on:  # yamllint disable-line rule:truthy
 # If multiple pull requests are merged before a release is done, keep building the current one and then build the next
 # ones together
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  group: ${{ github.workflow }}
   cancel-in-progress: false
 
 jobs:
