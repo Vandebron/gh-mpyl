@@ -1,7 +1,8 @@
 from pathlib import Path
+from typing import cast
 
 import pytest
-from kubernetes.client import V1Probe, V1ObjectMeta
+from kubernetes.client import V1Probe, V1ObjectMeta, V1DeploymentSpec
 from pyaml_env import parse_config
 
 from src.mpyl.cli import MpylCliParameters
@@ -311,6 +312,8 @@ class TestKubernetesChart:
         assert builder._get_image() == "test-image:latest"
         chart = to_service_chart(builder)
         assert (
-            chart["deployment"].spec.template.spec.containers[0].image
+            cast(V1DeploymentSpec, chart["deployment"].spec)
+            .template.spec.containers[0]
+            .image
             == "test-image:latest"
         )
