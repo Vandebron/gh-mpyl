@@ -16,8 +16,8 @@ on:
 
 # If multiple commits are pushed simultaneously, only build the last one.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || inputs.image }}
+  cancel-in-progress: false
 
 jobs:
   health-check:
