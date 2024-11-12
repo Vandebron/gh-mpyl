@@ -464,7 +464,7 @@ class Build:
 class Deployment:
     cluster: Optional[TargetProperty[str]]
     namespace: Optional[str]
-    properties: Properties
+    properties: Optional[Properties]
     kubernetes: Optional[Kubernetes]
     dagster: Optional[Dagster]
     traefik: Optional[Traefik]
@@ -715,6 +715,10 @@ def get_env_variables(project: Project, target: Target) -> dict[str, str]:
     if project.deployment is None:
         raise KeyError(
             f"No deployment information was found for project: {project.name}"
+        )
+    if project.deployment.properties is None:
+        raise KeyError(
+            f"No properties information was found for project: {project.name}"
         )
     if len(project.deployment.properties.env) == 0:
         raise KeyError(f"No properties.env is defined for project: {project.name}")
