@@ -80,24 +80,11 @@ class Steps:
         self._logger.info(
             f"Executing {executor.meta.name} for '{project_execution.name}'"
         )
-        required = executor.required_artifact
-        if (
-            artifact is not None
-            and required.value != ArtifactType.NONE.value  # pylint: disable=no-member
-            and required.value  # pylint: disable=no-member
-            != artifact.artifact_type.value  # pylint: disable=no-member
-        ):
-            return Output(
-                success=False,
-                message=f"Required artifact of type {required.name} for {executor.meta.name} "
-                f"on {project_execution.name} does not match {artifact.artifact_type.name}.",
-            )
-
         result = executor.execute(
             Input(
                 project_execution=project_execution,
                 run_properties=properties,
-                required_artifact=artifact,
+                artifact=artifact,
             )
         )
         if result.success:
@@ -109,26 +96,6 @@ class Steps:
                 f"Execution of {executor.meta.name} failed for '{project_execution.name}' with outcome '{result.message}'"  # pylint: disable=line-too-long
             )
         return result
-
-    @staticmethod
-    def _find_required_artifact(
-        project: Project, stages: list[Stage], required_artifact: Optional[ArtifactType]
-    ) -> Optional[Artifact]:
-        if not required_artifact or required_artifact == ArtifactType.NONE:
-            return None
-
-        for stage in stages:
-            output: Optional[Output] = Output.try_read(project.target_path, stage.name)
-            if (
-                output
-                and output.produced_artifact
-                and output.produced_artifact.artifact_type == required_artifact
-            ):
-                return output.produced_artifact
-
-        raise ValueError(
-            f"Artifact {required_artifact} required for {project.name} not found"
-        )
 
     def _execute_after_(
         self,
@@ -203,21 +170,12 @@ class Steps:
             self._logger.info(
                 f"Executing {stage.name} {stage.icon} for {project_execution.name}"
             )
-            artifact: Optional[Artifact] = self._find_required_artifact(
-                project_execution.project,
-                self._properties.stages,
-                executor.required_artifact,
-            )
             if executor.before:
                 before_result = self._execute(
                     executor=executor.before,
                     project_execution=project_execution,
                     properties=self._properties,
-                    artifact=self._find_required_artifact(
-                        project_execution.project,
-                        self._properties.stages,
-                        executor.before.required_artifact,
-                    ),
+                    artifact=None,
                 )
                 if not before_result.success:
                     return before_result
@@ -226,7 +184,7 @@ class Steps:
                 executor=executor,
                 project_execution=project_execution,
                 properties=self._properties,
-                artifact=artifact,
+                artifact=None,
             )
             result.write(project_execution.project.target_path, stage.name)
 

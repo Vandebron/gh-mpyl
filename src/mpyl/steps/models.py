@@ -1,10 +1,11 @@
 """ Model representation of run-specific configuration. """
+
 import os
 import pkgutil
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional, cast, Type
+from typing import Optional
 
 from ruamel.yaml import YAML, yaml_object  # type: ignore
 
@@ -224,15 +225,7 @@ class Input:
     project_execution: ProjectExecution
     run_properties: RunProperties
     """Run specific properties"""
-    required_artifact: Optional[Artifact] = None
-
-    def as_spec(self, spec_type: Type[ArtifactSpec]):
-        """Returns the artifact spec as type :param typ:"""
-        if self.required_artifact is None:
-            raise ValueError(
-                f"Artifact required for {self.project_execution.name} not set"
-            )
-        return cast(spec_type, self.required_artifact.spec)  # type: ignore
+    artifact: Optional[Artifact] = None
 
 
 @yaml_object(yaml)

@@ -45,12 +45,7 @@ description: 'A simple Java service'
 ##### Return type
 
 Your step needs to return an `mpyl.steps.models.Output` object with fields that are hopefully self-explanatory.
-The `produced_artifact` can be constructed with `mpyl.steps.models.input_to_artifact`. The `spec` parameter is for
-specifying `ArtifactType` specific metadata, that can be picked up by another step that has `ArtifactType.DOCKER_IMAGE`
-as `required_artifact`, like `mpyl.steps.deploy.kubernetes.DeployKubernetes` for example.
-```python
-input_to_artifact(ArtifactType.DOCKER_IMAGE, step_input, spec=DockerImageSpec(image=image_tag)
-```
+The `produced_artifact` can be constructed with `mpyl.steps.models.input_to_artifact`.
 
 ##### Step input
 The step receives an `mpyl.steps.models.Input` for `execute`. If your step needs configuration settings, like for
@@ -69,6 +64,7 @@ Example:
 ```
 
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -111,10 +107,6 @@ class Step(metaclass=IPluginRegistry):
     """
     produced_artifact: ArtifactType
     """The type of the artifact produced by this step """
-    required_artifact: ArtifactType
-    """Is set to something other than `ArtifactType.NONE` if this step depends on an artifact produced by the execution
-    of an earlier step. For example: a step in the `Deploy` stage, may need to deploy a docker image that was produced
-    in the `Build` stage."""
     before: Optional[Step]
     after: Optional[Step]
     """Will be executed after completion of this step. Can be used for shared post processing steps, like pushing the
@@ -125,14 +117,12 @@ class Step(metaclass=IPluginRegistry):
         logger: Logger,
         meta: Meta,
         produced_artifact: ArtifactType,
-        required_artifact: ArtifactType,
         before: Optional[Step] = None,
         after: Optional[Step] = None,
     ) -> None:
         self._logger = logger.getChild(meta.name.replace(" ", ""))
         self.meta = meta
         self.produced_artifact = produced_artifact
-        self.required_artifact = required_artifact
         self.before = before
         self.after = after
 

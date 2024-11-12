@@ -9,18 +9,22 @@ from tests.test_resources import test_data
 from tests.test_resources.test_data import (
     TestStage,
     get_project_execution,
+    get_minimal_project,
+    stub_run_properties,
 )
 
 
 class TestHelm:
     def test_write_chart(self):
-        output = test_data.get_output()
         step_input = Input(
             project_execution=get_project_execution(),
-            run_properties=test_data.run_properties_with_plan(
-                RunPlan.from_plan({TestStage.deploy(): {get_project_execution()}})
+            run_properties=stub_run_properties(
+                run_plan=RunPlan.from_plan(
+                    {TestStage.deploy(): {get_project_execution()}}
+                ),
+                all_projects={get_minimal_project()},
+                deploy_image="some image",
             ),
-            required_artifact=output.produced_artifact,
         )
         with tempfile.TemporaryDirectory() as tempdir:
             builder = ChartBuilder(step_input)
