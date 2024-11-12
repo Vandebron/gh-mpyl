@@ -111,7 +111,7 @@ def run(
             raise click.ClickException(
                 message="Images can only be passed when deploying"
             )
-        if len(projects) != 1:
+        if len(projects.split(",")) != 1:
             raise click.ClickException(
                 message="Need to pass exactly one project to deploy when passing an image"
             )
