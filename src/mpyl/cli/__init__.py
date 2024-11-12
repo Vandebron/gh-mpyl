@@ -3,6 +3,7 @@
 import asyncio
 import importlib
 import logging
+import os
 from dataclasses import dataclass
 from importlib.metadata import version as version_meta
 from pathlib import Path
@@ -24,14 +25,12 @@ CONFIG_PATH_HELP = "Path to the config.yml. Can be set via `MPYL_CONFIG_PATH` en
 class CliContext:
     config: dict
     console: Console
-    verbose: bool
     run_properties: dict
 
 
 @dataclass(frozen=True)
 class MpylCliParameters:
     tag: Optional[str] = None
-    verbose: bool = False
     stage: Optional[str] = None
     projects: Optional[str] = None
     deploy_image: Optional[str] = None
@@ -97,9 +96,7 @@ def get_version():
 FORMAT = "%(message)s"
 
 
-def create_console_logger(
-    show_path: bool, verbose: bool, max_width: Optional[int] = None
-) -> Console:
+def create_console_logger(show_path: bool, max_width: Optional[int] = None) -> Console:
     console = Console(
         markup=True,
         width=max_width if (max_width is not None and max_width > 0) else None,
@@ -108,6 +105,7 @@ def create_console_logger(
         log_time=False,
         color_system="256",
     )
+    verbose = os.environ.get("RUNNER_DEBUG", "0") == "1"
     logging.basicConfig(
         level="DEBUG" if verbose else "INFO",
         format=FORMAT,

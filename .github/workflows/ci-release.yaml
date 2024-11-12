@@ -11,9 +11,14 @@ on:  # yamllint disable-line rule:truthy
       - src/**
       - actions/**
       - Dockerfile
-      - entrypoint.sh
       - Pipfile
       - Pipfile.lock
+
+# If multiple pull requests are merged before a release is done, keep building the current one and then build the next
+# ones together
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
 
 jobs:
   release:
