@@ -48,16 +48,8 @@ from ..utilities.pyaml_env import parse_config
     default=DEFAULT_RUN_PROPERTIES_FILE_NAME,
     show_default=True,
 )
-@click.option(
-    "--verbose",
-    "-v",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Verbose output",
-)
 @click.pass_context
-def build(ctx, config, properties, verbose):
+def build(ctx, config, properties):
     """Pipeline build commands"""
     parsed_properties = parse_config(properties)
     parsed_config = parse_config(config)
@@ -67,11 +59,10 @@ def build(ctx, config, properties, verbose):
     ).console
     console = create_console_logger(
         show_path=console_config.show_paths,
-        verbose=verbose,
         max_width=console_config.width,
     )
 
-    ctx.obj = CliContext(parsed_config, console, verbose, parsed_properties)
+    ctx.obj = CliContext(parsed_config, console, parsed_properties)
 
 
 class CustomValidation(click.Command):
@@ -115,7 +106,6 @@ def run(
         run_result_file.unlink()
 
     parameters = MpylCliParameters(
-        verbose=obj.verbose,
         tag=tag,
         stage=stage,
         projects=projects,
@@ -127,9 +117,7 @@ def run(
         properties=obj.run_properties,
         cli_parameters=parameters,
     )
-    run_result = run_mpyl(
-        run_properties=run_properties, cli_parameters=parameters, reporter=None
-    )
+    run_result = run_mpyl(run_properties=run_properties, reporter=None)
 
     Path(RUN_ARTIFACTS_FOLDER).mkdir(parents=True, exist_ok=True)
     run_result_file = Path(RUN_ARTIFACTS_FOLDER) / f"run_result-{uuid.uuid4()}.pickle"

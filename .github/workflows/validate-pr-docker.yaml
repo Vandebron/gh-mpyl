@@ -5,7 +5,6 @@ on:
   pull_request:
     paths:
       - Dockerfile
-      - entrypoint.sh
       - src/**
       - Pipfile
       - Pipfile.lock

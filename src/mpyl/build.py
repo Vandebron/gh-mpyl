@@ -89,7 +89,6 @@ def write_run_plan(run_properties: RunProperties):
 
 def run_mpyl(
     run_properties: RunProperties,
-    cli_parameters: MpylCliParameters,
     reporter: Optional[Reporter],
 ) -> RunResult:
     console_properties = run_properties.console
@@ -101,7 +100,7 @@ def run_mpyl(
         color_system="256",
     )
     logging.raiseExceptions = False
-    log_level = "DEBUG" if cli_parameters.verbose else console_properties.log_level
+    log_level = console_properties.log_level
     logging.basicConfig(
         level=log_level,
         format=FORMAT,

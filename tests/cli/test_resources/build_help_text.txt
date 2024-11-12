@@ -6,7 +6,6 @@ Options:
   -c, --config PATH      Path to the config.yml. Can be set via
                          `MPYL_CONFIG_PATH` env var.   [required]
   -p, --properties PATH  Path to run properties  [default: run_properties.yml]
-  -v, --verbose          Verbose output
   --help                 Show this message and exit.
 
 Commands:

@@ -18,7 +18,6 @@ from ....steps.deploy.k8s.chart import ChartBuilder
 def __load_project(
     console: Optional[Console],
     project_path: Path,
-    verbose: bool = False,
 ) -> Optional[Project]:
     try:
         project = load_project(project_path, validate_project_yaml=True, log=False)
@@ -30,7 +29,7 @@ def __load_project(
         if console:
             console.print(f"❌ {project_path}: {exc}")
         return None
-    if console and verbose:
+    if console:
         console.print(f"✅ {project_path}")
     return project
 

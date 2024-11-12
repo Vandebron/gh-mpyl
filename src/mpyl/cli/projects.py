@@ -48,17 +48,13 @@ class ProjectsContext:
     envvar="MPYL_CONFIG_PATH",
     default=DEFAULT_CONFIG_FILE_NAME,
 )
-@click.option("--verbose", "-v", is_flag=True, default=False)
 @click.pass_context
-def projects(ctx, config, verbose):
+def projects(ctx, config):
     """Commands related to MPyL project configurations (project.yml)"""
     ctx.obj = ProjectsContext(
         cli=CliContext(
             config=parse_config(config),
-            console=create_console_logger(
-                show_path=False, verbose=verbose, max_width=0
-            ),
-            verbose=verbose,
+            console=create_console_logger(show_path=False, max_width=0),
             run_properties={},
         ),
     )

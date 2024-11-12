@@ -19,7 +19,6 @@ ENV PYTHONPATH=/app
 
 # Switch to the directory of the calling repo
 WORKDIR /repo
-COPY entrypoint.sh ../entrypoint.sh
 
 # Prevents Python from writing pyc files.
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -28,4 +27,4 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # Run the application.
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["python", "/app/mpyl/__main__.py"]

@@ -52,5 +52,5 @@ class TestCli:
         assert_roundtrip(self.resource_path / "list_projects_text.txt", result.output)
 
     def test_create_console(self):
-        console = create_console_logger(show_path=False, verbose=True, max_width=135)
+        console = create_console_logger(show_path=False, max_width=135)
         assert console.width == 135
