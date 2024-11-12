@@ -33,7 +33,7 @@ inputs:
     default: ${{ github.event.pull_request.number }}
 runs:
   using: docker
-  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.5.6
+  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.5.7
   args:
     - build
     - run
