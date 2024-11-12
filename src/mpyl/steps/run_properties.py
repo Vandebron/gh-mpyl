@@ -20,6 +20,7 @@ def construct_run_properties(
     config: dict,
     properties: dict,
     tag: Optional[str] = None,
+    deploy_image: Optional[str] = None,
 ) -> RunProperties:
     validate_run_properties(properties)
 
@@ -37,4 +38,5 @@ def construct_run_properties(
         config=config,
         all_projects=all_projects,
         cli_tag=tag or properties["build"]["versioning"].get("tag"),
+        deploy_image=deploy_image,
     )

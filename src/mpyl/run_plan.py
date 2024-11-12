@@ -12,7 +12,6 @@ from typing import Optional, Union
 from rich.console import Console
 from rich.markdown import Markdown
 
-from .cli import CliContext
 from .constants import RUN_ARTIFACTS_FOLDER
 from .project import Project, Stage
 from .project_execution import ProjectExecution

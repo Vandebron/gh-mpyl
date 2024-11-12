@@ -10,9 +10,7 @@ from src.mpyl.constants import (
 )
 from src.mpyl.project import load_project, Target, Project, Stages, Stage
 from src.mpyl.project_execution import ProjectExecution
-from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps.models import (
-    RunProperties,
     Output,
     ArtifactType,
     Artifact,

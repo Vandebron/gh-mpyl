@@ -9,7 +9,7 @@ from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps import Step, Meta, ArtifactType, Input, Output
 from src.mpyl.steps.build import STAGE_NAME
 from src.mpyl.steps.run import RunResult
-from src.mpyl.steps.steps import Steps, StepsCollection
+from src.mpyl.steps.steps import Steps, StepsCollection, ExecutionException
 from tests import root_test_path
 from tests.steps.test_models import stub_run_properties
 from tests.test_resources.test_data import (
@@ -37,7 +37,7 @@ class ThrowingStep(Step):
         )
 
     def execute(self, step_input: Input) -> Output:
-        raise Exception("this is not good")
+        raise ExecutionException("test", "tester", "build", "this is not good")
 
 
 class TestBuildCommand:
@@ -56,10 +56,9 @@ class TestBuildCommand:
         executor = Steps(
             logging.getLogger(),
             run_properties,
-            run_plan,
             StepsCollection(logging.getLogger()),
         )
-        result = run_build(self.logger, accumulator, executor, None)
+        result = run_build(self.logger, accumulator, executor)
         assert not result.has_results
         assert result.is_success
         assert result.status_line == "🦥 Nothing to do"
@@ -83,10 +82,9 @@ class TestBuildCommand:
         executor = Steps(
             logging.getLogger(),
             run_properties,
-            run_plan,
             collection,
         )
-        result = run_build(self.logger, accumulator, executor, None)
+        result = run_build(self.logger, accumulator, executor)
         assert result.exception is None
         assert result.status_line == "✅ Successful"
         assert result.is_success
@@ -105,9 +103,9 @@ class TestBuildCommand:
         accumulator = RunResult(run_properties=run_properties, run_plan=run_plan)
         logger = logging.getLogger()
         collection = StepsCollection(logger)
-        executor = Steps(logger, run_properties, run_plan, collection)
+        executor = Steps(logger, run_properties, collection)
 
-        result = run_build(self.logger, accumulator, executor, None)
+        result = run_build(self.logger, accumulator, executor)
         assert not result.has_results
         assert result.status_line == "❗ Failed with exception"
 

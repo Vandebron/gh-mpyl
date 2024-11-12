@@ -97,6 +97,8 @@ class RunProperties:
     """All stage definitions"""
     projects: set[Project]
     """All projects"""
+    deploy_image: Optional[str] = None
+    """The docker image to deploy"""
 
     @staticmethod
     def from_configuration(
@@ -104,20 +106,21 @@ class RunProperties:
         config: dict,
         all_projects: set[Project],
         cli_tag: Optional[str] = None,
+        deploy_image: Optional[str] = None,
     ):
         build = run_properties["build"]
         versioning_config = build["versioning"]
 
         tag: Optional[str] = cli_tag or versioning_config.get("tag")
         pr_from_config: Optional[str] = versioning_config.get("pr_number")
-        pr_num: Optional[int] = (
+        pr_number: Optional[int] = (
             None if tag else (int(pr_from_config) if pr_from_config else None)
         )
 
         versioning = VersioningProperties(
             revision=versioning_config["revision"],
             branch=versioning_config["branch"],
-            pr_number=pr_num,
+            pr_number=pr_number,
             tag=tag,
         )
 
@@ -134,6 +137,7 @@ class RunProperties:
                 for stage in run_properties["stages"]
             ],
             projects=all_projects,
+            deploy_image=deploy_image,
         )
 
     def to_stage(self, stage_name: str) -> Stage:

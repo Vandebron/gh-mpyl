@@ -19,7 +19,6 @@ from src.mpyl.steps.models import (
     ArtifactType,
     RunProperties,
     VersioningProperties,
-    ConsoleProperties,
     Artifact,
 )
 from src.mpyl.steps.steps import Steps
@@ -145,7 +144,6 @@ class TestSteps:
             target=Target.PULL_REQUEST,
             versioning=VersioningProperties("", "feature/ARC-123", 1, None),
             config=config_values,
-            console=ConsoleProperties("INFO", False, 130),
             stages=[],
             projects=set(),
         )

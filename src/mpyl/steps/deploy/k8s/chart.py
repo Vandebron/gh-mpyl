@@ -38,7 +38,7 @@ from kubernetes.client import (
     V1RoleBinding,
     V1PolicyRule,
     V1RoleRef,
-    V1Subject,
+    RbacV1Subject,
 )
 from ruamel.yaml import YAML
 
@@ -628,7 +628,7 @@ class ChartBuilder:
                 name=self.release_name,
             ),
             subjects=[
-                V1Subject(
+                RbacV1Subject(
                     kind="ServiceAccount",
                     name=self.release_name,
                     namespace=self.namespace,
@@ -683,7 +683,13 @@ class ChartBuilder:
         )
 
     def _get_image(self):
-        return self.step_input.as_spec(DockerImageSpec).image
+        passed_deploy_image = self.step_input.run_properties.deploy_image
+
+        return (
+            passed_deploy_image
+            if passed_deploy_image
+            else self.step_input.as_spec(DockerImageSpec).image
+        )
 
     def _get_resources(self):
         resources = self.project.kubernetes.resources

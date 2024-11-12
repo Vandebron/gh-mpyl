@@ -28,6 +28,7 @@ def stub_run_properties(
         config=config,
         all_projects=all_projects,
         cli_tag=cli_parameters.tag or properties["build"]["versioning"].get("tag"),
+        deploy_image=cli_parameters.deploy_image,
     )
 
 

@@ -7,9 +7,10 @@ from tests import root_test_path
 
 class TestConsole(Console):
     def __init__(self):
+        super().__init__()
         self._stdout = []
 
-    def print(self, something: Markdown):  # type: ignore
+    def print(self, something: Markdown):  # type: ignore # pylint: disable=arguments-differ
         self._stdout.append(str(something.markup))
 
     def output(self):

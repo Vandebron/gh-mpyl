@@ -40,7 +40,7 @@ class TestCli:
             ["projects", "-c", str(self.config_path), "lint"],
         )
         assert re.match(
-            r"(.|\n)*Validated .* projects\. .* valid, .* invalid\n\nChecking for duplicate project names: \n.*No duplicate project names found",
+            r"(.|\n)*Validated .* projects\. .* valid, .* invalid\n\nChecking for duplicate project names: \n.*No duplicate project names found",  # pylint: disable=line-too-long
             result.output,
         )
 

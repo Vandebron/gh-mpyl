@@ -1,10 +1,12 @@
 import dataclasses
 from pathlib import Path
+from typing import cast
 
 import pytest
-from kubernetes.client import V1Probe, V1ObjectMeta
+from kubernetes.client import V1Probe, V1ObjectMeta, V1DeploymentSpec
 from pyaml_env import parse_config
 
+from src.mpyl.cli import MpylCliParameters
 from src.mpyl.constants import DEFAULT_CONFIG_FILE_NAME
 from src.mpyl.project import Target, Project
 from src.mpyl.project_execution import ProjectExecution
@@ -303,3 +305,22 @@ class TestKubernetesChart:
             builder_without_swagger
         )
         assert endpoint_without_swagger == "/"
+
+    def test_passed_deploy_image(self):
+        builder = self._get_builder(
+            get_minimal_project(),
+            stub_run_properties(
+                config=config_values,
+                properties=properties_values,
+                all_projects={get_minimal_project()},
+                cli_parameters=MpylCliParameters(deploy_image="test-image:latest"),
+            ),
+        )
+        assert builder._get_image() == "test-image:latest"
+        chart = to_service_chart(builder)
+        assert (
+            cast(V1DeploymentSpec, chart["deployment"].spec)
+            .template.spec.containers[0]
+            .image
+            == "test-image:latest"
+        )
