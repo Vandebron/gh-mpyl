@@ -38,7 +38,7 @@ from kubernetes.client import (
     V1RoleBinding,
     V1PolicyRule,
     V1RoleRef,
-    V1Subject,
+    RbacV1Subject,
 )
 from ruamel.yaml import YAML
 
@@ -628,7 +628,7 @@ class ChartBuilder:
                 name=self.release_name,
             ),
             subjects=[
-                V1Subject(
+                RbacV1Subject(
                     kind="ServiceAccount",
                     name=self.release_name,
                     namespace=self.namespace,
