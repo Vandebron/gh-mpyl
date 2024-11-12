@@ -6,7 +6,7 @@ import logging
 import os
 import time
 from pathlib import Path
-from typing import Union, Optional
+from typing import Union
 
 from jsonschema import ValidationError
 from rich.console import Console
@@ -19,7 +19,6 @@ from .reporting.formatting.markdown import (
     execution_plan_as_markdown,
     run_result_to_markdown,
 )
-from .reporting.targets import Reporter
 from .steps import deploy
 from .steps.collection import StepsCollection
 from .steps.models import Output, RunProperties
@@ -87,10 +86,7 @@ def write_run_plan(run_properties: RunProperties):
         json.dump(list(run_plan.values()), file)
 
 
-def run_mpyl(
-    run_properties: RunProperties,
-    reporter: Optional[Reporter],
-) -> RunResult:
+def run_mpyl(run_properties: RunProperties) -> RunResult:
     console_properties = run_properties.console
     console = Console(
         markup=False,
@@ -120,8 +116,6 @@ def run_mpyl(
         logger.info("Run plan:")
         console.print(Markdown(f"\n\n{run_result_to_markdown(run_result)}"))
 
-        if reporter:
-            reporter.send_report(run_result)
         try:
             steps = Steps(
                 logger=logger,
@@ -130,10 +124,7 @@ def run_mpyl(
             )
 
             run_result = run_build(
-                logger=logger,
-                accumulator=run_result,
-                executor=steps,
-                reporter=reporter,
+                logger=logger, accumulator=run_result, executor=steps
             )
         except ValidationError as exc:
             console.log(
@@ -157,12 +148,7 @@ def run_mpyl(
         raise exc
 
 
-def run_build(
-    logger: logging.Logger,
-    accumulator: RunResult,
-    executor: Steps,
-    reporter: Optional[Reporter] = None,
-):
+def run_build(logger: logging.Logger, accumulator: RunResult, executor: Steps):
     try:
         for stage, project_executions in accumulator.run_plan.selected_plan.items():
             for project_execution in project_executions:
@@ -178,8 +164,6 @@ def run_build(
                 else:
                     result = executor.execute(stage.name, project_execution)
                 accumulator.append(result)
-                if reporter:
-                    reporter.send_report(accumulator)
 
                 if not result.output.success and stage.name == deploy.STAGE_NAME:
                     logger.warning(f"{stage} failed for {project_execution.name}")

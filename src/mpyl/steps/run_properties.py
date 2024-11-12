@@ -44,6 +44,7 @@ def construct_run_properties(
         run_plan=run_plan,
         all_projects=all_projects,
         cli_tag=cli_parameters.tag or properties["build"]["versioning"].get("tag"),
+        deploy_image=cli_parameters.deploy_image,
     )
 
 

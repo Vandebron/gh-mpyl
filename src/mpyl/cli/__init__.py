@@ -33,6 +33,7 @@ class MpylCliParameters:
     tag: Optional[str] = None
     stage: Optional[str] = None
     projects: Optional[str] = None
+    deploy_image: Optional[str] = None
 
 
 async def load_url(test: bool = False):
