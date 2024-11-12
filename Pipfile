@@ -33,7 +33,7 @@ sqlalchemy = "<2.0.0" # forced downgrade https://github.com/dagster-io/dagster/d
 coverage = "==7.6.4"
 'black[d]' = "==23.3.0"
 black = "==23.3.0"
-dill = "==0.3.8"
+dill = "==0.3.9"
 
 [requires]
 python_version = "3.11"
