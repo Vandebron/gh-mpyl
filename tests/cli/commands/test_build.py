@@ -9,7 +9,7 @@ from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps import Step, Meta, ArtifactType, Input, Output
 from src.mpyl.steps.build import STAGE_NAME
 from src.mpyl.steps.run import RunResult
-from src.mpyl.steps.steps import Steps, StepsCollection
+from src.mpyl.steps.steps import Steps, StepsCollection, ExecutionException
 from tests import root_test_path
 from tests.steps.test_models import stub_run_properties
 from tests.test_resources.test_data import (
@@ -38,7 +38,7 @@ class ThrowingStep(Step):
         )
 
     def execute(self, step_input: Input) -> Output:
-        raise Exception("this is not good")
+        raise ExecutionException("test", "tester", "build", "this is not good")
 
 
 class TestBuildCommand:
