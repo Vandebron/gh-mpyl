@@ -112,9 +112,16 @@ class Steps:
 
     @staticmethod
     def _find_required_artifact(
-        project: Project, stages: list[Stage], required_artifact: Optional[ArtifactType]
+        project: Project,
+        stages: list[Stage],
+        required_artifact: Optional[ArtifactType],
+        deploy_image: Optional[str] = None,
     ) -> Optional[Artifact]:
-        if not required_artifact or required_artifact == ArtifactType.NONE:
+        if (
+            not required_artifact
+            or required_artifact == ArtifactType.NONE
+            or (required_artifact == ArtifactType.DOCKER_IMAGE and deploy_image)
+        ):
             return None
 
         for stage in stages:
@@ -207,6 +214,7 @@ class Steps:
                 project_execution.project,
                 self._properties.stages,
                 executor.required_artifact,
+                self._properties.deploy_image,
             )
             if executor.before:
                 before_result = self._execute(
