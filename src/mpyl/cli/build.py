@@ -107,9 +107,13 @@ def run(
         run_result_file.unlink()
 
     if image:
+        if not stage or not projects:
+            raise click.ClickException(
+                message="Need to pass stage and project when passing an image"
+            )
         if stage != deploy.STAGE_NAME:
             raise click.ClickException(
-                message="Images can only be passed when deploying"
+                message="Images can only be passed when selecting the deploy stage"
             )
         if len(projects.split(",")) != 1:
             raise click.ClickException(
