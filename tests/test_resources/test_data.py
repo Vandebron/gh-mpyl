@@ -36,6 +36,7 @@ def stub_run_properties(
     deploy_image: Optional[str] = None,
 ):
     return RunProperties.from_configuration(
+        target=Target.PULL_REQUEST,
         run_properties=properties,
         config=config,
         run_plan=run_plan,

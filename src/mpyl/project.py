@@ -44,6 +44,19 @@ class Target(Enum):
     def __str__(self):
         return str(self.value)
 
+    @staticmethod
+    def from_environment(environment: str):
+        if environment == "pull-request":
+            return Target.PULL_REQUEST
+        if environment == "test":
+            return Target.PULL_REQUEST_BASE
+        if environment == "acceptance":
+            return Target.ACCEPTANCE
+        if environment == "production":
+            return Target.PRODUCTION
+
+        raise ValueError(f"Invalid value for environment: {environment}")
+
     PULL_REQUEST = "PullRequest"
     PULL_REQUEST_BASE = "PullRequestBase"
     ACCEPTANCE = "Acceptance"

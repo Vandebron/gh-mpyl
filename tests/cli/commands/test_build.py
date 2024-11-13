@@ -112,6 +112,8 @@ class TestBuildCommand:
             main_group,
             args=[
                 "build",
+                "-e",
+                "pull-request",
                 "-c",
                 str(self.config_path),
                 "-p",

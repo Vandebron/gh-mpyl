@@ -109,6 +109,7 @@ class RunProperties:
 
     @staticmethod
     def from_configuration(
+        target: Target,
         run_properties: dict,
         config: dict,
         run_plan: RunPlan,
@@ -121,8 +122,7 @@ class RunProperties:
         if build_dict:
             validate(run_properties, build_dict.decode("utf-8"))
 
-        build = run_properties["build"]
-        versioning_config = build["versioning"]
+        versioning_config = run_properties["build"]["versioning"]
 
         tag: Optional[str] = cli_tag or versioning_config.get("tag")
         pr_from_config: Optional[str] = versioning_config.get("pr_number")
@@ -136,17 +136,13 @@ class RunProperties:
             pr_number=pr_number,
             tag=tag,
         )
-        console = ConsoleProperties.from_configuration(build)
 
         return RunProperties(
-            details=RunContext.from_configuration(build["run"]),
-            target=Target(
-                build["parameters"].get("deploy_target", None)
-                or Target.PULL_REQUEST.value  # pylint: disable=no-member
-            ),
+            details=RunContext.from_configuration(run_properties["build"]["run"]),
+            target=target,
             versioning=versioning,
             config=config,
-            console=console,
+            console=ConsoleProperties.from_configuration(run_properties["build"]),
             run_plan=run_plan,
             stages=[
                 Stage(stage["name"], stage["icon"])

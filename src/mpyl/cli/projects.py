@@ -4,11 +4,11 @@ import sys
 from dataclasses import dataclass
 
 import click
+from rich.console import Console
 from rich.markdown import Markdown
 from rich.prompt import Confirm
 
 from . import (
-    CliContext,
     CONFIG_PATH_HELP,
     create_console_logger,
 )
@@ -34,8 +34,9 @@ from ..utilities.pyaml_env import parse_config
 
 
 @dataclass
-class ProjectsContext:
-    cli: CliContext
+class Context:
+    config: dict
+    console: Console = create_console_logger(show_path=False, max_width=0)
 
 
 @click.group("projects")
@@ -51,31 +52,22 @@ class ProjectsContext:
 @click.pass_context
 def projects(ctx, config):
     """Commands related to MPyL project configurations (project.yml)"""
-    ctx.obj = ProjectsContext(
-        cli=CliContext(
-            config=parse_config(config),
-            console=create_console_logger(show_path=False, max_width=0),
-            run_properties={},
-        ),
-    )
-
-
-OVERRIDE_PATTERN = "project-override"
+    ctx.obj = Context(parse_config(config))
 
 
 @projects.command(name="list", help="List found projects")
 @click.pass_obj
-def list_projects(obj: ProjectsContext):
+def list_projects(obj: Context):
     found_projects = find_projects()
 
     for proj in found_projects:
         project = load_project(proj, validate_project_yaml=False, log=False)
-        obj.cli.console.print(Markdown(f"{proj} `{project.name}`"))
+        obj.console.print(Markdown(f"{proj} `{project.name}`"))
 
 
 @projects.command(name="names", help="List found project names")
 @click.pass_obj
-def list_project_names(obj: ProjectsContext):
+def list_project_names(obj: Context):
     names = sorted(
         [
             load_project(project, validate_project_yaml=False, log=False).name
@@ -84,18 +76,18 @@ def list_project_names(obj: ProjectsContext):
     )
 
     for name in names:
-        obj.cli.console.print(name)
+        obj.console.print(name)
 
 
 @projects.command(help="Validate the yaml of changed projects against their schema")
 @click.pass_obj
 # pylint: disable=too-many-branches
-def lint(obj: ProjectsContext):
+def lint(obj: Context):
     all_projects = _check_and_load_projects(
-        console=obj.cli.console, project_paths=find_projects()
+        console=obj.console, project_paths=find_projects()
     )
 
-    console = obj.cli.console
+    console = obj.console
     failed = False
 
     duplicates = _assert_unique_project_names(
@@ -137,7 +129,7 @@ def lint(obj: ProjectsContext):
         wrong_whitelists = _lint_whitelisting_rules(
             console=console,
             projects=all_projects,
-            config=obj.cli.config,
+            config=obj.config,
             target=target,
         )
         if len(wrong_whitelists) == 0:
@@ -171,10 +163,10 @@ def lint(obj: ProjectsContext):
     help="Apply upgrade operations to the project files",
 )
 @click.pass_obj
-def upgrade(obj: ProjectsContext, apply: bool):
+def upgrade(obj: Context, apply: bool):
     paths = find_projects()
     candidates = check_upgrades_needed(paths, PROJECT_UPGRADERS)
-    console = obj.cli.console
+    console = obj.console
     if not apply:
         upgradable = check_upgrade(console, candidates)
         number_in_need_of_upgrade = len(upgradable)

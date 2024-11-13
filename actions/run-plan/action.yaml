@@ -8,10 +8,6 @@ inputs:
   version:
     description: The version of the deliverable produced by the current workflow run
     required: true
-  # to be replaced by environment, see https://vandebron.atlassian.net/browse/GUILD-1138
-  deploy-target:
-    description: The deploy target to use
-    required: true
   config-path:
     description: The path to the MPyL config file
     required: false
@@ -30,9 +26,11 @@ inputs:
     default: ${{ github.event.pull_request.number }}
 runs:
   using: docker
-  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.5.13
+  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.6.1
   args:
     - build
+    - --environment
+    - ${{ inputs.environment }}
     - status
   env:
     MPYL_CONFIG_PATH: ${{ inputs.config-path }}
@@ -41,4 +39,3 @@ runs:
     TAG_NAME: ${{ inputs.environment != 'pull-request' && inputs.version || '' }} # run_properties.versioning.tag
     GIT_COMMIT: ${{ inputs.commit }} # run_properties.versioning.revision
     CHANGE_ID: ${{ inputs.pr-number }} # run_properties.versioning.pr_number
-    DEPLOY_TARGET: ${{ inputs.deploy-target }} # run_properties.parameters.deploy_target
