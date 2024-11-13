@@ -9,14 +9,8 @@ from src.mpyl.steps.run import RunResult
 from src.mpyl.steps.steps import StepResult
 from src.mpyl.utilities.junit import JunitTestSpec, TestRunSummary
 from tests import root_test_path
-from tests.steps.test_models import stub_run_properties
 from tests.test_resources import test_data
-from tests.test_resources.test_data import (
-    TestStage,
-    properties_values,
-    config_values,
-    resource_path,
-)
+from tests.test_resources.test_data import TestStage, stub_run_properties
 
 test_resource_path = root_test_path / "reporting" / "formatting" / "test_resources"
 
@@ -33,8 +27,6 @@ def create_test_result_with_plan() -> RunResult:
     deploy_projects = [__get_other_project()]
     return RunResult(
         run_properties=stub_run_properties(
-            config=config_values,
-            properties=properties_values,
             run_plan=RunPlan.from_plan(
                 {
                     TestStage.build(): {
@@ -46,7 +38,6 @@ def create_test_result_with_plan() -> RunResult:
                     },
                 }
             ),
-            all_projects=set(),
         ),
     )
 

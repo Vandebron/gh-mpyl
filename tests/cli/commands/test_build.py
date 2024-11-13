@@ -11,15 +11,12 @@ from src.mpyl.steps.build import STAGE_NAME
 from src.mpyl.steps.run import RunResult
 from src.mpyl.steps.steps import Steps, StepsCollection, ExecutionException
 from tests import root_test_path
-from tests.steps.test_models import stub_run_properties
 from tests.test_resources.test_data import (
     get_minimal_project,
     RUN_PROPERTIES,
     get_project_with_stages,
     TestStage,
-    config_values,
-    properties_values,
-    run_properties_with_plan,
+    stub_run_properties,
 )
 
 
@@ -34,7 +31,6 @@ class ThrowingStep(Step):
                 stage=STAGE_NAME,
             ),
             produced_artifact=ArtifactType.NONE,
-            required_artifact=ArtifactType.NONE,
         )
 
     def execute(self, step_input: Input) -> Output:
@@ -71,7 +67,10 @@ class TestBuildCommand:
                 TestStage.deploy(): project_executions,
             }
         )
-        run_properties = run_properties_with_plan(plan=run_plan)
+        run_properties = stub_run_properties(
+            run_plan=run_plan,
+            all_projects={get_minimal_project()},
+        )
         accumulator = RunResult(run_properties=run_properties)
         collection = StepsCollection(logging.getLogger())
         executor = Steps(
@@ -91,8 +90,6 @@ class TestBuildCommand:
             {TestStage.build(): {ProjectExecution.run(p) for p in projects}}
         )
         run_properties = stub_run_properties(
-            config=config_values,
-            properties=properties_values,
             run_plan=run_plan,
             all_projects=projects,
         )

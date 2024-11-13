@@ -18,7 +18,6 @@ class BuildSkip(Step):
                 stage=STAGE_NAME,
             ),
             produced_artifact=ArtifactType.NONE,
-            required_artifact=ArtifactType.NONE,
         )
 
     def execute(self, step_input: Input) -> Output:

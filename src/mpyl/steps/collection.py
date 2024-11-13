@@ -1,4 +1,5 @@
 """A collection of all available step executors."""
+
 import importlib
 import importlib.util
 import pkgutil
@@ -6,8 +7,7 @@ from logging import Logger
 from typing import Optional
 
 from . import Step, IPluginRegistry
-from ..project import Stage, Project
-from ..steps import ArtifactType
+from ..project import Stage
 
 
 class StepsCollection:
@@ -63,17 +63,6 @@ class StepsCollection:
         except ModuleNotFoundError as exc:
             logger.debug(f"Module {module_root} at {base_path} not found {exc}")
             return None
-
-    def get_stage_for_producing_artifact(
-        self, project: Project, artifact: ArtifactType
-    ) -> Optional[str]:
-        for stage, step in project.stages.all().items():
-            if step is not None:
-                executor = self.get_executor(Stage(stage, "icon"), step)
-                if executor is not None:
-                    if executor.produced_artifact == artifact:
-                        return stage
-        return None
 
     def get_executor(self, stage: Stage, step_name: str) -> Optional[Step]:
         executors = filter(

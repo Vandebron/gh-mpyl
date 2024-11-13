@@ -40,7 +40,6 @@ class DeployDagster(Step):
                 stage=STAGE_NAME,
             ),
             produced_artifact=ArtifactType.NONE,
-            required_artifact=ArtifactType.DOCKER_IMAGE,
         )
 
     def __evaluate_results(self, results: List[Output]):

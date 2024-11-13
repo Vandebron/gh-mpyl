@@ -22,7 +22,6 @@ class DeployKubernetes(Step):
                 stage=STAGE_NAME,
             ),
             produced_artifact=ArtifactType.NONE,
-            required_artifact=ArtifactType.DOCKER_IMAGE,
         )
 
     @staticmethod

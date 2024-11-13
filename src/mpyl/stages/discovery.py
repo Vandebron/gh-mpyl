@@ -17,7 +17,7 @@ from ..project_execution import ProjectExecution
 from ..run_plan import RunPlan
 from ..steps import deploy
 from ..steps.collection import StepsCollection
-from ..steps.models import Output, ArtifactType
+from ..steps.models import Output
 from ..utilities.repo import Changeset
 
 
@@ -92,18 +92,6 @@ def is_file_a_dependency(
     if executor is None:
         logger.debug(f"Project {project.name}: no executor found for stage {stage}")
         return False
-
-    required_artifact = executor.required_artifact
-    if required_artifact != ArtifactType.NONE:
-        producing_stage = steps.get_stage_for_producing_artifact(
-            project, required_artifact
-        )
-        if producing_stage is not None and producing_stage in touched_stages:
-            logger.debug(
-                f"Project {project.name} added to the run plan because producing stage {producing_stage} for required "
-                f"artifact {required_artifact} is modified"
-            )
-            return True
 
     return False
 

@@ -21,7 +21,6 @@ class BpmDiagramDeploy(Step):
                 stage=STAGE_NAME,
             ),
             produced_artifact=ArtifactType.NONE,
-            required_artifact=ArtifactType.NONE,
             # TO DO: create bpm artifact:
             # https://vandebron.atlassian.net/browse/BPMN-293
         )

@@ -30,7 +30,6 @@ class TestEcho(Step):
                 stage=STAGE_NAME,
             ),
             produced_artifact=ArtifactType.JUNIT_TESTS,
-            required_artifact=ArtifactType.NONE,
         )
 
     def execute(self, step_input: Input) -> Output:

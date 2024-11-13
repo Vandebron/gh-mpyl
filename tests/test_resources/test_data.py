@@ -1,10 +1,10 @@
 import dataclasses
 import os
 from pathlib import Path
+from typing import Optional
 
 from attr import dataclass
 
-from src.mpyl.cli import MpylCliParameters
 from src.mpyl.constants import (
     DEFAULT_CONFIG_FILE_NAME,
     DEFAULT_RUN_PROPERTIES_FILE_NAME,
@@ -21,18 +21,32 @@ from src.mpyl.steps.models import (
 from src.mpyl.utilities.docker import DockerImageSpec
 from src.mpyl.utilities.pyaml_env import parse_config
 from tests import root_test_path
-from tests.steps.test_models import stub_run_properties
 
 resource_path = root_test_path / "test_resources"
 config_values = parse_config(resource_path / DEFAULT_CONFIG_FILE_NAME)
 properties_values = parse_config(resource_path / DEFAULT_RUN_PROPERTIES_FILE_NAME)
 
-RUN_PROPERTIES = stub_run_properties(
-    config=config_values,
-    properties=properties_values,
-    run_plan=RunPlan.empty(),
-    all_projects=set(),
-)
+
+def stub_run_properties(
+    config: dict = config_values,
+    properties: dict = properties_values,
+    run_plan: RunPlan = RunPlan.empty(),
+    all_projects: set[Project] = set(),
+    tag: Optional[str] = None,
+    deploy_image: Optional[str] = None,
+):
+    return RunProperties.from_configuration(
+        target=Target.PULL_REQUEST,
+        run_properties=properties,
+        config=config,
+        run_plan=run_plan,
+        all_projects=all_projects,
+        cli_tag=tag or properties["build"]["versioning"].get("tag"),
+        deploy_image=deploy_image,
+    )
+
+
+RUN_PROPERTIES = stub_run_properties()
 
 RUN_PROPERTIES_PROD = dataclasses.replace(
     RUN_PROPERTIES,
@@ -96,39 +110,6 @@ def get_cron_job_project() -> Project:
 
 def safe_load_project(name: str) -> Project:
     return load_project(Path(name), validate_project_yaml=True, log=False)
-
-
-def run_properties_with_plan(
-    plan: RunPlan, cli_parameters=MpylCliParameters()
-) -> RunProperties:
-    run_properties = stub_run_properties(
-        config=config_values,
-        properties=properties_values,
-        run_plan=plan,
-        all_projects={get_minimal_project()},
-        cli_parameters=cli_parameters,
-    )
-
-    return run_properties
-
-
-def run_properties_prod_with_plan() -> RunProperties:
-    plan = RunPlan.from_plan(
-        {TestStage.deploy(): {ProjectExecution.run(get_minimal_project())}}
-    )
-    run_properties_prod = stub_run_properties(
-        config=config_values,
-        properties=properties_values,
-        run_plan=plan,
-        all_projects={get_minimal_project()},
-    )
-    return dataclasses.replace(
-        run_properties_prod,
-        target=Target.PRODUCTION,
-        versioning=dataclasses.replace(
-            RUN_PROPERTIES.versioning, tag="20230829-1234", pr_number=None
-        ),
-    )
 
 
 def get_output() -> Output:

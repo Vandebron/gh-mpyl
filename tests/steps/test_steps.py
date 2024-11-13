@@ -89,37 +89,6 @@ class TestSteps:
             yaml_to_string(output, yaml),
         )
 
-    def test_find_required_output(self):
-        found_artifact = Steps._find_required_artifact(
-            self.build_project, RUN_PROPERTIES.stages, ArtifactType.DOCKER_IMAGE
-        )
-        assert found_artifact is not None
-        assert self.docker_image.produced_artifact is not None
-        assert (
-            cast(DockerImageSpec, found_artifact.spec).image
-            == cast(DockerImageSpec, self.docker_image.produced_artifact.spec).image
-        )
-
-    def test_find_not_required_output(self):
-        with pytest.raises(ValueError) as exc_info:
-            Steps._find_required_artifact(
-                self.build_project,
-                RUN_PROPERTIES.stages,
-                ArtifactType.DEPLOYED_HELM_APP,
-            )
-        assert (
-            str(exc_info.value)
-            == "Artifact ArtifactType.DEPLOYED_HELM_APP required for test not found"
-        )
-
-    def test_find_required_output_should_handle_none(self):
-        assert (
-            Steps._find_required_artifact(
-                self.build_project, RUN_PROPERTIES.stages, None
-            )
-            is None
-        )
-
     def test_should_return_error_if_stage_not_defined(self):
         steps = Steps(
             logger=Logger.manager.getLogger("logger"),
@@ -169,10 +138,7 @@ class TestSteps:
         )
         assert result.output.success
         assert result.output.message == "Built test"
-        assert result.output.produced_artifact is not None
-        assert (
-            result.output.produced_artifact.artifact_type == ArtifactType.DOCKER_IMAGE
-        )
+        assert result.output.produced_artifact is None
 
     def test_should_fail_if_executor_is_not_known(self):
         project = test_data.get_project_with_stages({"build": "Unknown Build"})
