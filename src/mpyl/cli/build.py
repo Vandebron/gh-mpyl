@@ -4,12 +4,13 @@ import pickle
 import shutil
 import sys
 import uuid
+from dataclasses import dataclass
 from pathlib import Path
 
 import click
+from rich.console import Console
 
 from . import (
-    CliContext,
     CONFIG_PATH_HELP,
     MpylCliParameters,
 )
@@ -21,8 +22,8 @@ from ..constants import (
     RUN_ARTIFACTS_FOLDER,
     RUN_RESULT_FILE_GLOB,
 )
-from ..project import load_project
 from ..run_plan import load_run_plan_from_file
+from ..project import load_project, Target
 from ..stages.discovery import find_projects
 from ..steps import deploy
 from ..steps.models import ConsoleProperties
@@ -30,7 +31,22 @@ from ..steps.run_properties import construct_run_properties
 from ..utilities.pyaml_env import parse_config
 
 
+@dataclass(frozen=True)
+class Context:
+    target: Target
+    config: dict
+    console: Console
+    run_properties: dict
+
+
 @click.group("build")
+@click.option(
+    "--environment",
+    "-e",
+    required=True,
+    type=click.Choice(["pull-request", "test", "acceptance", "production"]),
+    help="The environment to deploy to",
+)
 @click.option(
     "--config",
     "-c",
@@ -51,12 +67,22 @@ from ..utilities.pyaml_env import parse_config
     show_default=True,
 )
 @click.pass_context
-def build(ctx, config, properties):
+def build(ctx, environment, config, properties):
     """Pipeline build commands"""
     parsed_properties = parse_config(properties)
-    parsed_config = parse_config(config)
 
-    ctx.obj = CliContext(parsed_config, parsed_properties)
+    console_config = ConsoleProperties.from_configuration(parsed_properties["build"])
+    console = create_console_logger(
+        show_path=console_config.show_paths,
+        max_width=console_config.width,
+    )
+
+    ctx.obj = Context(
+        target=Target.from_environment(environment),
+        config=parse_config(config),
+        console=console,
+        run_properties=parsed_properties,
+    )
 
 
 class CustomValidation(click.Command):
@@ -89,7 +115,7 @@ class CustomValidation(click.Command):
 )
 @click.pass_obj
 def run(
-    obj: CliContext,
+    obj: Context,
     tag,
     stage,
     projects,
@@ -100,11 +126,15 @@ def run(
         run_result_file.unlink()
 
     if image:
+        if not stage or not projects:
+            raise click.ClickException(
+                message="Need to pass stage and project when passing an image"
+            )
         if stage != deploy.STAGE_NAME:
             raise click.ClickException(
-                message="Images can only be passed when deploying"
+                message="Images can only be passed when selecting the deploy stage"
             )
-        if len(projects) != 1:
+        if len(projects.split(",")) != 1:
             raise click.ClickException(
                 message="Need to pass exactly one project to deploy when passing an image"
             )
@@ -112,15 +142,10 @@ def run(
     parameters = MpylCliParameters(
         tag=tag, stage=stage, projects=projects, deploy_image=image
     )
-
-    console_config = ConsoleProperties.from_configuration(obj.run_properties)
-    console = create_console_logger(
-        show_path=console_config.show_paths,
-        max_width=console_config.width,
-    )
-    console.log(parameters)
+    obj.console.log(parameters)
 
     run_properties = construct_run_properties(
+        target=obj.target,
         config=obj.config,
         properties=obj.run_properties,
         tag=parameters.tag,
@@ -132,7 +157,9 @@ def run(
     )
 
     run_result = run_mpyl(
-        console_properties=console_config,
+        console_properties=ConsoleProperties.from_configuration(
+            obj.run_properties["build"]
+        ),
         run_properties=run_properties,
         run_plan=run_plan,
     )
@@ -147,16 +174,11 @@ def run(
 
 @build.command(help=f"Clean all MPyL metadata in `{RUN_ARTIFACTS_FOLDER}` folders")
 @click.pass_obj
-def clean(obj: CliContext):
+def clean(obj: Context):
     artifacts_path = Path(RUN_ARTIFACTS_FOLDER)
-    console_config = ConsoleProperties.from_configuration(obj.run_properties)
-    console = create_console_logger(
-        show_path=console_config.show_paths,
-        max_width=console_config.width,
-    )
     if artifacts_path.is_dir():
         shutil.rmtree(artifacts_path)
-        console.print(f"🧹 Cleaned up {artifacts_path}")
+        obj.console.print(f"🧹 Cleaned up {artifacts_path}")
 
     found_projects: list[Path] = [
         Path(load_project(project_path, validate_project_yaml=False).target_path)
@@ -167,6 +189,6 @@ def clean(obj: CliContext):
     if paths_to_clean:
         for target_path in set(paths_to_clean):
             shutil.rmtree(target_path)
-            console.print(f"🧹 Cleaned up {target_path}")
+            obj.console.print(f"🧹 Cleaned up {target_path}")
     else:
-        console.print("Nothing to clean")
+        obj.console.print("Nothing to clean")

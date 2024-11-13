@@ -41,13 +41,11 @@ def deploy_to_cluster(
                     f"Deployment of BPM diagrams to cluster for project {project_name} "
                     f"failed with {output.message}"
                 ),
-                produced_artifact=None,
             )
 
     return Output(
         success=True,
         message=f"Deployed all diagrams in {project_name} to Camunda cluster",
-        produced_artifact=None,
     )
 
 
@@ -70,23 +68,19 @@ def deploy_to_modeler(
         return Output(
             success=False,
             message=f"Authorization Error for project {project_name}",
-            produced_artifact=None,
         )
     except HTTPRequestError as err:
         return Output(
             success=False,
             message=f"Deploy BPMN diagrams to modeler for project {project_name} have http error {err}",
-            produced_artifact=None,
         )
     except ValueError as err:
         return Output(
             success=False,
             message=f"Project {project_name} has value error: {err}",
-            produced_artifact=None,
         )
 
     return Output(
         success=True,
         message=f"Deployed all diagrams in {project_name} to Camunda modeler",
-        produced_artifact=None,
     )

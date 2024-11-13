@@ -22,12 +22,6 @@ CONFIG_PATH_HELP = "Path to the config.yml. Can be set via `MPYL_CONFIG_PATH` en
 
 
 @dataclass(frozen=True)
-class CliContext:
-    config: dict
-    run_properties: dict
-
-
-@dataclass(frozen=True)
 class MpylCliParameters:
     tag: Optional[str] = None
     stage: Optional[str] = None

@@ -40,27 +40,9 @@ If you use MPyL in a github action, a build will be triggered automatically and 
 
 ### Command structure
 
-```
-.. include:: tests/cli/test_resources/main_help_text.txt
-```
-
 Top level commands options are passed on to sub commands and need to be specified *before* the sub command.
 In ```mpyl projects --config <path> list ```, the `--config` option applies to all `project` commands, like `list`
 or `lint`.
-
-<details>
-  <summary>Projects</summary>
-```
-.. include:: tests/cli/test_resources/projects_help_text.txt
-```
-</details>
-
-<details>
-  <summary>Build</summary>
-```
-.. include:: tests/cli/test_resources/build_help_text.txt
-```
-</details>
 
 ##### MPyL configuration
 
@@ -230,12 +212,6 @@ A typical `.mpyl` folder has a file for each executed stage. The `BUILD.yml` fil
 build step. For example:
 ```yaml
 message: Pushed ghcr.io/samtheisens/nodeservice:pr-6
-produced_artifact: !Artifact
-  artifact_type: !ArtifactType DOCKER_IMAGE-1
-  revision: b6c87b70c3c16174bdacac6c7dd4ef71b4bb0047
-  producing_step: After Docker Build
-  spec: !DockerImageSpec
-    image: ghcr.io/samtheisens/nodeservice:pr-6
 ```
 These files speed up subsequent runs by preventing steps from being executed when their inputs have not changed.
 
@@ -248,13 +224,6 @@ mpyl build clean
 
 See `mpyl.steps`.
 
-## ..create a test step
-
-### Junit test results
-
-MPyL can parse Junit test results for reporting purposes. Your test step needs to produce a
-`mpyl.steps.models.ArtifactType.JUNIT_TESTS` artifact.
-See `mpyl.steps.test.echo` for an example of how such an artifact can be created.
 
 ### Integration tests
 If your project includes "integration tests" that require a docker container to run during the test stage,

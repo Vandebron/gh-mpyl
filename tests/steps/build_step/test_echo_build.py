@@ -8,7 +8,7 @@ from tests.test_resources.test_data import get_project_execution
 
 class TestBuildEcho:
     def test_build_echo(self):
-        step_input = Input(get_project_execution(), test_data.RUN_PROPERTIES, None)
+        step_input = Input(get_project_execution(), test_data.RUN_PROPERTIES)
         echo = BuildEcho(logger=logging.getLogger())
         output = echo.execute(step_input)
         assert output.success

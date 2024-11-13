@@ -46,7 +46,6 @@ class TestDagster:
                 )
             ),
             run_properties=test_data.RUN_PROPERTIES,
-            required_artifact=None,
         )
 
         values = to_user_code_values(
@@ -72,7 +71,6 @@ class TestDagster:
                 )
             ),
             run_properties=test_data.RUN_PROPERTIES_PROD,
-            required_artifact=None,
         )
 
         values = to_user_code_values(
@@ -96,7 +94,6 @@ class TestDagster:
                 )
             ),
             run_properties=test_data.RUN_PROPERTIES,
-            required_artifact=None,
         )
 
         values = to_user_code_values(
@@ -123,7 +120,6 @@ class TestDagster:
                 )
             ),
             run_properties=test_data.RUN_PROPERTIES,
-            required_artifact=None,
         )
 
         values = to_user_code_values(

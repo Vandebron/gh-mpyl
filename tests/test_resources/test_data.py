@@ -1,6 +1,7 @@
 import dataclasses
 import os
 from pathlib import Path
+from typing import Optional
 
 from attr import dataclass
 
@@ -10,25 +11,33 @@ from src.mpyl.constants import (
 )
 from src.mpyl.project import load_project, Target, Project, Stages, Stage
 from src.mpyl.project_execution import ProjectExecution
-from src.mpyl.steps.models import (
-    Output,
-    ArtifactType,
-    Artifact,
-)
-from src.mpyl.utilities.docker import DockerImageSpec
+from src.mpyl.steps.models import RunProperties
 from src.mpyl.utilities.pyaml_env import parse_config
 from tests import root_test_path
-from tests.steps.test_models import stub_run_properties
 
 resource_path = root_test_path / "test_resources"
 config_values = parse_config(resource_path / DEFAULT_CONFIG_FILE_NAME)
 properties_values = parse_config(resource_path / DEFAULT_RUN_PROPERTIES_FILE_NAME)
 
-RUN_PROPERTIES = stub_run_properties(
-    config=config_values,
-    properties=properties_values,
-    all_projects=set(),
-)
+
+def stub_run_properties(
+    config: dict = config_values,
+    properties: dict = properties_values,
+    all_projects: set[Project] = set(),
+    tag: Optional[str] = None,
+    deploy_image: Optional[str] = None,
+):
+    return RunProperties.from_configuration(
+        target=Target.PULL_REQUEST,
+        run_properties=properties,
+        config=config,
+        all_projects=all_projects,
+        cli_tag=tag or properties["build"]["versioning"].get("tag"),
+        deploy_image=deploy_image,
+    )
+
+
+RUN_PROPERTIES = stub_run_properties()
 
 RUN_PROPERTIES_PROD = dataclasses.replace(
     RUN_PROPERTIES,
@@ -92,20 +101,6 @@ def get_cron_job_project() -> Project:
 
 def safe_load_project(name: str) -> Project:
     return load_project(Path(name), validate_project_yaml=True, log=False)
-
-
-def get_output() -> Output:
-    return Output(
-        success=True,
-        message="build success",
-        produced_artifact=Artifact(
-            artifact_type=ArtifactType.DOCKER_IMAGE,
-            revision="123",
-            hash="a generated hash",
-            producing_step="Producing Step",
-            spec=DockerImageSpec(image="image:latest"),
-        ),
-    )
 
 
 def get_project_with_stages(

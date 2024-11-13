@@ -1,7 +1,6 @@
 """Kubernetes deployment related helper methods"""
 
 import datetime
-from dataclasses import dataclass
 from logging import Logger
 from pathlib import Path
 from typing import Optional
@@ -9,11 +8,11 @@ from typing import Optional
 import yaml as dict_to_yaml_str
 from kubernetes import client
 from kubernetes.client import V1ConfigMap, ApiException, V1Deployment
-from ruamel.yaml import yaml_object, YAML
+from ruamel.yaml import YAML
 
 from .helm import write_helm_chart, GENERATED_WARNING
 from ...deploy.k8s.resources import CustomResourceDefinition
-from ...models import input_to_artifact, ArtifactType, ArtifactSpec, RunProperties
+from ...models import RunProperties
 from ....project import ProjectName, Project, Target
 from ....steps import Input, Output
 from ....steps.deploy.k8s import helm
@@ -26,20 +25,6 @@ from ....steps.deploy.k8s.resources import to_yaml
 from ....utilities import replace_pr_number
 
 yaml = YAML()
-
-
-@yaml_object(yaml)
-@dataclass
-class DeployedHelmAppSpec(ArtifactSpec):
-    yaml_tag = "!DeployedHelmAppSpec"
-    url: Optional[str]
-
-
-@yaml_object(yaml)
-@dataclass
-class RenderedHelmChartSpec(ArtifactSpec):
-    yaml_tag = "!RenderedHelmChartSpec"
-    chart_path: str
 
 
 def rollout_restart_deployment(
@@ -132,16 +117,9 @@ def generate_helm_charts(  # pylint: disable=too-many-locals
         logger, chart, Path(project.target_path), run_properties, release_name
     )
 
-    artifact = input_to_artifact(
-        ArtifactType.HELM_CHART,
-        step_input,
-        spec=RenderedHelmChartSpec(str(chart_path)),
-    )
-
     return Output(
         success=True,
         message=f"Helm charts written to {chart_path}",
-        produced_artifact=artifact,
     )
 
 

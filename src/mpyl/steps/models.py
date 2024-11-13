@@ -1,15 +1,16 @@
 """ Model representation of run-specific configuration. """
 
 import os
+import pkgutil
 from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
-from typing import Optional, cast, Type
+from typing import Optional
 
 from ruamel.yaml import YAML, yaml_object  # type: ignore
 
 from ..project import Project, Stage, Target
 from ..project_execution import ProjectExecution
+from ..validation import validate
 
 yaml = YAML()
 
@@ -102,14 +103,19 @@ class RunProperties:
 
     @staticmethod
     def from_configuration(
+        target: Target,
         run_properties: dict,
         config: dict,
         all_projects: set[Project],
         cli_tag: Optional[str] = None,
         deploy_image: Optional[str] = None,
     ):
-        build = run_properties["build"]
-        versioning_config = build["versioning"]
+        build_dict = pkgutil.get_data(__name__, "../schema/run_properties.schema.yml")
+
+        if build_dict:
+            validate(run_properties, build_dict.decode("utf-8"))
+
+        versioning_config = run_properties["build"]["versioning"]
 
         tag: Optional[str] = cli_tag or versioning_config.get("tag")
         pr_from_config: Optional[str] = versioning_config.get("pr_number")
@@ -125,11 +131,8 @@ class RunProperties:
         )
 
         return RunProperties(
-            details=RunContext.from_configuration(build["run"]),
-            target=Target(
-                build["parameters"].get("deploy_target", None)
-                or Target.PULL_REQUEST.value  # pylint: disable=no-member
-            ),
+            details=RunContext.from_configuration(run_properties["build"]["run"]),
+            target=target,
             versioning=versioning,
             config=config,
             stages=[
@@ -159,75 +162,10 @@ class RunProperties:
 
 @yaml_object(yaml)
 @dataclass(frozen=False)
-class ArtifactType(Enum):
-    def __eq__(self, other):
-        return self.value == other.value
-
-    @classmethod
-    def from_yaml(cls, _, node):
-        return ArtifactType(int(node.value.split("-")[1]))
-
-    @classmethod
-    def to_yaml(cls, representer, node):
-        return representer.represent_scalar(
-            "!ArtifactType",
-            f"{node._name_}-{node._value_}",  # pylint: disable=protected-access
-        )
-
-    DOCKER_IMAGE = 1
-    """A docker image"""
-    JUNIT_TESTS = 2
-    """A test suite in junit compatible `.xml` format"""
-    DEPLOYED_HELM_APP = 3
-    """Null object"""
-    NONE = 4
-    """A helm chart deployed to kubernetes"""
-    HELM_CHART = 5
-    """A helm chart written to a folder"""
-    KUBERNETES_MANIFEST = 6
-    """"A k8s manifest writen to a file"""
-    ARCHIVE = 7
-    """"An artifact archive e.g. .jar, .tar, .zip"""
-
-
-@yaml_object(yaml)
-@dataclass
-class ArtifactSpec:
-    pass
-
-
-@yaml_object(yaml)
-@dataclass(frozen=False)
-class Artifact:
-    artifact_type: ArtifactType
-    revision: str
-    producing_step: str
-    spec: ArtifactSpec
-    hash: Optional[str] = None
-
-
-@yaml_object(yaml)
-@dataclass
-class ArchiveSpec(ArtifactSpec):
-    yaml_tag = "!ArchiveSpec"
-    archive_path: str
-
-
-@yaml_object(yaml)
-@dataclass(frozen=False)
 class Input:
     project_execution: ProjectExecution
     run_properties: RunProperties
     """Run specific properties"""
-    required_artifact: Optional[Artifact] = None
-
-    def as_spec(self, spec_type: Type[ArtifactSpec]):
-        """Returns the artifact spec as type :param typ:"""
-        if self.required_artifact is None:
-            raise ValueError(
-                f"Artifact required for {self.project_execution.name} not set"
-            )
-        return cast(spec_type, self.required_artifact.spec)  # type: ignore
 
 
 @yaml_object(yaml)
@@ -235,7 +173,7 @@ class Input:
 class Output:
     success: bool
     message: str
-    produced_artifact: Optional[Artifact] = None
+    hash: Optional[str] = None
 
     @staticmethod
     def path(target_path: Path, stage: str):
@@ -253,15 +191,3 @@ class Output:
             with open(path, encoding="utf-8") as file:
                 return yaml.load(file)
         return None
-
-
-def input_to_artifact(
-    artifact_type: ArtifactType, step_input: Input, spec: ArtifactSpec
-):
-    return Artifact(
-        artifact_type=artifact_type,
-        revision=step_input.run_properties.versioning.revision,
-        hash=step_input.project_execution.hashed_changes,
-        producing_step=step_input.project_execution.name,
-        spec=spec,
-    )

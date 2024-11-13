@@ -6,7 +6,7 @@ Can be used to add the stage to the run plan, so you can run something else in y
 from logging import Logger
 
 from .. import Step, Meta
-from ..models import Input, Output, ArtifactType
+from ..models import Input, Output
 from . import STAGE_NAME
 
 
@@ -20,8 +20,6 @@ class PostdeploySkip(Step):
                 version="0.0.1",
                 stage=STAGE_NAME,
             ),
-            produced_artifact=ArtifactType.NONE,
-            required_artifact=ArtifactType.NONE,
         )
 
     def execute(self, step_input: Input) -> Output:

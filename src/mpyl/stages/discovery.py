@@ -1,6 +1,6 @@
 """ Discovery of projects that are relevant to a specific `mpyl.stage.Stage` . Determine which of the
 discovered projects have been invalidated due to changes in the source code since the last build of the project's
-output artifact."""
+output."""
 
 import hashlib
 import logging
@@ -13,7 +13,7 @@ from ..project import Stage
 from ..project_execution import ProjectExecution
 from ..steps import deploy
 from ..steps.collection import StepsCollection
-from ..steps.models import Output, ArtifactType
+from ..steps.models import Output
 from ..utilities.repo import Changeset
 
 
@@ -89,18 +89,6 @@ def is_file_a_dependency(
         logger.debug(f"Project {project.name}: no executor found for stage {stage}")
         return False
 
-    required_artifact = executor.required_artifact
-    if required_artifact != ArtifactType.NONE:
-        producing_stage = steps.get_stage_for_producing_artifact(
-            project, required_artifact
-        )
-        if producing_stage is not None and producing_stage in touched_stages:
-            logger.debug(
-                f"Project {project.name} added to the run plan because producing stage {producing_stage} for required "
-                f"artifact {required_artifact} is modified"
-            )
-            return True
-
     return False
 
 
@@ -125,11 +113,7 @@ def is_project_cached_for_stage(
         logger.debug(
             f"Project {project} will execute stage {stage} because the previous run was not successful"
         )
-    elif output.produced_artifact is None:
-        logger.debug(
-            f"Project {project} will execute stage {stage} because there was no artifact in the previous run"
-        )
-    elif not output.produced_artifact.hash:
+    elif not output.hash:
         logger.debug(
             f"Project {project} will execute stage {stage} because there are no hashed changes for the previous run"
         )
@@ -137,13 +121,11 @@ def is_project_cached_for_stage(
         logger.debug(
             f"Project {project} will execute stage {stage} because there are no hashed changes for the current run"
         )
-    elif output.produced_artifact.hash != hashed_changes:
+    elif output.hash != hashed_changes:
         logger.debug(
             f"Project {project} will execute stage {stage} because its content changed since the previous run"
         )
-        logger.debug(
-            f"Hashed changes for the previous run: {output.produced_artifact.hash}"
-        )
+        logger.debug(f"Hashed changes for the previous run: {output.hash}")
         logger.debug(f"Hashed changes for the current run:  {hashed_changes}")
     else:
         logger.debug(

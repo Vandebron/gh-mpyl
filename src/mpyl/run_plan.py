@@ -15,9 +15,7 @@ from rich.markdown import Markdown
 from .constants import RUN_ARTIFACTS_FOLDER
 from .project import Project, Stage
 from .project_execution import ProjectExecution
-from .stages.discovery import (
-    find_projects_to_execute,
-)
+from .stages.discovery import find_projects_to_execute
 from .steps.collection import StepsCollection
 from .utilities.repo import Changeset
 

@@ -58,10 +58,6 @@ The following technologies are expected to be present on the local OS:
 ### Bundled
 MPyL is extensible and has a minimal footprint. Having said that, batteries for the following technologies are included.
 
-##### CI/CD
-###### Testing
-- [Junit](https://junit.org/) `mpyl.steps.models.ArtifactType.JUNIT_TESTS`
-
 ###### Deployment
 - [K8S](https://kubernetes.io/) `mpyl.steps.deploy.kubernetes`
 - [Helm](https://helm.sh/) `mpyl.steps.deploy.k8s.helm`

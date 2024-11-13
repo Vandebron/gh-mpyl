@@ -3,7 +3,6 @@ import logging
 import os
 import shutil
 from pathlib import Path
-from typing import Optional
 
 from ruamel.yaml import YAML  # type: ignore
 
@@ -14,14 +13,12 @@ from src.mpyl.stages.discovery import (
     is_project_cached_for_stage,
     is_file_a_dependency,
 )
-from src.mpyl.steps import ArtifactType
 from src.mpyl.steps import Output
 from src.mpyl.steps import build, test, deploy
 from src.mpyl.steps.collection import StepsCollection
-from src.mpyl.steps.models import Artifact
-from src.mpyl.utilities.docker import DockerImageSpec
 from src.mpyl.utilities.repo import Changeset
 from tests.projects.find import load_projects
+from tests.reporting import test_resource_path
 from tests.test_resources.test_data import TestStage
 
 yaml = YAML()
@@ -43,17 +40,7 @@ def _caching_for(
         os.makedirs(path)
 
     try:
-        Output(
-            success=True,
-            message="a test output",
-            produced_artifact=Artifact(
-                artifact_type=ArtifactType.DOCKER_IMAGE,
-                revision="a git revision",
-                producing_step="a step",
-                spec=DockerImageSpec(image="docker-image-path"),
-                hash=hashed_contents,
-            ),
-        ).write(
+        Output(success=True, message="a test output", hash=hashed_contents).write(
             target_path=Path(path),
             stage=stage.name,
         )
@@ -247,20 +234,9 @@ class TestDiscovery:
     def test_is_stage_cached(self):
         hashed_changes = "a generated test hash"
 
-        test_artifact = Artifact(
-            artifact_type=ArtifactType.DOCKER_IMAGE,
-            revision="revision",
-            producing_step="step",
-            spec=DockerImageSpec(image="image"),
-            hash=hashed_changes,
-        )
-
-        def create_test_output(
-            success: bool = True,
-            artifact: Optional[Artifact] = test_artifact,
-        ):
+        def create_test_output(success: bool = True):
             return Output(
-                success=success, message="an output message", produced_artifact=artifact
+                success=success, message="an output message", hash=hashed_changes
             )
 
         assert not is_project_cached_for_stage(
@@ -291,14 +267,6 @@ class TestDiscovery:
             logger=self.logger,
             project="a test project",
             stage="a test stage",
-            output=create_test_output(artifact=None),
-            hashed_changes=hashed_changes,
-        ), "should not be cached if no artifact produced"
-
-        assert not is_project_cached_for_stage(
-            logger=self.logger,
-            project="a test project",
-            stage="a test stage",
             output=create_test_output(),
             hashed_changes=None,
         ), "should not be cached if there are no changes in the current run"
@@ -318,6 +286,15 @@ class TestDiscovery:
             output=create_test_output(),
             hashed_changes=hashed_changes,
         ), "should be cached if hash matches"
+
+    def test_read_output_with_old_artifact_spec(self):
+        assert not is_project_cached_for_stage(
+            logger=self.logger,
+            project="a test project",
+            stage="a test stage",
+            output=Output.try_read(test_resource_path, "output-with-legacy-artifact"),
+            hashed_changes="a generated hash",
+        ), "should not be cached, but it shouldn't explode"
 
     def test_listing_override_files(self):
         touched_files = {"tests/projects/overriden-project/file.py": "A"}

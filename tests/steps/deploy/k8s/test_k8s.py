@@ -6,7 +6,6 @@ import pytest
 from kubernetes.client import V1Probe, V1ObjectMeta, V1DeploymentSpec
 from pyaml_env import parse_config
 
-from src.mpyl.cli import MpylCliParameters
 from src.mpyl.constants import DEFAULT_CONFIG_FILE_NAME
 from src.mpyl.project import Target, Project
 from src.mpyl.project_execution import ProjectExecution
@@ -20,10 +19,9 @@ from src.mpyl.steps.deploy.k8s.chart import (
 from src.mpyl.steps.deploy.k8s.resources import to_yaml, CustomResourceDefinition
 from src.mpyl.steps.deploy.k8s.resources.traefik import V1AlphaIngressRoute
 from src.mpyl.steps.deploy.kubernetes import DeployKubernetes
-from src.mpyl.steps.models import Input, Artifact, ArtifactType
-from src.mpyl.utilities.docker import DockerConfig, DockerImageSpec
+from src.mpyl.steps.models import Input
+from src.mpyl.utilities.docker import DockerConfig
 from tests import root_test_path
-from tests.steps.test_models import stub_run_properties
 from tests.test_resources import test_data
 from tests.test_resources.test_data import (
     assert_roundtrip,
@@ -33,8 +31,7 @@ from tests.test_resources.test_data import (
     get_cron_job_project,
     get_minimal_project,
     get_project_execution,
-    config_values,
-    properties_values,
+    stub_run_properties,
     RUN_PROPERTIES,
 )
 
@@ -66,23 +63,14 @@ class TestKubernetesChart:
 
         if not run_properties:
             run_properties = stub_run_properties(
-                config=config_values,
-                properties=properties_values,
                 all_projects={get_minimal_project()},
+                deploy_image="registry/image:123",
             )
-
-        required_artifact = Artifact(
-            artifact_type=ArtifactType.DOCKER_IMAGE,
-            revision="revision",
-            producing_step="build_docker_Step",
-            spec=DockerImageSpec("registry/image:123"),
-        )
 
         return ChartBuilder(
             step_input=Input(
                 project_execution=project_execution,
                 run_properties=run_properties,
-                required_artifact=required_artifact,
             ),
         )
 
@@ -128,7 +116,6 @@ class TestKubernetesChart:
         step_input = Input(
             get_project_execution(),
             test_data.RUN_PROPERTIES,
-            required_artifact=test_data.get_output().produced_artifact,
         )
         config = get_cluster_config_for_project(
             step_input.run_properties,
@@ -140,7 +127,6 @@ class TestKubernetesChart:
         step_input = Input(
             get_project_execution(),
             test_data.RUN_PROPERTIES,
-            required_artifact=test_data.get_output().produced_artifact,
         )
         config = get_cluster_config_for_project(
             step_input.run_properties,
@@ -239,9 +225,8 @@ class TestKubernetesChart:
     def test_production_ingress(self):
         project = get_minimal_project()
         run_properties_prod = stub_run_properties(
-            config=config_values,
-            properties=properties_values,
             all_projects={project},
+            deploy_image="registry/image:123",
         )
         run_properties_prod = dataclasses.replace(
             run_properties_prod,
@@ -310,10 +295,8 @@ class TestKubernetesChart:
         builder = self._get_builder(
             get_minimal_project(),
             stub_run_properties(
-                config=config_values,
-                properties=properties_values,
                 all_projects={get_minimal_project()},
-                cli_parameters=MpylCliParameters(deploy_image="test-image:latest"),
+                deploy_image="test-image:latest",
             ),
         )
         assert builder._get_image() == "test-image:latest"

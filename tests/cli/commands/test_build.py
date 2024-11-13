@@ -6,19 +6,17 @@ from src.mpyl import main_group, add_commands
 from src.mpyl.build import run_build
 from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.run_plan import RunPlan
-from src.mpyl.steps import Step, Meta, ArtifactType, Input, Output
+from src.mpyl.steps import Step, Meta, Input, Output
 from src.mpyl.steps.build import STAGE_NAME
 from src.mpyl.steps.run import RunResult
 from src.mpyl.steps.steps import Steps, StepsCollection, ExecutionException
 from tests import root_test_path
-from tests.steps.test_models import stub_run_properties
 from tests.test_resources.test_data import (
     get_minimal_project,
     RUN_PROPERTIES,
     get_project_with_stages,
     TestStage,
-    config_values,
-    properties_values,
+    stub_run_properties,
 )
 
 
@@ -32,8 +30,6 @@ class ThrowingStep(Step):
                 version="0.0.1",
                 stage=STAGE_NAME,
             ),
-            produced_artifact=ArtifactType.NONE,
-            required_artifact=ArtifactType.NONE,
         )
 
     def execute(self, step_input: Input) -> Output:
@@ -73,8 +69,6 @@ class TestBuildCommand:
             }
         )
         run_properties = stub_run_properties(
-            config=config_values,
-            properties=properties_values,
             all_projects={get_minimal_project()},
         )
         accumulator = RunResult(run_properties=run_properties, run_plan=run_plan)
@@ -96,8 +90,6 @@ class TestBuildCommand:
             {TestStage.build(): {ProjectExecution.run(p) for p in projects}}
         )
         run_properties = stub_run_properties(
-            config=config_values,
-            properties=properties_values,
             all_projects=projects,
         )
         accumulator = RunResult(run_properties=run_properties, run_plan=run_plan)
@@ -119,6 +111,8 @@ class TestBuildCommand:
             main_group,
             args=[
                 "build",
+                "-e",
+                "pull-request",
                 "-c",
                 str(self.config_path),
                 "-p",

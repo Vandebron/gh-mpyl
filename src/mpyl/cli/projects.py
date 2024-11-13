@@ -1,13 +1,14 @@
 """Commands related to projects and how they relate"""
 
 import sys
+from dataclasses import dataclass
 
 import click
+from rich.console import Console
 from rich.markdown import Markdown
 from rich.prompt import Confirm
 
 from . import (
-    CliContext,
     CONFIG_PATH_HELP,
     create_console_logger,
 )
@@ -32,6 +33,12 @@ from ..stages.discovery import find_projects
 from ..utilities.pyaml_env import parse_config
 
 
+@dataclass(frozen=True)
+class Context:
+    config: dict
+    console: Console = create_console_logger(show_path=False, max_width=0)
+
+
 @click.group("projects")
 @click.option(
     "--config",
@@ -45,26 +52,22 @@ from ..utilities.pyaml_env import parse_config
 @click.pass_context
 def projects(ctx, config):
     """Commands related to MPyL project configurations (project.yml)"""
-    ctx.obj = CliContext(
-        config=parse_config(config),
-        run_properties={},
-    )
+    ctx.obj = Context(parse_config(config))
 
 
 @projects.command(name="list", help="List found projects")
-def list_projects():
-    console = create_console_logger(show_path=False, max_width=0)
-
+@click.pass_obj
+def list_projects(obj: Context):
     found_projects = find_projects()
 
     for proj in found_projects:
         project = load_project(proj, validate_project_yaml=False, log=False)
-        console.print(Markdown(f"{proj} `{project.name}`"))
+        obj.console.print(Markdown(f"{proj} `{project.name}`"))
 
 
 @projects.command(name="names", help="List found project names")
-def list_project_names():
-    console = create_console_logger(show_path=False, max_width=0)
+@click.pass_obj
+def list_project_names(obj: Context):
     names = sorted(
         [
             load_project(project, validate_project_yaml=False, log=False).name
@@ -73,79 +76,78 @@ def list_project_names():
     )
 
     for name in names:
-        console.print(name)
+        obj.console.print(name)
 
 
 @projects.command(help="Validate the yaml of changed projects against their schema")
 @click.pass_obj
 # pylint: disable=too-many-branches
-def lint(cli: CliContext):
-    console = create_console_logger(show_path=False, max_width=0)
+def lint(obj: Context):
     all_projects = _check_and_load_projects(
-        console=console, project_paths=find_projects()
+        console=obj.console, project_paths=find_projects()
     )
 
     failed = False
 
     duplicates = _assert_unique_project_names(
-        console=console,
+        console=obj.console,
         all_projects=all_projects,
     )
     if duplicates:
-        console.print(
+        obj.console.print(
             f"  ❌ Found {len(duplicates)} duplicate project names: {duplicates}"
         )
         failed = True
     else:
-        console.print("  ✅ No duplicate project names found")
+        obj.console.print("  ✅ No duplicate project names found")
 
     missing_project_ids = _assert_project_ids(
-        console=console, all_projects=all_projects
+        console=obj.console, all_projects=all_projects
     )
     if missing_project_ids:
-        console.print(
+        obj.console.print(
             f"  ❌ Found {len(missing_project_ids)} projects without a project id: {missing_project_ids}"
         )
         failed = True
     else:
-        console.print("  ✅ All kubernetes projects have a project id")
+        obj.console.print("  ✅ All kubernetes projects have a project id")
 
     wrong_substitutions = _assert_correct_project_linkup(
-        console=console,
+        console=obj.console,
         target=Target.PULL_REQUEST,
         projects=all_projects,
         pr_identifier=123,
     )
     if len(wrong_substitutions) == 0:
-        console.print("  ✅ No wrong namespace substitutions found")
+        obj.console.print("  ✅ No wrong namespace substitutions found")
     else:
         failed = True
-        __detail_wrong_substitutions(console, all_projects, wrong_substitutions)
+        __detail_wrong_substitutions(obj.console, all_projects, wrong_substitutions)
 
     for target in Target:
         wrong_whitelists = _lint_whitelisting_rules(
-            console=console,
+            console=obj.console,
             projects=all_projects,
-            config=cli.config,
+            config=obj.config,
             target=target,
         )
         if len(wrong_whitelists) == 0:
-            console.print("  ✅ No undefined whitelists found")
+            obj.console.print("  ✅ No undefined whitelists found")
         else:
             for project, diff in wrong_whitelists:
-                console.log(
+                obj.console.log(
                     f"  ❌ Project {project.name} has undefined whitelists: {diff}"
                 )
                 failed = True
 
     projects_with_self_dependencies = _assert_no_self_dependencies(
-        console, all_projects
+        obj.console, all_projects
     )
     if len(projects_with_self_dependencies) == 0:
-        console.print("  ✅ No project with a dependency on itself found")
+        obj.console.print("  ✅ No project with a dependency on itself found")
     else:
         for project in projects_with_self_dependencies:
-            console.print(f"  ❌ Project {project.name} has a dependency on itself")
+            obj.console.print(f"  ❌ Project {project.name} has a dependency on itself")
         failed = True
 
     if failed:
@@ -159,19 +161,20 @@ def lint(cli: CliContext):
     is_flag=True,
     help="Apply upgrade operations to the project files",
 )
-def upgrade(apply: bool):
-    console = create_console_logger(show_path=False, max_width=0)
-
+@click.pass_obj
+def upgrade(obj: Context, apply: bool):
     paths = find_projects()
     candidates = check_upgrades_needed(paths, PROJECT_UPGRADERS)
     if not apply:
-        upgradable = check_upgrade(console, candidates)
+        upgradable = check_upgrade(obj.console, candidates)
         number_in_need_of_upgrade = len(upgradable)
         if number_in_need_of_upgrade > 0:
-            console.print(f"{number_in_need_of_upgrade} projects need to be upgraded")
+            obj.console.print(
+                f"{number_in_need_of_upgrade} projects need to be upgraded"
+            )
             sys.exit(1)
 
-    with console.status("Checking for upgrades...") as status:
+    with obj.console.status("Checking for upgrades...") as status:
         materialized = list(candidates)
         need_upgrade = [path for path, diff in materialized if diff is not None]
         number_of_upgrades = len(need_upgrade)

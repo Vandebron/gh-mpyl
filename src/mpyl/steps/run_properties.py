@@ -3,7 +3,7 @@
 import pkgutil
 from typing import Optional
 
-from ..project import load_project
+from ..project import load_project, Target
 from ..stages.discovery import find_projects
 from ..steps.models import RunProperties
 from ..validation import validate
@@ -17,6 +17,7 @@ def validate_run_properties(properties: dict):
 
 
 def construct_run_properties(
+    target: Target,
     config: dict,
     properties: dict,
     tag: Optional[str] = None,
@@ -34,6 +35,7 @@ def construct_run_properties(
     )
 
     return RunProperties.from_configuration(
+        target=target,
         run_properties=properties,
         config=config,
         all_projects=all_projects,

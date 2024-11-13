@@ -9,8 +9,8 @@ from rich.console import Console
 from rich.logging import RichHandler
 from rich.markdown import Markdown
 
-from .reporting.formatting.markdown import run_result_to_markdown
 from .run_plan import RunPlan
+from .reporting.formatting.markdown import run_result_to_markdown
 from .steps import deploy
 from .steps.collection import StepsCollection
 from .steps.models import Output, RunProperties, ConsoleProperties
