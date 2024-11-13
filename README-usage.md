@@ -40,27 +40,9 @@ If you use MPyL in a github action, a build will be triggered automatically and 
 
 ### Command structure
 
-```
-.. include:: tests/cli/test_resources/main_help_text.txt
-```
-
 Top level commands options are passed on to sub commands and need to be specified *before* the sub command.
 In ```mpyl projects --config <path> list ```, the `--config` option applies to all `project` commands, like `list`
 or `lint`.
-
-<details>
-  <summary>Projects</summary>
-```
-.. include:: tests/cli/test_resources/projects_help_text.txt
-```
-</details>
-
-<details>
-  <summary>Build</summary>
-```
-.. include:: tests/cli/test_resources/build_help_text.txt
-```
-</details>
 
 ##### MPyL configuration
 

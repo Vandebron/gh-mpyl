@@ -9,7 +9,7 @@ from src.mpyl.constants import (
     DEFAULT_CONFIG_FILE_NAME,
     DEFAULT_RUN_PROPERTIES_FILE_NAME,
 )
-from src.mpyl.project import Project
+from src.mpyl.project import Project, Target
 from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps.models import VersioningProperties, RunProperties
 from src.mpyl.utilities.pyaml_env import parse_config
@@ -26,6 +26,7 @@ def stub_run_properties(
     cli_parameters: MpylCliParameters = MpylCliParameters(),
 ):
     return RunProperties.from_configuration(
+        target=Target.PULL_REQUEST,
         run_properties=properties,
         config=config,
         run_plan=run_plan,

@@ -36,6 +36,8 @@ runs:
   image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.5.13
   args:
     - build
+    - --environment
+    - ${{ inputs.environment }}
     - run
     - --stage
     - ${{ inputs.stage }}
@@ -44,7 +46,6 @@ runs:
   env:
     MPYL_CONFIG_PATH: ${{ inputs.config-path }}
     CHANGED_FILES_PATH: ${{ inputs.changed-files-path }}
-    TAG_NAME: ${{ inputs.environment != 'pull-request' && inputs.version || '' }} # run_properties.versioning.tag
-    GIT_COMMIT: ${{ inputs.commit }} # run_properties.versioning.revision
-    CHANGE_ID: ${{ inputs.pr-number }} # run_properties.versioning.pr_number
-    DEPLOY_TARGET: ${{ inputs.deploy-target }} # run_properties.parameters.deploy_target
+    TAG_NAME: ${{ inputs.environment != 'pull-request' && inputs.version || '' }}  # run_properties.versioning.tag
+    GIT_COMMIT: ${{ inputs.commit }}  # run_properties.versioning.revision
+    CHANGE_ID: ${{ inputs.pr-number }}  # run_properties.versioning.pr_number
