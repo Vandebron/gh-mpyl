@@ -12,7 +12,7 @@ from ruamel.yaml import YAML  # type: ignore
 
 from . import Step
 from .collection import StepsCollection
-from .models import Output, Input, RunProperties, ArtifactType, Artifact
+from .models import Output, Input, RunProperties, ArtifactType
 from ..project import Project
 from ..project import Stage
 from ..project_execution import ProjectExecution
@@ -75,7 +75,6 @@ class Steps:
         executor: Step,
         project_execution: ProjectExecution,
         properties: RunProperties,
-        artifact: Optional[Artifact],
     ) -> Output:
         self._logger.info(
             f"Executing {executor.meta.name} for '{project_execution.name}'"
@@ -84,7 +83,6 @@ class Steps:
             Input(
                 project_execution=project_execution,
                 run_properties=properties,
-                artifact=artifact,
             )
         )
         if result.success:
@@ -109,7 +107,6 @@ class Steps:
             executor=step,
             project_execution=project_execution,
             properties=self._properties,
-            artifact=combined_artifact,
         )
 
         if (
@@ -175,7 +172,6 @@ class Steps:
                     executor=executor.before,
                     project_execution=project_execution,
                     properties=self._properties,
-                    artifact=None,
                 )
                 if not before_result.success:
                     return before_result
@@ -184,7 +180,6 @@ class Steps:
                 executor=executor,
                 project_execution=project_execution,
                 properties=self._properties,
-                artifact=None,
             )
             result.write(project_execution.project.target_path, stage.name)
 

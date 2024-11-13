@@ -221,7 +221,6 @@ class Input:
     project_execution: ProjectExecution
     run_properties: RunProperties
     """Run specific properties"""
-    artifact: Optional[Artifact] = None
 
 
 @yaml_object(yaml)

@@ -46,7 +46,6 @@ class TestDagster:
                 )
             ),
             test_data.RUN_PROPERTIES,
-            None,
         )
 
         values = to_user_code_values(
@@ -72,7 +71,6 @@ class TestDagster:
                 )
             ),
             test_data.RUN_PROPERTIES_PROD,
-            None,
         )
 
         values = to_user_code_values(
@@ -96,7 +94,6 @@ class TestDagster:
                 )
             ),
             test_data.RUN_PROPERTIES,
-            None,
         )
 
         values = to_user_code_values(
@@ -123,7 +120,6 @@ class TestDagster:
                 )
             ),
             test_data.RUN_PROPERTIES,
-            None,
         )
 
         values = to_user_code_values(
