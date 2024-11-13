@@ -55,7 +55,7 @@ class Target(Enum):
         if environment == "production":
             return Target.PRODUCTION
 
-        raise ValueError("'Invalid value for environment: {environment}")
+        raise ValueError("Invalid value for environment: {environment}")
 
     PULL_REQUEST = "PullRequest"
     PULL_REQUEST_BASE = "PullRequestBase"
