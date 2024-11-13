@@ -6,16 +6,9 @@ from typing import Dict, Optional
 from ruamel.yaml import yaml_object, YAML
 
 from ...project import Project
-from ...steps.models import Input, ArtifactSpec
+from ...steps.models import Input
 
 yaml = YAML()
-
-
-@yaml_object(yaml)
-@dataclass
-class DockerImageSpec(ArtifactSpec):
-    yaml_tag = "!DockerImageSpec"
-    image: str
 
 
 @dataclass(frozen=True)

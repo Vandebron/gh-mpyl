@@ -212,12 +212,6 @@ A typical `.mpyl` folder has a file for each executed stage. The `BUILD.yml` fil
 build step. For example:
 ```yaml
 message: Pushed ghcr.io/samtheisens/nodeservice:pr-6
-produced_artifact: !Artifact
-  artifact_type: !ArtifactType DOCKER_IMAGE-1
-  revision: b6c87b70c3c16174bdacac6c7dd4ef71b4bb0047
-  producing_step: After Docker Build
-  spec: !DockerImageSpec
-    image: ghcr.io/samtheisens/nodeservice:pr-6
 ```
 These files speed up subsequent runs by preventing steps from being executed when their inputs have not changed.
 
@@ -230,13 +224,6 @@ mpyl build clean
 
 See `mpyl.steps`.
 
-## ..create a test step
-
-### Junit test results
-
-MPyL can parse Junit test results for reporting purposes. Your test step needs to produce a
-`mpyl.steps.models.ArtifactType.JUNIT_TESTS` artifact.
-See `mpyl.steps.test.echo` for an example of how such an artifact can be created.
 
 ### Integration tests
 If your project includes "integration tests" that require a docker container to run during the test stage,
