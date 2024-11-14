@@ -4,8 +4,7 @@ from pathlib import Path
 from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps import Input
 from src.mpyl.steps.deploy.k8s.chart import ChartBuilder, to_service_chart
-from src.mpyl.steps.deploy.k8s.helm import write_chart, to_chart_metadata
-from tests.test_resources import test_data
+from src.mpyl.steps.deploy.k8s.helm import write_chart
 from tests.test_resources.test_data import (
     TestStage,
     get_project_execution,
@@ -31,6 +30,5 @@ class TestHelm:
             write_chart(
                 to_service_chart(builder),
                 Path(tempdir),
-                to_chart_metadata("chart_name", test_data.RUN_PROPERTIES),
                 {},
             )
