@@ -12,9 +12,10 @@ from ruamel.yaml import YAML
 
 from .helm import write_helm_chart, GENERATED_WARNING
 from ...deploy.k8s.resources import CustomResourceDefinition
+from ...input import Input
 from ...models import RunProperties
+from ...output import Output
 from ....project import ProjectName, Project, Target
-from ....steps import Input, Output
 from ....steps.deploy.k8s import helm
 from ....steps.deploy.k8s.cluster import (
     get_namespace_metadata,

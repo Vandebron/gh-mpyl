@@ -56,7 +56,7 @@ from .resources.traefik import (
     HostWrapper,
 )  # pylint: disable = no-name-in-module
 from ... import deploy
-from ...models import Input
+from ...input import Input
 from ....project import (
     Project,
     KeyValueProperty,

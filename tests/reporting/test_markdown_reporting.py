@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from src.mpyl.reporting.formatting.markdown import run_result_to_markdown
-from src.mpyl.steps.models import Output
+from src.mpyl.steps.output import Output
 from src.mpyl.steps.steps import StepResult, ExecutionException
 from tests import root_test_path
 from tests.reporting import (

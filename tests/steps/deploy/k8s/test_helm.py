@@ -1,7 +1,8 @@
 import tempfile
 from pathlib import Path
 
-from src.mpyl.steps import Input
+from src.mpyl.run_plan import RunPlan
+from src.mpyl.steps.input import Input
 from src.mpyl.steps.deploy.k8s.chart import ChartBuilder, to_service_chart
 from src.mpyl.steps.deploy.k8s.helm import write_chart, to_chart_metadata
 from tests.test_resources import test_data
@@ -20,6 +21,7 @@ class TestHelm:
                 all_projects={get_minimal_project()},
                 deploy_image="some image",
             ),
+            run_plan=RunPlan.empty(),
         )
         with tempfile.TemporaryDirectory() as tempdir:
             builder = ChartBuilder(step_input)

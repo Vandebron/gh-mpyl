@@ -53,7 +53,7 @@ def execution_plan_as_markdown(run_result: RunResult):
     result = ""
     exception = run_result.exception
     if exception:
-        result += f"For _{exception.executor}_ on _{exception.project_name}_ at stage _{exception.stage}_ \n"
+        result += f"For _{exception.step}_ on _{exception.project_name}_ at stage _{exception.stage}_ \n"
         result += f"\n\n{exception}\n\n"
     elif run_result.failed_results:
         failed_projects = ", ".join(

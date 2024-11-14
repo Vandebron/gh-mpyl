@@ -5,7 +5,7 @@ from logging import Logger
 from typing import Union
 
 from ..logging import try_parse_ansi
-from ...steps.models import Output
+from ...steps.output import Output
 
 SUBPROCESS_FAILED = "Subprocess failed"
 

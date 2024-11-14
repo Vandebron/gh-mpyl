@@ -13,7 +13,8 @@ from .run_plan import RunPlan
 from .reporting.formatting.markdown import run_result_to_markdown
 from .steps import deploy
 from .steps.collection import StepsCollection
-from .steps.models import Output, RunProperties, ConsoleProperties
+from .steps.models import RunProperties, ConsoleProperties
+from .steps.output import Output
 from .steps.run import RunResult
 from .steps.steps import ExecutionException, StepResult, Steps
 
@@ -57,14 +58,15 @@ def run_mpyl(
         run_plan.print_markdown(console, run_properties.stages)
 
         try:
-            steps = Steps(
+            executor = Steps(
                 logger=logger,
-                properties=run_properties,
+                run_properties=run_properties,
+                run_plan=run_plan,
                 steps_collection=StepsCollection(logger=logger),
             )
 
             run_result = run_build(
-                logger=logger, accumulator=run_result, executor=steps
+                logger=logger, accumulator=run_result, executor=executor
             )
         except ValidationError as exc:
             console.log(

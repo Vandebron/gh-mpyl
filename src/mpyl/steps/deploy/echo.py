@@ -3,8 +3,9 @@
 from logging import Logger
 
 from . import STAGE_NAME
-from .. import Step, Meta
-from ..models import Input, Output
+from ..input import Input
+from ..output import Output
+from ..step import Step, Meta
 
 
 class DeployEcho(Step):

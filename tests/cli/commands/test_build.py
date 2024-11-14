@@ -6,9 +6,11 @@ from src.mpyl import main_group, add_commands
 from src.mpyl.build import run_build
 from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.run_plan import RunPlan
-from src.mpyl.steps import Step, Meta, Input, Output
 from src.mpyl.steps.build import STAGE_NAME
+from src.mpyl.steps.input import Input
+from src.mpyl.steps.output import Output
 from src.mpyl.steps.run import RunResult
+from src.mpyl.steps.step import Meta, Step
 from src.mpyl.steps.steps import Steps, StepsCollection, ExecutionException
 from tests import root_test_path
 from tests.test_resources.test_data import (
@@ -51,8 +53,9 @@ class TestBuildCommand:
         accumulator = RunResult(run_properties=run_properties, run_plan=run_plan)
         executor = Steps(
             logging.getLogger(),
-            run_properties,
-            StepsCollection(logging.getLogger()),
+            run_properties=run_properties,
+            run_plan=run_plan,
+            steps_collection=StepsCollection(logging.getLogger()),
         )
         result = run_build(self.logger, accumulator, executor)
         assert not result.has_results
@@ -75,8 +78,9 @@ class TestBuildCommand:
         collection = StepsCollection(logging.getLogger())
         executor = Steps(
             logging.getLogger(),
-            run_properties,
-            collection,
+            run_properties=run_properties,
+            run_plan=run_plan,
+            steps_collection=collection,
         )
         result = run_build(self.logger, accumulator, executor)
         assert result.exception is None
@@ -95,7 +99,12 @@ class TestBuildCommand:
         accumulator = RunResult(run_properties=run_properties, run_plan=run_plan)
         logger = logging.getLogger()
         collection = StepsCollection(logger)
-        executor = Steps(logger, run_properties, collection)
+        executor = Steps(
+            logger,
+            run_properties=run_properties,
+            run_plan=run_plan,
+            steps_collection=collection,
+        )
 
         result = run_build(self.logger, accumulator, executor)
         assert not result.has_results
@@ -104,7 +113,7 @@ class TestBuildCommand:
         assert result.exception.message == "this is not good"
         assert result.exception.stage == TestStage.build().name
         assert result.exception.project_name == "test"
-        assert result.exception.executor == "Throwing Build"
+        assert result.exception.step == "Throwing Build"
 
     def test_build_clean_output(self):
         result = self.runner.invoke(

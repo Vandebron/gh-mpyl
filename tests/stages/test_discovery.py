@@ -4,7 +4,7 @@ import os
 import shutil
 from pathlib import Path
 
-from ruamel.yaml import YAML  # type: ignore
+from ruamel.yaml import YAML
 
 from src.mpyl.constants import RUN_ARTIFACTS_FOLDER
 from src.mpyl.project import load_project, Stage
@@ -13,9 +13,8 @@ from src.mpyl.stages.discovery import (
     is_project_cached_for_stage,
     is_file_a_dependency,
 )
-from src.mpyl.steps import Output
 from src.mpyl.steps import build, test, deploy
-from src.mpyl.steps.collection import StepsCollection
+from src.mpyl.steps.output import Output
 from src.mpyl.utilities.repo import Changeset
 from tests.projects.find import load_projects
 from tests.reporting import test_resource_path

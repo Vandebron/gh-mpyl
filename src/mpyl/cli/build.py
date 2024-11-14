@@ -70,8 +70,7 @@ class Context:
 def build(ctx, environment, config, properties):
     """Pipeline build commands"""
     parsed_properties = parse_config(properties)
-
-    console_config = ConsoleProperties.from_configuration(parsed_properties["build"])
+    console_config = ConsoleProperties.from_configuration(parsed_properties)
     console = create_console_logger(
         show_path=console_config.show_paths,
         max_width=console_config.width,
@@ -157,9 +156,7 @@ def run(
     )
 
     run_result = run_mpyl(
-        console_properties=ConsoleProperties.from_configuration(
-            obj.run_properties["build"]
-        ),
+        console_properties=ConsoleProperties.from_configuration(obj.run_properties),
         run_properties=run_properties,
         run_plan=run_plan,
     )

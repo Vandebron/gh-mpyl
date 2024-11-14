@@ -3,7 +3,7 @@ from datetime import datetime
 from src.mpyl.project import Stages, Project
 from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.run_plan import RunPlan
-from src.mpyl.steps.models import Output
+from src.mpyl.steps.output import Output
 from src.mpyl.steps.run import RunResult
 from src.mpyl.steps.steps import StepResult
 from tests import root_test_path

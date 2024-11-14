@@ -4,20 +4,21 @@ from logging import Logger
 import pytest
 from jsonschema import ValidationError
 from pyaml_env import parse_config
-from ruamel.yaml import YAML  # type: ignore
+from ruamel.yaml import YAML
 
 from src.mpyl.constants import DEFAULT_CONFIG_FILE_NAME, RUN_ARTIFACTS_FOLDER
 from src.mpyl.project import Project, Stages, Target
 from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.projects.versioning import yaml_to_string
+from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps import build
 from src.mpyl.steps.collection import StepsCollection
 from src.mpyl.steps.models import (
-    Output,
     RunProperties,
     VersioningProperties,
 )
 from src.mpyl.steps.steps import Steps
+from src.mpyl.steps.output import Output
 from tests import root_test_path, test_resource_path
 from tests.test_resources import test_data
 from tests.test_resources.test_data import assert_roundtrip, RUN_PROPERTIES
@@ -29,7 +30,8 @@ class TestSteps:
     resource_path = root_test_path / "test_resources"
     executor = Steps(
         logger=logging.getLogger(),
-        properties=test_data.RUN_PROPERTIES,
+        run_properties=test_data.RUN_PROPERTIES,
+        run_plan=RunPlan.empty(),
         steps_collection=StepsCollection(logging.getLogger()),
     )
 
@@ -74,7 +76,8 @@ class TestSteps:
     def test_should_return_error_if_stage_not_defined(self):
         steps = Steps(
             logger=Logger.manager.getLogger("logger"),
-            properties=test_data.RUN_PROPERTIES,
+            run_properties=test_data.RUN_PROPERTIES,
+            run_plan=RunPlan.empty(),
         )
         stages = Stages(
             {"build": None, "test": None, "deploy": None, "postdeploy": None}
@@ -103,11 +106,12 @@ class TestSteps:
         with pytest.raises(ValidationError) as excinfo:
             Steps(
                 logger=Logger.manager.getLogger("logger"),
-                properties=properties,
+                run_properties=properties,
+                run_plan=RunPlan.empty(),
             )
         assert "{} is not of type 'string'" in excinfo.value.message
 
-    def test_should_succeed_if_executor_is_known(self):
+    def test_should_succeed_if_step_is_known(self):
         project = test_data.get_project_with_stages(
             stage_config={"build": "Echo Build"},
             path=str(self.resource_path / "metapath" / "project.yml"),
@@ -119,7 +123,7 @@ class TestSteps:
         assert result.output.success
         assert result.output.message == "Built test"
 
-    def test_should_fail_if_executor_is_not_known(self):
+    def test_should_fail_if_step_is_not_known(self):
         project = test_data.get_project_with_stages({"build": "Unknown Build"})
         result = self.executor.execute(
             stage=build.STAGE_NAME,
@@ -128,7 +132,7 @@ class TestSteps:
         assert not result.output.success
         assert (
             result.output.message
-            == "Executor 'Unknown Build' for 'build' not known or registered"
+            == "Step 'Unknown Build' for 'build' not known or registered"
         )
 
     def test_should_fail_if_maintainer_is_not_known(self):

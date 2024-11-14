@@ -2,9 +2,10 @@
 
 from logging import Logger
 
-from .. import Step, Meta
-from ..models import Input, Output
 from . import STAGE_NAME
+from ..input import Input
+from ..output import Output
+from ..step import Step, Meta
 
 
 class TestSkip(Step):

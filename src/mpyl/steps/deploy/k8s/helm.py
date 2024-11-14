@@ -9,7 +9,8 @@ from pathlib import Path
 import yaml
 
 from .resources import to_yaml, CustomResourceDefinition
-from ...models import RunProperties, Output
+from ...models import RunProperties
+from ...output import Output
 from ....cli import get_version
 from ....utilities.subprocess import custom_check_output
 

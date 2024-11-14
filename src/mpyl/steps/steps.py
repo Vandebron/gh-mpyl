@@ -10,9 +10,11 @@ from typing import Optional
 
 from ruamel.yaml import YAML  # type: ignore
 
-from . import Step
 from .collection import StepsCollection
-from .models import Output, Input, RunProperties
+from .input import Input
+from .models import RunProperties
+from .output import Output
+from .step import Step
 from ..project import Project
 from ..project import Stage
 from ..project_execution import ProjectExecution
@@ -27,7 +29,7 @@ class ExecutionException(Exception):
 
     def __init__(self, project_name: str, executor: str, stage: str, message: str):
         self.project_name = project_name
-        self.executor = executor
+        self.step = executor
         self.stage = stage
         self.message = message
         super().__init__(self.message)
@@ -35,7 +37,7 @@ class ExecutionException(Exception):
     def __reduce__(self):
         return ExecutionException, (
             self.project_name,
-            self.executor,
+            self.step,
             self.stage,
             self.message,
         )
@@ -60,17 +62,19 @@ class Steps:
     def __init__(
         self,
         logger: Logger,
-        properties: RunProperties,
+        run_properties: RunProperties,
+        run_plan: RunPlan,
         steps_collection: Optional[StepsCollection] = None,
     ) -> None:
         self._logger = logger
-        self._run_properties = properties
+        self._run_properties = run_properties
+        self._run_plan = run_plan
         self._steps_collection = steps_collection or StepsCollection(logger)
 
         schema_dict = pkgutil.get_data(__name__, "../schema/mpyl_config.schema.yml")
 
         if schema_dict:
-            validate(properties.config, schema_dict.decode("utf-8"))
+            validate(run_properties.config, schema_dict.decode("utf-8"))
 
     def _execute(
         self,
@@ -82,6 +86,7 @@ class Steps:
             Input(
                 project_execution=project_execution,
                 run_properties=self._run_properties,
+                run_plan=self._run_plan,
             )
         )
         if result.success:
@@ -141,50 +146,50 @@ class Steps:
         if invalid_maintainers:
             return invalid_maintainers
 
-        executor: Optional[Step] = self._steps_collection.get_step(stage, step_name)
-        if not executor:
+        step: Optional[Step] = self._steps_collection.get_step(stage, step_name)
+        if not step:
             self._logger.error(
-                f"No executor found for {step_name} in stage {stage.name}"
+                f"No step found with name '{step_name}' in stage {stage.name}"
             )
 
             return Output(
                 success=False,
-                message=f"Executor '{step_name}' for '{stage.name}' not known or registered",
+                message=f"Step '{step_name}' for '{stage.name}' not known or registered",
             )
 
         try:
             self._logger.info(
                 f"Executing {stage.name} {stage.icon} for {project_execution.name}"
             )
-            if executor.before:
+            if step.before:
                 before_result = self._execute(
-                    step=executor.before,
+                    step=step.before,
                     project_execution=project_execution,
                 )
                 if not before_result.success:
                     return before_result
 
             result = self._execute(
-                step=executor,
+                step=step,
                 project_execution=project_execution,
             )
             result.write(project_execution.project.target_path, stage.name)
 
-            if executor.after and result.success:
+            if step.after and result.success:
                 return self._execute_after_(
-                    result, executor.after, project_execution, stage
+                    result, step.after, project_execution, stage
                 )
 
             return result
         except Exception as exc:
             message = str(exc)
             self._logger.warning(
-                f"Execution of '{executor.meta.name}' for project '{project_execution.name}' in stage {stage.name} "
+                f"Execution of '{step.meta.name}' for project '{project_execution.name}' in stage {stage.name} "
                 f"failed with exception: {message}",
                 exc_info=True,
             )
             raise ExecutionException(
-                project_execution.name, executor.meta.name, stage.name, message
+                project_execution.name, step.meta.name, stage.name, message
             ) from exc
 
     def execute(self, stage: str, project_execution: ProjectExecution) -> StepResult:

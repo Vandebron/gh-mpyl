@@ -4,10 +4,11 @@ from logging import Logger
 from typing import List
 from functools import reduce
 from .bpm import deploy_to_cluster, deploy_to_modeler
+from ..input import Input
+from ..output import Output
+from ..step import Step, Meta
 from ...utilities.bpm import CamundaConfig
 from . import STAGE_NAME
-from .. import Step, Meta
-from ..models import Input, Output
 
 
 class BpmDiagramDeploy(Step):

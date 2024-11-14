@@ -1,4 +1,4 @@
-"""A collection of all available step executors."""
+"""A collection of all available steps."""
 
 import importlib
 import importlib.util
@@ -6,7 +6,7 @@ import pkgutil
 from logging import Logger
 from typing import Optional
 
-from . import Step, IPluginRegistry
+from .step import Step, IPluginRegistry
 from ..project import Stage
 
 
@@ -29,7 +29,7 @@ class StepsCollection:
         self.__load_steps_in_module(logger, ".", alternative_library_location)
         location = alternative_library_location
 
-        logger.debug(f"Loaded {len(IPluginRegistry.plugins)} executors from {location}")
+        logger.debug(f"Loaded {len(IPluginRegistry.plugins)} steps from {location}")
         if not IPluginRegistry.plugins:
             logger.warning(f"No steps found. Check {location} for plugins.")
 

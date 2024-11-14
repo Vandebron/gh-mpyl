@@ -9,6 +9,7 @@ from pyaml_env import parse_config
 from src.mpyl.constants import DEFAULT_CONFIG_FILE_NAME
 from src.mpyl.project import Target, Project
 from src.mpyl.project_execution import ProjectExecution
+from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps.deploy.k8s import get_cluster_config_for_project
 from src.mpyl.steps.deploy.k8s.chart import (
     ChartBuilder,
@@ -19,7 +20,7 @@ from src.mpyl.steps.deploy.k8s.chart import (
 from src.mpyl.steps.deploy.k8s.resources import to_yaml, CustomResourceDefinition
 from src.mpyl.steps.deploy.k8s.resources.traefik import V1AlphaIngressRoute
 from src.mpyl.steps.deploy.kubernetes import DeployKubernetes
-from src.mpyl.steps.models import Input
+from src.mpyl.steps.input import Input
 from src.mpyl.utilities.docker import DockerConfig
 from tests import root_test_path
 from tests.test_resources import test_data
@@ -71,6 +72,7 @@ class TestKubernetesChart:
             step_input=Input(
                 project_execution=project_execution,
                 run_properties=run_properties,
+                run_plan=RunPlan.empty(),
             ),
         )
 
@@ -115,7 +117,8 @@ class TestKubernetesChart:
     def test_load_cluster_config(self):
         step_input = Input(
             get_project_execution(),
-            test_data.RUN_PROPERTIES,
+            run_properties=test_data.RUN_PROPERTIES,
+            run_plan=RunPlan.empty(),
         )
         config = get_cluster_config_for_project(
             step_input.run_properties,
@@ -126,7 +129,8 @@ class TestKubernetesChart:
     def test_load_cluster_config_with_project_override(self):
         step_input = Input(
             get_project_execution(),
-            test_data.RUN_PROPERTIES,
+            run_properties=test_data.RUN_PROPERTIES,
+            run_plan=RunPlan.empty(),
         )
         config = get_cluster_config_for_project(
             step_input.run_properties,

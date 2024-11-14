@@ -11,7 +11,7 @@ from typing import Optional
 from ..project import Project
 from ..project_execution import ProjectExecution
 from ..steps import deploy
-from ..steps.models import Output
+from ..steps.output import Output
 from ..utilities.repo import Changeset
 
 
