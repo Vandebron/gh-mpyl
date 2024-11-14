@@ -3,11 +3,9 @@ from datetime import datetime
 from src.mpyl.project import Stages, Project
 from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.run_plan import RunPlan
-from src.mpyl.steps.deploy.k8s import DeployedHelmAppSpec
-from src.mpyl.steps.models import Output, Artifact, ArtifactType
+from src.mpyl.steps.models import Output
 from src.mpyl.steps.run import RunResult
 from src.mpyl.steps.steps import StepResult
-from src.mpyl.utilities.junit import JunitTestSpec, TestRunSummary
 from tests import root_test_path
 from tests.test_resources import test_data
 from tests.test_resources.test_data import TestStage, stub_run_properties
@@ -64,22 +62,7 @@ def append_results(result: RunResult) -> None:
         StepResult(
             stage=TestStage.test(),
             project=other_project,
-            output=Output(
-                success=True,
-                message="Tests successful",
-                produced_artifact=Artifact(
-                    artifact_type=ArtifactType.JUNIT_TESTS,
-                    revision="revision",
-                    producing_step="Docker Test",
-                    spec=JunitTestSpec(
-                        test_output_path=str(test_resource_path),
-                        test_results_url="http://localhost/tests",
-                        test_results_summary=TestRunSummary(
-                            tests=51, failures=1, errors=0, skipped=0
-                        ),
-                    ),
-                ),
-            ),
+            output=Output(success=True, message="Tests successful"),
             timestamp=datetime.fromisoformat("2019-01-04T16:41:45+02:00"),
         )
     )
@@ -87,16 +70,7 @@ def append_results(result: RunResult) -> None:
         StepResult(
             stage=TestStage.deploy(),
             project=other_project,
-            output=Output(
-                success=True,
-                message="Deploy successful",
-                produced_artifact=Artifact(
-                    artifact_type=ArtifactType.DEPLOYED_HELM_APP,
-                    revision="revision",
-                    producing_step="Kubernetes Deploy",
-                    spec=DeployedHelmAppSpec(url="https://some.location.com"),
-                ),
-            ),
+            output=Output(success=True, message="Deploy successful"),
             timestamp=datetime.fromisoformat("2019-01-04T16:41:45+02:00"),
         )
     )

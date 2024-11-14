@@ -12,13 +12,7 @@ from src.mpyl.constants import (
 from src.mpyl.project import load_project, Target, Project, Stages, Stage
 from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.run_plan import RunPlan
-from src.mpyl.steps.models import (
-    RunProperties,
-    Output,
-    ArtifactType,
-    Artifact,
-)
-from src.mpyl.utilities.docker import DockerImageSpec
+from src.mpyl.steps.models import RunProperties
 from src.mpyl.utilities.pyaml_env import parse_config
 from tests import root_test_path
 
@@ -110,20 +104,6 @@ def get_cron_job_project() -> Project:
 
 def safe_load_project(name: str) -> Project:
     return load_project(Path(name), validate_project_yaml=True, log=False)
-
-
-def get_output() -> Output:
-    return Output(
-        success=True,
-        message="build success",
-        produced_artifact=Artifact(
-            artifact_type=ArtifactType.DOCKER_IMAGE,
-            revision="123",
-            hash="a generated hash",
-            producing_step="Producing Step",
-            spec=DockerImageSpec(image="image:latest"),
-        ),
-    )
 
 
 def get_project_with_stages(

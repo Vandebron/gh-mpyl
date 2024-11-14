@@ -12,13 +12,6 @@ in a docker image.
 A step can either be *built in* to `MPyL` or defined within the context of a particular pipeline. The latter is easier
 to do and is the best option if the likelihood of the logic being of use in other contexts is small.
 
-.. note:: The benefits of standard artifact types
-   It is recommended to have your steps produce any of the standard artifact types. This allows you to benefit from
-   the tooling embedded in MPyL to process them. For example: if a step in the `Test` stage produces an artifact of type
-   `ArtifactType.JUNIT_TESTS`, the test results can be reported in a unified way by any of the `mpyl.reporting`
-   reporters regardless of whether the tests were run by a `jest` or a `scala` test.
-
-
 ### Implementation
 
 Let's assume you want to create a new step for the `Build` stage that creates a builds a `Java` maven project and embeds
@@ -37,15 +30,12 @@ stages:
 description: 'A simple Java service'
 ```
  -  `Meta.stage` describes the `mpyl.project.Stage to which the step relates. It can only be executed in this context.
- -  `Step.produced_artifact` defines the `mpyl.steps.models.ArtifactType` that this step produces. In our example case
- this would be `mpyl.steps.models.ArtifactType.DOCKER_IMAGE`.
  - The `Step.after` is a postprocessing step, which we can set to `mpyl.steps.build.docker_after_build.AfterBuildDocker`
  in this case. It will push the image produced by this step to a registry.
 
 ##### Return type
 
 Your step needs to return an `mpyl.steps.models.Output` object with fields that are hopefully self-explanatory.
-The `produced_artifact` can be constructed with `mpyl.steps.models.input_to_artifact`.
 
 ##### Step input
 The step receives an `mpyl.steps.models.Input` for `execute`. If your step needs configuration settings, like for
@@ -71,7 +61,7 @@ from dataclasses import dataclass
 from logging import Logger
 from typing import Optional, List
 
-from .models import ArtifactType, Input, Output
+from .models import Input, Output
 
 
 class IPluginRegistry(type):
@@ -105,8 +95,6 @@ class Step(metaclass=IPluginRegistry):
     """Information _about_ the specific instance of `Step`. For example its name, description, version or the stage
     to which it applies.
     """
-    produced_artifact: ArtifactType
-    """The type of the artifact produced by this step """
     before: Optional[Step]
     after: Optional[Step]
     """Will be executed after completion of this step. Can be used for shared post processing steps, like pushing the
@@ -116,24 +104,21 @@ class Step(metaclass=IPluginRegistry):
         self,
         logger: Logger,
         meta: Meta,
-        produced_artifact: ArtifactType,
         before: Optional[Step] = None,
         after: Optional[Step] = None,
     ) -> None:
         self._logger = logger.getChild(meta.name.replace(" ", ""))
         self.meta = meta
-        self.produced_artifact = produced_artifact
         self.before = before
         self.after = after
 
     def execute(self, step_input: Input) -> Output:
         """Execute an individual step for a specific `project` at a specific `stage` of the pipeline.
-        :param step_input: The input of the project along with its build properties and required artifact (if any).
+        :param step_input: The input of the project along with its build properties.
         :return Output: The result of the execution. `success` will be `False` if any exception was thrown during
         execution.
         """
         return Output(
             success=False,
             message=f"Not implemented for {step_input.project_execution.name}",
-            produced_artifact=None,
         )

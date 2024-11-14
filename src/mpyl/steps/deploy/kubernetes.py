@@ -7,7 +7,7 @@ from . import STAGE_NAME
 from .k8s import generate_helm_charts
 from .k8s.chart import ChartBuilder, to_service_chart
 from .. import Step, Meta
-from ..models import Input, Output, ArtifactType
+from ..models import Input, Output
 from ...project import Target
 
 
@@ -21,7 +21,6 @@ class DeployKubernetes(Step):
                 version="0.0.1",
                 stage=STAGE_NAME,
             ),
-            produced_artifact=ArtifactType.NONE,
         )
 
     @staticmethod

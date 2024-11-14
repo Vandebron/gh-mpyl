@@ -12,7 +12,7 @@ from ruamel.yaml import YAML  # type: ignore
 
 from . import Step
 from .collection import StepsCollection
-from .models import Output, Input, RunProperties, ArtifactType
+from .models import Output, Input, RunProperties
 from ..project import Project
 from ..project import Stage
 from ..project_execution import ProjectExecution
@@ -102,27 +102,18 @@ class Steps:
         project_execution: ProjectExecution,
         stage: Stage,
     ) -> Output:
-        combined_artifact = main_result.produced_artifact
         after_result = self._execute(
             executor=step,
             project_execution=project_execution,
             properties=self._properties,
         )
 
-        if (
-            after_result.produced_artifact
-            and after_result.produced_artifact.artifact_type != ArtifactType.NONE
-        ):
-            after_result.write(project_execution.project.target_path, stage.name)
-            combined_artifact = after_result.produced_artifact
+        after_result.write(project_execution.project.target_path, stage.name)
 
-        combined_result = Output(
+        return Output(
             success=main_result.success and after_result.success,
             message=f"{main_result.message}\n{after_result.message}",
-            produced_artifact=combined_artifact,
         )
-
-        return combined_result
 
     def _validate_project_against_config(self, project: Project) -> Optional[Output]:
         allowed_maintainers = set(
