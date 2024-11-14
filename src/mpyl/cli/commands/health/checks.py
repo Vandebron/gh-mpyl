@@ -5,6 +5,7 @@ import pkgutil
 from pathlib import Path
 from typing import Optional
 
+import click
 import jsonschema
 from dotenv import load_dotenv
 from rich.console import Console
@@ -21,11 +22,14 @@ from ....validation import validate
 class HealthConsole:
     def __init__(self, console: Console):
         self.console = console
+        self.failure = False
 
     def title(self, title: str):
         self.console.print(Markdown(f"*{title}*"))
 
     def check(self, check: str, success: bool):
+        if not success:
+            self.failure = True
         icon = "✅" if success else "❌"
         self.console.print(Markdown(f"&nbsp;&nbsp;{icon} {check}"))
 
@@ -62,6 +66,9 @@ def perform_health_checks(bare_console: Console):
             config_file_path=config_path,
             schema_path="../../../schema/mpyl_config.schema.yml",
         )
+
+    if console.failure:
+        raise click.ClickException("Health check failed")
 
 
 def __validate_config_path(
