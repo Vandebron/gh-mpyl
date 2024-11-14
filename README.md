@@ -1,35 +1,22 @@
 # Modular Pypeline Library
-![build-and-test-module](https://github.com/Vandebron/pympl/actions/workflows/build-package.yml/badge.svg?branch=main)
-![coverage](https://camo.githubusercontent.com/359bec0496fb67fc3a3deeb1917cc403a23890fc54c2efc37d59251a80e004d9/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f436f6465253230436f7665726167652d38302532352d79656c6c6f773f7374796c653d666c6174)
-[![publish-documentation](https://github.com/Vandebron/mpyl/actions/workflows/docs.yml/badge.svg?branch=main)](https://vandebron.github.io/mpyl)
 [![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 
 [![linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen)](https://github.com/PyCQA/pylint)
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 
-[![version](https://img.shields.io/github/v/tag/Vandebron/pympl.svg?color=blue&include_prereleases=&sort=semver)](https://pypi.org/project/mpyl/)
-[![python](https://img.shields.io/badge/Python-3.9-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org)
-[![package downloads](https://img.shields.io/pypi/dw/mpyl.svg)](https://pypi.org/project/mpyl)
-[![mpyl](https://snyk.io/advisor/python/mpyl/badge.svg)](https://snyk.io/advisor/python/mpyl)
+[![python](https://img.shields.io/badge/Python-3.11-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org)
 
-# What is MPyL?
+# What is gh-mpyl?
 
-MPyL stands for Modular Pipeline Library (in Python).
+gh-mpyl is a minimal version of [MPyL](https://vandebron.github.io/mpyl), packaged in a docker container action.
+It is a python library for creating a run plan and generating helm charts.
 
-This library is loosely based on the principles described in https://www.jenkins.io/blog/2019/01/08/mpl-modular-pipeline-library/
-but completely independent of Jenkins or any other CI/CD platform.
-
-## 🔖 Documentation
-Detailed, *complete*, searchable documentation can be found at [https://vandebron.github.io/mpyl](https://vandebron.github.io/mpyl)
 
 ## 📚 Principles
 
 MPyL is built with the following principles in mind.
 - **Not a platform** It is not tied to any CI/CD platform. MPyL is a library, not a framework. It is not a runner,
-  not a scheduler, and it doesn't have a GUI. It can be plugged into any CI/CD platform. Execution flows for
-  Jenkins or Dagster are included as an example.
-- **Minimal footprint**: It is self-contained and has very few external dependencies (e.g. Git, Docker).
-  It can be run anywhere, also on your local machine.
+  not a scheduler, and it doesn't have a GUI. It can be plugged into any CI/CD platform.
 - **Accessible and maintainable**
     - Written in Python, the most widely adopted scripting language with an extensive amount of client libraries relevant to CI/CD.
     - Strongly typed: `MyPy` type hints and schemas for all `YAML` files. Clearly defined interfaces for inputs
@@ -48,19 +35,15 @@ MPyL is built with the following principles in mind.
 
 ### Requirements
 The following technologies are expected to be present on the local OS:
-- [Python](https://www.python.org/) >= 3.9
+- [Python](https://www.python.org/) >= 3.11
 - [Pip](https://pypi.org/project/pip/) >= 23.0.1
 - [Docker](https://www.docker.com/) > 20
-- [Docker compose](https://docs.docker.com/compose/install/linux/)
-  installed as plugin (`docker compose version`) >= v2.2.3
 - [Git](https://git-scm.com/) SCM
 
 ### Bundled
 MPyL is extensible and has a minimal footprint. Having said that, batteries for the following technologies are included.
 
 ##### CI/CD
-###### Testing
-- [Junit](https://junit.org/) `mpyl.steps.models.ArtifactType.JUNIT_TESTS`
 
 ###### Deployment
 - [K8S](https://kubernetes.io/) `mpyl.steps.deploy.kubernetes`

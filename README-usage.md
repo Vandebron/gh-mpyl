@@ -4,45 +4,33 @@
 
 ### Suggested first time use
 
-#### 1. Install MPyL
+#### 1. Run MPyL
 
+There are multiple ways to run gh-mpyl:
+
+1. Build a local image based on the [Dockerfile](./Dockerfile).
+    ```shell
+    docker build -t gh-mpyl .
+    docker run gh-mpyl -v $(pwd):/repo health
+    ```
+    The run command should be run from the calling repository.
+2.  Run a dockerfile from the [gh-mpyl dockerhub](https://hub.docker.com/r/vdbpublic/gh-mpyl).
+    ```shell
+    docker run -v $(pwd):/repo vdbpublic/gh-mpyl:pr-1 health
+    ```
+3. Directly from the source code, see [Developer instructions](./README-dev.md).
+
+Validations are automatically triggered in pr's. You can quickly validate your local code by running
 ```shell
-pip install mpyl
-mpyl --help
+pipenv run validate
 ```
 
-#### 2. Health check
-
-⭐ It is recommended to run this before running any other commands.
-```shell
-mpyl health
-```
-Will validate the configuration and check if all required tools are installed.
-
-#### 3. Run a local build via the CLI
-
-Find out which projects need to be built.
-```shell
-mpyl build status
-```
-Run a build.
-```shell
-mpyl build run
-```
-
-#### 4. Run a CI build on your Pull Request
-
-Create a pull request.
-```shell
-gh pr create --draft
-```
-If you use MPyL in a github action, a build will be triggered automatically and the results will be reported there.
 
 ### Command structure
 
 Top level commands options are passed on to sub commands and need to be specified *before* the sub command.
-In ```mpyl projects --config <path> list ```, the `--config` option applies to all `project` commands, like `list`
-or `lint`.
+In ```mpyl build --config <path> list ```, the `--config` option applies to all `build` commands, like `run`
+or `status`.
 
 ##### MPyL configuration
 
@@ -99,10 +87,6 @@ Add this to ``~/.config/fish/completions/foo-bar.fish``:
 eval (env _MPYL_COMPLETE=fish_source mpyl)
 ```
 
-#### YAML auto completion
-
-![Schema based autocompletion](documentation_images/autocompletion.gif)
-
 ###### Intellij IDEA or PyCharm
 Go to: `Preferences | Languages & Frameworks | Schemas and DTDs | JSON Schema Mappings`
 - Add new schema
@@ -149,61 +133,6 @@ The [schema](https://vandebron.github.io/mpyl/schema/project.schema.yml) for `pr
 documentation and
 can be used to enable on-the-fly validation and auto-completion in your IDE.
 
-## ..setting up a CI-CD flow
-
-MPyL is not a taskrunner nor is it a tool to define and run CI-CD flows. It does however provide a building blocks that can
-easily be plugged into any existing CI-CD platform.
-
-### Github actions
-
-Github actions are a natural fit for MPyL. To build a pull request, you can use the following workflow:
-```yaml
-name: Build pull request
-on:
-  push:
-    branches-ignore: [ 'main' ]
-
-jobs:
-  Build_PR:
-    name: Build and deploy the pull request
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-
-      - name: Install MPyL
-        run: pip install 'mpyl==<latest_version>'
-
-      - name: Print execution plan
-        run: mpyl build status
-
-      - name: Build run
-        run: mpyl build run
-```
-
-## ..caching build artifacts
-
-#### Docker images
-
-Docker image layers built in previous runs can be used as a cache for subsequent runs. An external cache source can
-be configured in `mpyl_config.yml` as follows:
-
-```yaml
-docker:
-  registry:
-    cache:
-      cacheFromRegistry: true
-      custom:
-        to: 'type=gha,mode=max'
-        from: 'type=gha'
-```
-
-The `to` and `from` fields map to `--cache-to` and `--cache-from`
-[buildx arguments](https://docs.docker.com/engine/reference/commandline/buildx_build/#cache-from).
-
-The docker cache can be used in both the `mpyl.steps.build.dockerbuild` and `mpyl.steps.test.dockertest` steps.
-
 #### Artifacts
 
 MPyL's artifact metadata is stored in the hidden `.mpyl` folders next to `project.yml`.
@@ -212,12 +141,6 @@ A typical `.mpyl` folder has a file for each executed stage. The `BUILD.yml` fil
 build step. For example:
 ```yaml
 message: Pushed ghcr.io/samtheisens/nodeservice:pr-6
-produced_artifact: !Artifact
-  artifact_type: !ArtifactType DOCKER_IMAGE-1
-  revision: b6c87b70c3c16174bdacac6c7dd4ef71b4bb0047
-  producing_step: After Docker Build
-  spec: !DockerImageSpec
-    image: ghcr.io/samtheisens/nodeservice:pr-6
 ```
 These files speed up subsequent runs by preventing steps from being executed when their inputs have not changed.
 
@@ -229,25 +152,3 @@ mpyl build clean
 ## ..create a custom step
 
 See `mpyl.steps`.
-
-## ..create a test step
-
-### Junit test results
-
-MPyL can parse Junit test results for reporting purposes. Your test step needs to produce a
-`mpyl.steps.models.ArtifactType.JUNIT_TESTS` artifact.
-See `mpyl.steps.test.echo` for an example of how such an artifact can be created.
-
-### Integration tests
-If your project includes "integration tests" that require a docker container to run during the test stage,
-you can define these containers in a file named `docker-compose-test.yml`. For example, to test your database schema
-upgrades, with a real postgres database:
-<details>
-  <summary>Example `docker-compose-test.yml`</summary>
-```yaml
-.. include:: tests/projects/service/deployment/docker-compose-test.yml
-```
-</details>
-
-Note: make sure to define a reliable `healthcheck` to prevent your tests from being run before the database is
-fully up and running.
