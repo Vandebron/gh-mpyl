@@ -51,7 +51,6 @@ def _caching_for(
 
 class TestDiscovery:
     logger = logging.getLogger(__name__)
-    steps = StepsCollection(logger=logger)
     project_paths = [
         "tests/projects/job/deployment/project.yml",
         "tests/projects/service/deployment/project.yml",
@@ -72,7 +71,6 @@ class TestDiscovery:
                 sha="a git SHA",
                 _files_touched=files_touched,
             ),
-            steps=self.steps,
         )
 
     def test_changed_files_from_file(self):
@@ -100,7 +98,6 @@ class TestDiscovery:
                     projects,
                     build.STAGE_NAME,
                     changeset,
-                    self.steps,
                 )
             )
             == 1
@@ -112,7 +109,6 @@ class TestDiscovery:
                     projects,
                     test.STAGE_NAME,
                     changeset,
-                    self.steps,
                 )
             )
             == 0
@@ -124,7 +120,6 @@ class TestDiscovery:
                     projects,
                     deploy.STAGE_NAME,
                     changeset,
-                    self.steps,
                 )
             )
             == 1
@@ -228,7 +223,6 @@ class TestDiscovery:
             ),
             stage="build",
             path="tests/projects/sbt-service-other/file.py",
-            steps=self.steps,
         )
 
     def test_is_stage_cached(self):
@@ -304,21 +298,18 @@ class TestDiscovery:
             projects,
             build.STAGE_NAME,
             Changeset("revision", touched_files),
-            self.steps,
         )
         projects_for_test = find_projects_to_execute(
             self.logger,
             projects,
             test.STAGE_NAME,
             Changeset("revision", touched_files),
-            self.steps,
         )
         projects_for_deploy = find_projects_to_execute(
             self.logger,
             projects,
             deploy.STAGE_NAME,
             Changeset("revision", touched_files),
-            self.steps,
         )
         assert len(projects_for_build) == 1
         assert len(projects_for_test) == 1

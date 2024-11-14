@@ -11,10 +11,10 @@ from ..project import Stage
 
 
 class StepsCollection:
-    _step_executors: set[Step]
+    _steps: set[Step]
 
     def __init__(self, logger: Logger) -> None:
-        self._step_executors = set()
+        self._steps = set()
         package = "mpyl.steps"
         local_package = f"src.{package}"
         default_library_location, alternative_library_location = (
@@ -31,7 +31,7 @@ class StepsCollection:
 
         logger.debug(f"Loaded {len(IPluginRegistry.plugins)} executors from {location}")
         if not IPluginRegistry.plugins:
-            logger.warning(f"No executors found. Check {location} for plugins.")
+            logger.warning(f"No steps found. Check {location} for plugins.")
 
         for plugin in IPluginRegistry.plugins:
             step_instance: Step = plugin(logger)
@@ -39,7 +39,7 @@ class StepsCollection:
             logger.debug(
                 f"{meta.name} for stage {meta.stage} registered. Description: {meta.description}"
             )
-            self._step_executors.add(step_instance)
+            self._steps.add(step_instance)
 
     @staticmethod
     def __load_steps_in_module(
@@ -64,9 +64,9 @@ class StepsCollection:
             logger.debug(f"Module {module_root} at {base_path} not found {exc}")
             return None
 
-    def get_executor(self, stage: Stage, step_name: str) -> Optional[Step]:
-        executors = filter(
+    def get_step(self, stage: Stage, step_name: str) -> Optional[Step]:
+        steps = filter(
             lambda e: step_name == e.meta.name and e.meta.stage == stage.name,
-            self._step_executors,
+            self._steps,
         )
-        return next(executors, None)
+        return next(steps, None)

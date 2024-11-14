@@ -16,7 +16,6 @@ from .constants import RUN_ARTIFACTS_FOLDER
 from .project import Project, Stage
 from .project_execution import ProjectExecution
 from .stages.discovery import find_projects_to_execute
-from .steps.collection import StepsCollection
 from .utilities.repo import Changeset
 
 RUN_PLAN_PICKLE_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.pickle"
@@ -197,7 +196,6 @@ def _discover_run_plan(
             all_projects=all_projects,
             stage=stage.name,
             changeset=changeset,
-            steps=StepsCollection(logger=logging.getLogger()),
         )
 
         logger.debug(

@@ -53,7 +53,7 @@ class Steps:
     """Executor of individual steps within a pipeline."""
 
     _logger: Logger
-    _properties: RunProperties
+    _run_properties: RunProperties
     _run_plan: RunPlan
     _steps_collection: StepsCollection
 
@@ -64,7 +64,7 @@ class Steps:
         steps_collection: Optional[StepsCollection] = None,
     ) -> None:
         self._logger = logger
-        self._properties = properties
+        self._run_properties = properties
         self._steps_collection = steps_collection or StepsCollection(logger)
 
         schema_dict = pkgutil.get_data(__name__, "../schema/mpyl_config.schema.yml")
@@ -74,26 +74,23 @@ class Steps:
 
     def _execute(
         self,
-        executor: Step,
+        step: Step,
         project_execution: ProjectExecution,
-        properties: RunProperties,
     ) -> Output:
-        self._logger.info(
-            f"Executing {executor.meta.name} for '{project_execution.name}'"
-        )
-        result = executor.execute(
+        self._logger.info(f"Executing {step.meta.name} for '{project_execution.name}'")
+        result = step.execute(
             Input(
                 project_execution=project_execution,
-                run_properties=properties,
+                run_properties=self._run_properties,
             )
         )
         if result.success:
             self._logger.info(
-                f"Execution of {executor.meta.name} succeeded for '{project_execution.name}' with outcome '{result.message}'"  # pylint: disable=line-too-long
+                f"Execution of {step.meta.name} succeeded for '{project_execution.name}' with outcome '{result.message}'"  # pylint: disable=line-too-long
             )
         else:
             self._logger.warning(
-                f"Execution of {executor.meta.name} failed for '{project_execution.name}' with outcome '{result.message}'"  # pylint: disable=line-too-long
+                f"Execution of {step.meta.name} failed for '{project_execution.name}' with outcome '{result.message}'"  # pylint: disable=line-too-long
             )
         return result
 
@@ -105,9 +102,8 @@ class Steps:
         stage: Stage,
     ) -> Output:
         after_result = self._execute(
-            executor=step,
+            step=step,
             project_execution=project_execution,
-            properties=self._properties,
         )
 
         after_result.write(project_execution.project.target_path, stage.name)
@@ -119,7 +115,7 @@ class Steps:
 
     def _validate_project_against_config(self, project: Project) -> Optional[Output]:
         allowed_maintainers = set(
-            self._properties.config.get("project", {}).get("allowedMaintainers", [])
+            self._run_properties.config.get("project", {}).get("allowedMaintainers", [])
         )
         not_allowed = set(project.maintainer).difference(allowed_maintainers)
         if not_allowed:
@@ -145,7 +141,7 @@ class Steps:
         if invalid_maintainers:
             return invalid_maintainers
 
-        executor: Optional[Step] = self._steps_collection.get_executor(stage, step_name)
+        executor: Optional[Step] = self._steps_collection.get_step(stage, step_name)
         if not executor:
             self._logger.error(
                 f"No executor found for {step_name} in stage {stage.name}"
@@ -162,17 +158,15 @@ class Steps:
             )
             if executor.before:
                 before_result = self._execute(
-                    executor=executor.before,
+                    step=executor.before,
                     project_execution=project_execution,
-                    properties=self._properties,
                 )
                 if not before_result.success:
                     return before_result
 
             result = self._execute(
-                executor=executor,
+                step=executor,
                 project_execution=project_execution,
-                properties=self._properties,
             )
             result.write(project_execution.project.target_path, stage.name)
 
@@ -200,7 +194,7 @@ class Steps:
         :return: StepResult
         :raise ExecutionException
         """
-        stage_object = self._properties.to_stage(stage)
+        stage_object = self._run_properties.to_stage(stage)
         step_output = self._execute_stage(
             stage=stage_object, project_execution=project_execution
         )

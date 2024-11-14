@@ -9,10 +9,8 @@ from pathlib import Path
 from typing import Optional
 
 from ..project import Project
-from ..project import Stage
 from ..project_execution import ProjectExecution
 from ..steps import deploy
-from ..steps.collection import StepsCollection
 from ..steps.models import Output
 from ..utilities.repo import Changeset
 
@@ -59,7 +57,6 @@ def is_file_a_dependency(
     project: Project,
     stage: str,
     path: str,
-    steps: Optional[StepsCollection],
 ) -> bool:
     deps = project.dependencies
     if not deps:
@@ -76,18 +73,6 @@ def is_file_a_dependency(
             f"Project {project.name} added to the run plan because a {stage} dependency was modified: {path}"
         )
         return True
-
-    step_name = project.stages.for_stage(stage)
-    if step_name is None or steps is None:
-        logger.debug(
-            f"Project {project.name}: the step for stage {stage} is not defined or not found"
-        )
-        return False
-
-    executor = steps.get_executor(Stage(stage, "icon"), step_name)
-    if executor is None:
-        logger.debug(f"Project {project.name}: no executor found for stage {stage}")
-        return False
 
     return False
 
@@ -169,7 +154,6 @@ def find_projects_to_execute(
     all_projects: set[Project],
     stage: str,
     changeset: Changeset,
-    steps: Optional[StepsCollection],
 ) -> set[ProjectExecution]:
     def build_project_execution(
         project: Project,
@@ -178,7 +162,7 @@ def find_projects_to_execute(
             return None
 
         is_any_dependency_modified = any(
-            is_file_a_dependency(logger, project, stage, changed_file, steps)
+            is_file_a_dependency(logger, project, stage, changed_file)
             for changed_file in changeset.files_touched()
         )
         is_project_modified = any(
