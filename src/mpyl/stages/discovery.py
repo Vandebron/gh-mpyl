@@ -1,6 +1,6 @@
 """ Discovery of projects that are relevant to a specific `mpyl.stage.Stage` . Determine which of the
 discovered projects have been invalidated due to changes in the source code since the last build of the project's
-output artifact."""
+output."""
 
 import hashlib
 import logging
@@ -117,11 +117,7 @@ def is_project_cached_for_stage(
         logger.debug(
             f"Project {project} will execute stage {stage} because the previous run was not successful"
         )
-    elif output.produced_artifact is None:
-        logger.debug(
-            f"Project {project} will execute stage {stage} because there was no artifact in the previous run"
-        )
-    elif not output.produced_artifact.hash:
+    elif not output.hash:
         logger.debug(
             f"Project {project} will execute stage {stage} because there are no hashed changes for the previous run"
         )
@@ -129,13 +125,11 @@ def is_project_cached_for_stage(
         logger.debug(
             f"Project {project} will execute stage {stage} because there are no hashed changes for the current run"
         )
-    elif output.produced_artifact.hash != hashed_changes:
+    elif output.hash != hashed_changes:
         logger.debug(
             f"Project {project} will execute stage {stage} because its content changed since the previous run"
         )
-        logger.debug(
-            f"Hashed changes for the previous run: {output.produced_artifact.hash}"
-        )
+        logger.debug(f"Hashed changes for the previous run: {output.hash}")
         logger.debug(f"Hashed changes for the current run:  {hashed_changes}")
     else:
         logger.debug(

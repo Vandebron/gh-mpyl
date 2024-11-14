@@ -3,7 +3,6 @@
 import os
 import pkgutil
 from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
 from typing import Optional
 
@@ -161,62 +160,6 @@ class RunProperties:
 
 @yaml_object(yaml)
 @dataclass(frozen=False)
-class ArtifactType(Enum):
-    def __eq__(self, other):
-        return self.value == other.value
-
-    @classmethod
-    def from_yaml(cls, _, node):
-        return ArtifactType(int(node.value.split("-")[1]))
-
-    @classmethod
-    def to_yaml(cls, representer, node):
-        return representer.represent_scalar(
-            "!ArtifactType",
-            f"{node._name_}-{node._value_}",  # pylint: disable=protected-access
-        )
-
-    DOCKER_IMAGE = 1
-    """A docker image"""
-    JUNIT_TESTS = 2
-    """A test suite in junit compatible `.xml` format"""
-    DEPLOYED_HELM_APP = 3
-    """Null object"""
-    NONE = 4
-    """A helm chart deployed to kubernetes"""
-    HELM_CHART = 5
-    """A helm chart written to a folder"""
-    KUBERNETES_MANIFEST = 6
-    """"A k8s manifest writen to a file"""
-    ARCHIVE = 7
-    """"An artifact archive e.g. .jar, .tar, .zip"""
-
-
-@yaml_object(yaml)
-@dataclass
-class ArtifactSpec:
-    pass
-
-
-@yaml_object(yaml)
-@dataclass(frozen=False)
-class Artifact:
-    artifact_type: ArtifactType
-    revision: str
-    producing_step: str
-    spec: ArtifactSpec
-    hash: Optional[str] = None
-
-
-@yaml_object(yaml)
-@dataclass
-class ArchiveSpec(ArtifactSpec):
-    yaml_tag = "!ArchiveSpec"
-    archive_path: str
-
-
-@yaml_object(yaml)
-@dataclass(frozen=False)
 class Input:
     project_execution: ProjectExecution
     run_properties: RunProperties
@@ -228,7 +171,7 @@ class Input:
 class Output:
     success: bool
     message: str
-    produced_artifact: Optional[Artifact] = None
+    hash: Optional[str] = None
 
     @staticmethod
     def path(target_path: Path, stage: str):
@@ -246,15 +189,3 @@ class Output:
             with open(path, encoding="utf-8") as file:
                 return yaml.load(file)
         return None
-
-
-def input_to_artifact(
-    artifact_type: ArtifactType, step_input: Input, spec: ArtifactSpec
-):
-    return Artifact(
-        artifact_type=artifact_type,
-        revision=step_input.run_properties.versioning.revision,
-        hash=step_input.project_execution.hashed_changes,
-        producing_step=step_input.project_execution.name,
-        spec=spec,
-    )

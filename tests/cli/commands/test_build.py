@@ -6,7 +6,7 @@ from src.mpyl import main_group, add_commands
 from src.mpyl.build import run_build
 from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.run_plan import RunPlan
-from src.mpyl.steps import Step, Meta, ArtifactType, Input, Output
+from src.mpyl.steps import Step, Meta, Input, Output
 from src.mpyl.steps.build import STAGE_NAME
 from src.mpyl.steps.run import RunResult
 from src.mpyl.steps.steps import Steps, StepsCollection, ExecutionException
@@ -30,7 +30,6 @@ class ThrowingStep(Step):
                 version="0.0.1",
                 stage=STAGE_NAME,
             ),
-            produced_artifact=ArtifactType.NONE,
         )
 
     def execute(self, step_input: Input) -> Output:

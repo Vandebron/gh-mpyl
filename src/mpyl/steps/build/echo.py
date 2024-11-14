@@ -3,7 +3,7 @@
 from logging import Logger
 
 from .. import Step, Meta
-from ..models import Input, Output, ArtifactType
+from ..models import Input, Output
 from . import STAGE_NAME
 
 
@@ -17,7 +17,6 @@ class BuildEcho(Step):
                 version="0.0.1",
                 stage=STAGE_NAME,
             ),
-            produced_artifact=ArtifactType.NONE,
         )
 
     def execute(self, step_input: Input) -> Output:
@@ -25,5 +24,4 @@ class BuildEcho(Step):
         return Output(
             success=True,
             message=f"Built {step_input.project_execution.name}",
-            produced_artifact=None,
         )

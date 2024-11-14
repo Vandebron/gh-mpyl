@@ -1,15 +1,8 @@
 from datetime import datetime
 
-from src.mpyl.reporting.formatting.markdown import (
-    summary_to_markdown,
-    run_result_to_markdown,
-)
-from src.mpyl.steps.models import Output, Artifact, ArtifactType
+from src.mpyl.reporting.formatting.markdown import run_result_to_markdown
+from src.mpyl.steps.models import Output
 from src.mpyl.steps.steps import StepResult, ExecutionException
-from src.mpyl.utilities.junit import (
-    TestRunSummary,
-    JunitTestSpec,
-)
 from tests import root_test_path
 from tests.reporting import (
     create_test_result,
@@ -46,11 +39,6 @@ class TestMarkdownReporting:
             self.test_resource_path / "markdown_run_with_plan.md", simple_report
         )
 
-    def test_should_convert_test_summary_to_markdown(self):
-        summary = TestRunSummary(tests=20, failures=2, errors=1, skipped=0)
-        test_report = summary_to_markdown(summary)
-        assert_roundtrip(self.test_resource_path / "test_run_summary.md", test_report)
-
     def test_should_measure_progress(self):
         result = create_test_result_with_plan()
         assert result.progress_fraction == 0.0, "Should start at zero progress"
@@ -72,22 +60,7 @@ class TestMarkdownReporting:
             StepResult(
                 stage=TestStage.test(),
                 project=test_data.get_project(),
-                output=Output(
-                    success=True,
-                    message="Tests successful",
-                    produced_artifact=Artifact(
-                        artifact_type=ArtifactType.JUNIT_TESTS,
-                        revision="revision",
-                        producing_step="Jest",
-                        spec=JunitTestSpec(
-                            test_output_path=str(self.test_resource_path),
-                            test_results_url="http://localhost/tests",
-                            test_results_summary=TestRunSummary(
-                                tests=99, failures=1, errors=0, skipped=0
-                            ),
-                        ),
-                    ),
-                ),
+                output=Output(success=True, message="Tests successful"),
                 timestamp=datetime.fromisoformat("2019-01-04T16:41:24+02:00"),
             )
         )
@@ -95,22 +68,7 @@ class TestMarkdownReporting:
             StepResult(
                 stage=TestStage.test(),
                 project=test_data.get_project(),
-                output=Output(
-                    success=True,
-                    message="Tests successful",
-                    produced_artifact=Artifact(
-                        artifact_type=ArtifactType.JUNIT_TESTS,
-                        revision="revision",
-                        producing_step="Cypress",
-                        spec=JunitTestSpec(
-                            test_output_path=str(self.test_resource_path),
-                            test_results_url="https://cypress.io",
-                            test_results_summary=TestRunSummary(
-                                tests=3, failures=1, errors=0, skipped=0
-                            ),
-                        ),
-                    ),
-                ),
+                output=Output(success=True, message="Tests successful"),
                 timestamp=datetime.fromisoformat("2019-01-04T16:41:24+02:00"),
             )
         )

@@ -5,8 +5,7 @@ from pathlib import Path
 
 from . import STAGE_NAME
 from .. import Step, Meta
-from ..models import Input, Output, ArtifactType, input_to_artifact
-from ...utilities.junit import JunitTestSpec
+from ..models import Input, Output
 
 SAMPLE_JUNIT_RESULT = """
 <?xml version="1.0" encoding="UTF-8"?>
@@ -29,7 +28,6 @@ class TestEcho(Step):
                 version="0.0.1",
                 stage=STAGE_NAME,
             ),
-            produced_artifact=ArtifactType.JUNIT_TESTS,
         )
 
     def execute(self, step_input: Input) -> Output:
@@ -37,17 +35,7 @@ class TestEcho(Step):
         path = Path(step_input.project_execution.project.target_path, "test_results")
         path.mkdir(parents=True, exist_ok=True)
         Path(path, "test.xml").write_text(SAMPLE_JUNIT_RESULT, encoding="utf-8")
-
-        artifact = input_to_artifact(
-            artifact_type=ArtifactType.JUNIT_TESTS,
-            step_input=step_input,
-            spec=JunitTestSpec(
-                test_output_path=str(path),
-                test_results_url=step_input.run_properties.details.tests_url,
-            ),
-        )
         return Output(
             success=True,
             message=f"Tested {step_input.project_execution.name}",
-            produced_artifact=artifact,
         )
