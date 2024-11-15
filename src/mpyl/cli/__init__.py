@@ -4,8 +4,6 @@ import asyncio
 import importlib
 import logging
 import os
-import pkgutil
-from dataclasses import dataclass
 from importlib.metadata import version as version_meta
 from pathlib import Path
 from typing import Optional
