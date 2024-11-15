@@ -64,7 +64,7 @@ def plan(ctx, config, properties):
     )
 
 
-@click.command("create")
+@plan.command("create")
 @click.pass_obj
 def create_plan(ctx: Context):
     changed_files_path = ctx.config["vcs"]["changedFilesPath"]
@@ -87,7 +87,7 @@ def create_plan(ctx: Context):
     run_plan.print_markdown(ctx.console, all_stages)
 
 
-@click.command("print")
+@plan.command("print")
 @click.pass_obj
 def print_plan(ctx: Context):
     all_stages = [
