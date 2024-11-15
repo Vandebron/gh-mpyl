@@ -171,15 +171,17 @@ class RunPlan:
 
             for stage in stages:
                 executions = self.get_projects_for_stage(stage)
-                if not executions:
+                if executions:
+                    project_names = [
+                        f"_{execution.name}{' (cached)' if execution.cached else ''}_"
+                        for execution in sorted(
+                            executions, key=operator.attrgetter("name")
+                        )
+                    ]
+
+                    result += f'{stage.icon} {stage.name.capitalize()}:  \n{", ".join(project_names)}  \n'
+                else:
                     result += "🤷 Nothing to do  \n"
-
-                project_names = [
-                    f"_{execution.name}{' (cached)' if execution.cached else ''}_"
-                    for execution in sorted(executions, key=operator.attrgetter("name"))
-                ]
-
-                result += f'{stage.icon} {stage.name.capitalize()}:  \n{", ".join(project_names)}  \n'
 
             console.print(Markdown("**Execution plan:**  \n" + result))
 
