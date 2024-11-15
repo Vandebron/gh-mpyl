@@ -13,7 +13,7 @@ from ..constants import (
     DEFAULT_RUN_PROPERTIES_FILE_NAME,
 )
 from ..project import Stage
-from ..run_plan import discover_run_plan, load_run_plan_from_file
+from ..run_plan import discover_run_plan, RunPlan
 from ..steps.models import ConsoleProperties
 from ..utilities.pyaml_env import parse_config
 from ..validation import validate_run_properties
@@ -93,5 +93,7 @@ def print_plan(ctx: Context):
     all_stages = [
         Stage(stage["name"], stage["icon"]) for stage in ctx.run_properties["stages"]
     ]
-    run_plan = load_run_plan_from_file(selected_projects=None, selected_stage=None)
+    run_plan = RunPlan.load_from_pickle_file(
+        selected_projects=None, selected_stage=None
+    )
     run_plan.print_markdown(ctx.console, all_stages)

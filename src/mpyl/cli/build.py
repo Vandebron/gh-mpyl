@@ -17,8 +17,8 @@ from ..constants import (
     RUN_ARTIFACTS_FOLDER,
     RUN_RESULT_FILE_GLOB,
 )
-from ..run_plan import load_run_plan_from_file
 from ..project import load_project, Target
+from ..run_plan import RunPlan
 from ..stages.discovery import find_projects
 from ..steps import deploy
 from ..steps.models import ConsoleProperties, RunProperties
@@ -140,7 +140,7 @@ def run(
         deploy_image=image,
     )
 
-    run_plan = load_run_plan_from_file(
+    run_plan = RunPlan.load_from_pickle_file(
         selected_stage=run_properties.selected_stage(stage),
         selected_projects=run_properties.selected_projects(projects),
     )

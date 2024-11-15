@@ -138,6 +138,35 @@ class RunPlan:
         with open(RUN_PLAN_JSON_FILE, "w", encoding="utf-8") as file:
             json.dump(list(run_plan.values()), file)
 
+    @staticmethod
+    def load_from_pickle_file(
+        selected_projects: Optional[set[Project]],
+        selected_stage: Optional[Stage],
+    ):
+        logger = logging.getLogger("mpyl")
+
+        if RUN_PLAN_PICKLE_FILE.is_file():
+            logger.info(f"Loading existing run plan: {RUN_PLAN_PICKLE_FILE}")
+            with open(RUN_PLAN_PICKLE_FILE, "rb") as file:
+                run_plan: RunPlan = pickle.load(file)
+                logger.debug(f"Run plan: {run_plan}")
+                if selected_stage:
+                    run_plan = run_plan.select_stage(selected_stage)
+                    logger.info(f"Selected stage: {selected_stage.name}")
+                    logger.debug(f"Run plan: {run_plan}")
+                if selected_projects:
+                    run_plan = run_plan.select_projects(selected_projects)
+                    logger.info(
+                        f"Selected projects: {set(p.name for p in selected_projects)}"
+                    )
+                    logger.debug(f"Run plan: {run_plan}")
+                return run_plan
+
+        else:
+            raise ValueError(
+                f"Unable to find existing run plan at path {RUN_PLAN_PICKLE_FILE}"
+            )
+
     def print_markdown(self, console: Console, stages: list[Stage]):
         if self.has_projects_to_run(include_cached_projects=True):
             result = ""
@@ -181,9 +210,9 @@ def discover_run_plan(
     changeset = Changeset.from_file(
         logger=logger, sha=revision, changed_files_path=changed_files_path
     )
-    plan = {}
 
-    def add_projects_to_plan(stage: Stage):
+    plan = {}
+    for stage in all_stages:
         project_executions = find_projects_to_execute(
             logger=logger,
             all_projects=all_projects,
@@ -196,36 +225,4 @@ def discover_run_plan(
         )
         plan.update({stage: project_executions})
 
-    for stage in all_stages:
-        add_projects_to_plan(stage)
-
     return RunPlan.create(all_projects, plan)
-
-
-def load_run_plan_from_file(
-    selected_projects: Optional[set[Project]],
-    selected_stage: Optional[Stage],
-):
-    logger = logging.getLogger("mpyl")
-
-    if RUN_PLAN_PICKLE_FILE.is_file():
-        logger.info(f"Loading existing run plan: {RUN_PLAN_PICKLE_FILE}")
-        with open(RUN_PLAN_PICKLE_FILE, "rb") as file:
-            run_plan: RunPlan = pickle.load(file)
-            logger.debug(f"Run plan: {run_plan}")
-            if selected_stage:
-                run_plan = run_plan.select_stage(selected_stage)
-                logger.info(f"Selected stage: {selected_stage.name}")
-                logger.debug(f"Run plan: {run_plan}")
-            if selected_projects:
-                run_plan = run_plan.select_projects(selected_projects)
-                logger.info(
-                    f"Selected projects: {set(p.name for p in selected_projects)}"
-                )
-                logger.debug(f"Run plan: {run_plan}")
-            return run_plan
-
-    else:
-        raise ValueError(
-            f"Unable to find existing run plan at path {RUN_PLAN_PICKLE_FILE}"
-        )
