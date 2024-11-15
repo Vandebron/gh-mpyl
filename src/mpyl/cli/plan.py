@@ -83,6 +83,7 @@ def create_plan(ctx: Context):
         changed_files_path=changed_files_path,
     )
 
+    run_plan.write_to_pickle_file()
     run_plan.write_to_json_file()
     run_plan.print_markdown(ctx.console, all_stages)
 

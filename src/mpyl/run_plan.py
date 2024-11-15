@@ -101,10 +101,8 @@ class RunPlan:
             return find_stage(self.full_plan)
         return find_stage(self.selected_plan)
 
-    def write_to_pickle_file(
-        self,
-        logger: logging.Logger,
-    ):
+    def write_to_pickle_file(self):
+        logger = logging.getLogger("mpyl")
         os.makedirs(os.path.dirname(RUN_PLAN_PICKLE_FILE), exist_ok=True)
         with open(RUN_PLAN_PICKLE_FILE, "wb") as file:
             logger.info(f"Storing run plan in: {RUN_PLAN_PICKLE_FILE}")
@@ -174,7 +172,7 @@ class RunPlan:
             for stage in stages:
                 executions = self.get_projects_for_stage(stage)
                 if not executions:
-                    result += "🤷 Nothing to do"
+                    result += "🤷 Nothing to do\n"
 
                 project_names = [
                     f"_{execution.name}{' (cached)' if execution.cached else ''}_"

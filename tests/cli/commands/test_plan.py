@@ -10,7 +10,7 @@ class TestCli:
     runner = CliRunner()
     add_commands()
 
-    def test_plan_create(self):
+    def _test_help_for_command(self, command: str):
         result = self.runner.invoke(
             main_group,
             args=[
@@ -19,23 +19,14 @@ class TestCli:
                 str(self.config_path),
                 "-p",
                 str(self.run_properties_path),
-                "create",
+                command,
                 "--help",
             ],
         )
         assert not result.exception
 
+    def test_plan_create(self):
+        self._test_help_for_command("create")
+
     def test_plan_print(self):
-        result = self.runner.invoke(
-            main_group,
-            args=[
-                "plan",
-                "-c",
-                str(self.config_path),
-                "-p",
-                str(self.run_properties_path),
-                "print",
-                "--help",
-            ],
-        )
-        assert not result.exception
+        self._test_help_for_command("print")
