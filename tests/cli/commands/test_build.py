@@ -1,8 +1,5 @@
 import logging
 
-from click.testing import CliRunner
-
-from src.mpyl import main_group, add_commands
 from src.mpyl.build import run_build
 from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.run_plan import RunPlan
@@ -13,6 +10,7 @@ from src.mpyl.steps.run import RunResult
 from src.mpyl.steps.step import Meta, Step
 from src.mpyl.steps.steps import Steps, StepsCollection, ExecutionException
 from tests import root_test_path
+from tests.cli.commands import invoke, config_path, run_properties_path
 from tests.test_resources.test_data import (
     get_minimal_project,
     RUN_PROPERTIES,
@@ -38,12 +36,7 @@ class ThrowingStep(Step):
         raise ExecutionException("test", "tester", "build", "this is not good")
 
 
-class TestBuildCommand:
-    resource_path = root_test_path / "cli" / "test_resources"
-    config_path = root_test_path / "test_resources/mpyl_config.yml"
-    run_properties_path = root_test_path / "test_resources/run_properties.yml"
-    runner = CliRunner()
-    add_commands()
+class TestBuildCli:
     logger = logging.getLogger()
 
     def test_run_build_without_plan_should_be_successful(self):
@@ -115,16 +108,15 @@ class TestBuildCommand:
         assert result.exception.step == "Throwing Build"
 
     def test_build_clean_output(self):
-        result = self.runner.invoke(
-            main_group,
+        result = invoke(
             args=[
                 "build",
                 "-e",
                 "pull-request",
                 "-c",
-                str(self.config_path),
+                str(config_path),
                 "-p",
-                str(self.run_properties_path),
+                str(run_properties_path),
                 "clean",
             ],
             env={
