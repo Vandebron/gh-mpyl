@@ -93,6 +93,5 @@ jobs:
           project: job
           stage: build
           environment: pull-request
-          deploy-target: PullRequest
           version: a-random-version
           config-path: mpyl_config.example.yml
