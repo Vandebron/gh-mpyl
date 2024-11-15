@@ -1,17 +1,12 @@
 """ Model representation of run-specific configuration. """
 
 import os
-import pkgutil
 from dataclasses import dataclass
 from typing import Optional
 
-from ruamel.yaml import YAML, yaml_object  # type: ignore
+from ruamel.yaml import YAML, yaml_object
 
-from ..project import Project, Stage, Target
-from ..validation import validate
-
-
-yaml = YAML()
+from ..project import Stage, Target
 
 
 @dataclass(frozen=True)
@@ -21,10 +16,29 @@ class VersioningProperties:
     pr_number: Optional[int]
     tag: Optional[str]
 
-    def validate(self) -> Optional[str]:
-        if not self.pr_number and not self.tag:
-            return "Either pr_number or tag need to be set"
-        return None
+    @staticmethod
+    def from_run_properties(run_properties: dict):
+        _tag = run_properties["build"]["versioning"].get("tag")
+        _maybe_pr_number = run_properties["build"]["versioning"].get("pr_number")
+
+        if _tag:
+            _pr_number = None
+        elif _maybe_pr_number:
+            _pr_number = int(_maybe_pr_number)
+        else:
+            _pr_number = None
+
+        if not _tag and not _pr_number:
+            raise ValueError(
+                "Either build.versioning.tag or build.versioning.pr_number need to be set"
+            )
+
+        return VersioningProperties(
+            revision=run_properties["build"]["versioning"]["revision"],
+            branch=run_properties["build"]["versioning"]["branch"],
+            pr_number=_pr_number,
+            tag=_tag,
+        )
 
     @property
     def identifier(self) -> str:
@@ -79,7 +93,7 @@ class ConsoleProperties:
         )
 
 
-@yaml_object(yaml)
+@yaml_object(YAML())
 @dataclass(frozen=False)
 class RunProperties:
     """Contains information that is specific to a particular run of the pipeline"""
@@ -91,12 +105,9 @@ class RunProperties:
     versioning: VersioningProperties
     config: dict
     """Globally specified configuration, to be used by specific steps. Complies with the schema as
-    specified in `mpyl_config.schema.yml`
-     """
+    specified in `mpyl_config.schema.yml`"""
     stages: list[Stage]
     """All stage definitions"""
-    projects: set[Project]
-    """All projects"""
     deploy_image: Optional[str] = None
     """The docker image to deploy"""
 
@@ -105,40 +116,17 @@ class RunProperties:
         target: Target,
         run_properties: dict,
         config: dict,
-        all_projects: set[Project],
-        cli_tag: Optional[str] = None,
         deploy_image: Optional[str] = None,
     ):
-        build_dict = pkgutil.get_data(__name__, "../schema/run_properties.schema.yml")
-
-        if build_dict:
-            validate(run_properties, build_dict.decode("utf-8"))
-
-        versioning_config = run_properties["build"]["versioning"]
-
-        tag: Optional[str] = cli_tag or versioning_config.get("tag")
-        pr_from_config: Optional[str] = versioning_config.get("pr_number")
-        pr_number: Optional[int] = (
-            None if tag else (int(pr_from_config) if pr_from_config else None)
-        )
-
-        versioning = VersioningProperties(
-            revision=versioning_config["revision"],
-            branch=versioning_config["branch"],
-            pr_number=pr_number,
-            tag=tag,
-        )
-
         return RunProperties(
             details=RunContext.from_configuration(run_properties["build"]["run"]),
             target=target,
-            versioning=versioning,
+            versioning=VersioningProperties.from_run_properties(run_properties),
             config=config,
             stages=[
                 Stage(stage["name"], stage["icon"])
                 for stage in run_properties["stages"]
             ],
-            projects=all_projects,
             deploy_image=deploy_image,
         )
 

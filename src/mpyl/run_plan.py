@@ -13,9 +13,9 @@ from rich.console import Console
 from rich.markdown import Markdown
 
 from .constants import RUN_ARTIFACTS_FOLDER
-from .project import Project, Stage
+from .project import Project, Stage, load_project
 from .project_execution import ProjectExecution
-from .stages.discovery import find_projects_to_execute
+from .stages.discovery import find_projects_to_execute, find_projects
 from .utilities.repo import Changeset
 
 RUN_PLAN_PICKLE_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.pickle"
@@ -24,19 +24,25 @@ RUN_PLAN_JSON_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.json"
 
 @dataclass(frozen=True)
 class RunPlan:
+    all_known_projects: set[Project]
     full_plan: dict[Stage, set[ProjectExecution]]
     selected_plan: dict[Stage, set[ProjectExecution]]
 
     @classmethod
     def empty(cls) -> "RunPlan":
-        return cls(full_plan={}, selected_plan={})
+        return cls(all_known_projects=set(), full_plan={}, selected_plan={})
 
     @classmethod
-    def from_plan(cls, plan: dict[Stage, set[ProjectExecution]]) -> "RunPlan":
-        return cls(full_plan=plan, selected_plan=plan)
+    def create(
+        cls, all_known_projects: set[Project], plan: dict[Stage, set[ProjectExecution]]
+    ) -> "RunPlan":
+        return cls(
+            all_known_projects=all_known_projects, full_plan=plan, selected_plan=plan
+        )
 
     def select_stage(self, stage: Stage) -> "RunPlan":
         return RunPlan(
+            all_known_projects=self.all_known_projects,
             full_plan=self.full_plan,
             selected_plan={stage: self.get_projects_for_stage(stage)},
         )
@@ -48,13 +54,10 @@ class RunPlan:
             selected_plan[stage] = {e for e in executions if e.project in projects}
 
         return RunPlan(
+            all_known_projects=self.all_known_projects,
             full_plan=self.full_plan,
             selected_plan=selected_plan,
         )
-
-    def update(self, run_plan: "RunPlan"):
-        self.full_plan.update(run_plan.full_plan)
-        self.selected_plan.update(run_plan.selected_plan)
 
     def has_projects_to_run(
         self, include_cached_projects: bool, use_full_plan: bool = False
@@ -98,7 +101,7 @@ class RunPlan:
             return find_stage(self.full_plan)
         return find_stage(self.selected_plan)
 
-    def write_to_pickled_file(
+    def write_to_pickle_file(
         self,
         logger: logging.Logger,
     ):
@@ -158,33 +161,23 @@ class RunPlan:
             logger.info("No changes detected, nothing to do.")
 
 
-# pylint: disable=too-many-arguments
-def create_run_plan(
-    console: Console,
-    changed_files_path: str,
+def discover_run_plan(
     revision: str,
-    all_projects: set[Project],
-    all_stages: list[Stage],
-):
-    run_plan = _discover_run_plan(
-        revision=revision,
-        all_projects=all_projects,
-        all_stages=all_stages,
-        changed_files_path=changed_files_path,
-    )
-
-    run_plan.write_to_json_file()
-    run_plan.print_markdown(console, all_stages)
-
-
-def _discover_run_plan(
-    revision: str,
-    all_projects: set[Project],
     all_stages: list[Stage],
     changed_files_path: str,
 ) -> RunPlan:
     logger = logging.getLogger("mpyl")
     logger.info("Discovering run plan...")
+
+    all_projects = set(
+        map(
+            lambda p: load_project(
+                project_path=p, validate_project_yaml=False, log=True
+            ),
+            find_projects(),
+        )
+    )
+
     changeset = Changeset.from_file(
         logger=logger, sha=revision, changed_files_path=changed_files_path
     )
@@ -206,15 +199,7 @@ def _discover_run_plan(
     for stage in all_stages:
         add_projects_to_plan(stage)
 
-    return RunPlan.from_plan(plan)
-
-
-def print_run_plan(
-    console: Console,
-    all_stages: list[Stage],
-):
-    run_plan = load_run_plan_from_file(selected_projects=None, selected_stage=None)
-    run_plan.print_markdown(console, all_stages)
+    return RunPlan.create(all_projects, plan)
 
 
 def load_run_plan_from_file(

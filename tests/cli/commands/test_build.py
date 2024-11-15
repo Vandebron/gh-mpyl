@@ -63,17 +63,17 @@ class TestBuildCommand:
         assert result.status_line == "🦥 Nothing to do"
 
     def test_run_build_with_plan_should_execute_successfully(self):
-        project_executions = {ProjectExecution.run(get_minimal_project())}
-        run_plan = RunPlan.from_plan(
-            {
+        project = get_minimal_project()
+        project_executions = {ProjectExecution.run(project)}
+        run_plan = RunPlan.create(
+            all_known_projects={project},
+            plan={
                 TestStage.build(): project_executions,
                 TestStage.test(): project_executions,
                 TestStage.deploy(): project_executions,
-            }
+            },
         )
-        run_properties = stub_run_properties(
-            all_projects={get_minimal_project()},
-        )
+        run_properties = stub_run_properties()
         accumulator = RunResult(run_properties=run_properties, run_plan=run_plan)
         collection = StepsCollection(logging.getLogger())
         executor = Steps(
@@ -90,12 +90,11 @@ class TestBuildCommand:
 
     def test_run_build_throwing_step_should_be_handled(self):
         projects = {get_project_with_stages({"build": "Throwing Build"})}
-        run_plan = RunPlan.from_plan(
-            {TestStage.build(): {ProjectExecution.run(p) for p in projects}}
+        run_plan = RunPlan.create(
+            all_known_projects=projects,
+            plan={TestStage.build(): {ProjectExecution.run(p) for p in projects}},
         )
-        run_properties = stub_run_properties(
-            all_projects=projects,
-        )
+        run_properties = stub_run_properties()
         accumulator = RunResult(run_properties=run_properties, run_plan=run_plan)
         logger = logging.getLogger()
         collection = StepsCollection(logger)

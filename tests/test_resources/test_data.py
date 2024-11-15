@@ -23,16 +23,12 @@ properties_values = parse_config(resource_path / DEFAULT_RUN_PROPERTIES_FILE_NAM
 def stub_run_properties(
     config: dict = config_values,
     properties: dict = properties_values,
-    all_projects: set[Project] = set(),
-    tag: Optional[str] = None,
     deploy_image: Optional[str] = None,
 ):
     return RunProperties.from_configuration(
         target=Target.PULL_REQUEST,
         run_properties=properties,
         config=config,
-        all_projects=all_projects,
-        cli_tag=tag or properties["build"]["versioning"].get("tag"),
         deploy_image=deploy_image,
     )
 

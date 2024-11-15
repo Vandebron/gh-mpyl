@@ -22,17 +22,18 @@ def create_test_result() -> RunResult:
 
 
 def create_test_result_with_plan() -> RunResult:
-    build_projects = [test_data.get_project(), __get_other_project()]
-    test_projects = [__get_other_project()]
-    deploy_projects = [__get_other_project()]
+    build_projects = {test_data.get_project(), __get_other_project()}
+    test_projects = {__get_other_project()}
+    deploy_projects = {__get_other_project()}
     return RunResult(
         run_properties=stub_run_properties(),
-        run_plan=RunPlan.from_plan(
-            {
+        run_plan=RunPlan.create(
+            all_known_projects=build_projects | test_projects | deploy_projects,
+            plan={
                 TestStage.build(): {ProjectExecution.run(p) for p in build_projects},
                 TestStage.test(): {ProjectExecution.run(p) for p in test_projects},
                 TestStage.deploy(): {ProjectExecution.run(p) for p in deploy_projects},
-            }
+            },
         ),
     )
 

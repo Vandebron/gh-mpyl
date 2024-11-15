@@ -4,8 +4,6 @@ import os
 import shutil
 from pathlib import Path
 
-from ruamel.yaml import YAML
-
 from src.mpyl.constants import RUN_ARTIFACTS_FOLDER
 from src.mpyl.project import load_project, Stage
 from src.mpyl.stages.discovery import (
@@ -19,8 +17,6 @@ from src.mpyl.utilities.repo import Changeset
 from tests.projects.find import load_projects
 from tests.reporting import test_resource_path
 from tests.test_resources.test_data import TestStage
-
-yaml = YAML()
 
 HASHED_CHANGES_OF_JOB = (
     "e16e7b0fec422c931b1fbab51bf5942f057d3591c74f495d3db60e2c0ac17616"

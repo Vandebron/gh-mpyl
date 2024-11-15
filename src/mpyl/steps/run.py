@@ -3,10 +3,14 @@ Accumulate `mpyl.steps.run.RunResult` from executed `mpyl.steps.step.Step`
 """
 
 import operator
+import pickle
+import uuid
+from pathlib import Path
 from typing import Optional
 
 from .models import RunProperties
 from .steps import StepResult, ExecutionException
+from ..constants import RUN_ARTIFACTS_FOLDER
 from ..project import Stage
 from ..run_plan import RunPlan
 
@@ -94,9 +98,6 @@ class RunResult:
     def extend(self, results: list[StepResult]):
         self._results.extend(results)
 
-    def update_run_plan(self, run_plan: RunPlan):
-        self._run_plan.update(run_plan)
-
     @property
     def is_success(self):
         if self._exception:
@@ -130,3 +131,11 @@ class RunResult:
         return RunResult.sort_chronologically(
             [res for res in self._results if res.stage == stage]
         )
+
+    def write_to_pickle_file(self):
+        Path(RUN_ARTIFACTS_FOLDER).mkdir(parents=True, exist_ok=True)
+        run_result_file = (
+            Path(RUN_ARTIFACTS_FOLDER) / f"run_result-{uuid.uuid4()}.pickle"
+        )
+        with open(run_result_file, "wb") as file:
+            pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)

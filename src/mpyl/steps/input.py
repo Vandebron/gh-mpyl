@@ -8,10 +8,8 @@ from .models import RunProperties
 from ..project_execution import ProjectExecution
 from ..run_plan import RunPlan
 
-yaml = YAML()
 
-
-@yaml_object(yaml)
+@yaml_object(YAML())
 @dataclass(frozen=False)  # yaml_object classes can't be frozen
 class Input:
     project_execution: ProjectExecution

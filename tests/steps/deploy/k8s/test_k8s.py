@@ -34,6 +34,7 @@ from tests.test_resources.test_data import (
     get_project_execution,
     stub_run_properties,
     RUN_PROPERTIES,
+    TestStage,
 )
 
 
@@ -63,16 +64,16 @@ class TestKubernetesChart:
         project_execution = ProjectExecution.run(project)
 
         if not run_properties:
-            run_properties = stub_run_properties(
-                all_projects={get_minimal_project()},
-                deploy_image="registry/image:123",
-            )
+            run_properties = stub_run_properties(deploy_image="registry/image:123")
 
         return ChartBuilder(
             step_input=Input(
                 project_execution=project_execution,
                 run_properties=run_properties,
-                run_plan=RunPlan.empty(),
+                run_plan=RunPlan.create(
+                    all_known_projects={project, get_minimal_project()},
+                    plan={TestStage.deploy(): {project_execution}},
+                ),
             ),
         )
 
@@ -228,10 +229,7 @@ class TestKubernetesChart:
 
     def test_production_ingress(self):
         project = get_minimal_project()
-        run_properties_prod = stub_run_properties(
-            all_projects={project},
-            deploy_image="registry/image:123",
-        )
+        run_properties_prod = stub_run_properties(deploy_image="registry/image:123")
         run_properties_prod = dataclasses.replace(
             run_properties_prod,
             target=Target.PRODUCTION,
@@ -298,10 +296,7 @@ class TestKubernetesChart:
     def test_passed_deploy_image(self):
         builder = self._get_builder(
             get_minimal_project(),
-            stub_run_properties(
-                all_projects={get_minimal_project()},
-                deploy_image="test-image:latest",
-            ),
+            stub_run_properties(deploy_image="test-image:latest"),
         )
         assert builder._get_image() == "test-image:latest"
         chart = to_service_chart(builder)

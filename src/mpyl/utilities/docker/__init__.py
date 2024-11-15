@@ -3,11 +3,7 @@
 from dataclasses import dataclass
 from typing import Dict, Optional
 
-from ruamel.yaml import YAML
-
 from ...project import Project
-
-yaml = YAML()
 
 
 @dataclass(frozen=True)

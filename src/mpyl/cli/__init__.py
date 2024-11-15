@@ -4,6 +4,7 @@ import asyncio
 import importlib
 import logging
 import os
+import pkgutil
 from dataclasses import dataclass
 from importlib.metadata import version as version_meta
 from pathlib import Path
@@ -19,14 +20,6 @@ from rich.logging import RichHandler
 from ..utilities.pyaml_env import parse_config
 
 CONFIG_PATH_HELP = "Path to the config.yml. Can be set via `MPYL_CONFIG_PATH` env var. "
-
-
-@dataclass(frozen=True)
-class MpylCliParameters:
-    tag: Optional[str] = None
-    stage: Optional[str] = None
-    projects: Optional[str] = None
-    deploy_image: Optional[str] = None
 
 
 async def load_url(test: bool = False):
@@ -57,26 +50,11 @@ async def get_latest_publication(test: bool = False) -> Optional[str]:
     return body.get("info", {}).get("version", None)
 
 
-async def get_release_url(release: str, test: bool = False) -> Optional[str]:
-    body = await get_publication_info(test)
-    releases = body.get("releases", {})
-    if release in releases:
-        return releases[release][0].get("url", None)
-    return None
-
-
 def get_meta_version():
     try:
         return version_meta("mpyl")
     except importlib.metadata.PackageNotFoundError:
         return None
-
-
-async def check_updates(meta: str) -> Optional[str]:
-    latest = await get_latest_publication()
-    if latest and meta != latest:
-        return latest
-    return None
 
 
 def get_version():

@@ -1,19 +1,14 @@
 """Commands related to build"""
 
-import pickle
 import shutil
 import sys
-import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
 import click
 from rich.console import Console
 
-from . import (
-    CONFIG_PATH_HELP,
-    MpylCliParameters,
-)
+from . import CONFIG_PATH_HELP
 from . import create_console_logger
 from ..build import run_mpyl
 from ..constants import (
@@ -26,9 +21,9 @@ from ..run_plan import load_run_plan_from_file
 from ..project import load_project, Target
 from ..stages.discovery import find_projects
 from ..steps import deploy
-from ..steps.models import ConsoleProperties
-from ..steps.run_properties import construct_run_properties
+from ..steps.models import ConsoleProperties, RunProperties
 from ..utilities.pyaml_env import parse_config
+from ..validation import validate_run_properties
 
 
 @dataclass(frozen=True)
@@ -70,6 +65,8 @@ class Context:
 def build(ctx, environment, config, properties):
     """Pipeline build commands"""
     parsed_properties = parse_config(properties)
+    validate_run_properties(parsed_properties)
+
     console_config = ConsoleProperties.from_configuration(parsed_properties)
     console = create_console_logger(
         show_path=console_config.show_paths,
@@ -98,15 +95,14 @@ class CustomValidation(click.Command):
 
 
 @build.command(help="Run an MPyL build", cls=CustomValidation)
-@click.option("--tag", "-t", help="Tag to build", type=click.STRING, required=False)
 @click.option(
-    "--stage", default=None, type=click.STRING, required=False, help="Stage to run"
+    "--stage", default=None, type=click.STRING, required=True, help="Stage to run"
 )
 @click.option(
     "--projects",
     "-p",
     type=click.STRING,
-    required=False,
+    required=True,
     help="Comma separated list of the projects to build",
 )
 @click.option(
@@ -115,7 +111,6 @@ class CustomValidation(click.Command):
 @click.pass_obj
 def run(
     obj: Context,
-    tag,
     stage,
     projects,
     image,
@@ -138,16 +133,11 @@ def run(
                 message="Need to pass exactly one project to deploy when passing an image"
             )
 
-    parameters = MpylCliParameters(
-        tag=tag, stage=stage, projects=projects, deploy_image=image
-    )
-    obj.console.log(parameters)
-
-    run_properties = construct_run_properties(
+    run_properties = RunProperties.from_configuration(
         target=obj.target,
+        run_properties=obj.run_properties,
         config=obj.config,
-        properties=obj.run_properties,
-        tag=parameters.tag,
+        deploy_image=image,
     )
 
     run_plan = load_run_plan_from_file(
@@ -161,11 +151,7 @@ def run(
         run_plan=run_plan,
     )
 
-    Path(RUN_ARTIFACTS_FOLDER).mkdir(parents=True, exist_ok=True)
-    run_result_file = Path(RUN_ARTIFACTS_FOLDER) / f"run_result-{uuid.uuid4()}.pickle"
-    with open(run_result_file, "wb") as file:
-        pickle.dump(run_result, file, pickle.HIGHEST_PROTOCOL)
-
+    run_result.write_to_pickle_file()
     sys.exit(0 if run_result.is_success else 1)
 
 

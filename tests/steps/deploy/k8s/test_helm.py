@@ -8,7 +8,6 @@ from src.mpyl.steps.deploy.k8s.helm import write_chart, to_chart_metadata
 from tests.test_resources import test_data
 from tests.test_resources.test_data import (
     get_project_execution,
-    get_minimal_project,
     stub_run_properties,
 )
 
@@ -17,10 +16,7 @@ class TestHelm:
     def test_write_chart(self):
         step_input = Input(
             project_execution=get_project_execution(),
-            run_properties=stub_run_properties(
-                all_projects={get_minimal_project()},
-                deploy_image="some image",
-            ),
+            run_properties=stub_run_properties(deploy_image="some image"),
             run_plan=RunPlan.empty(),
         )
         with tempfile.TemporaryDirectory() as tempdir:

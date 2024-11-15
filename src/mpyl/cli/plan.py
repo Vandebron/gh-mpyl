@@ -12,11 +12,11 @@ from ..constants import (
     DEFAULT_CONFIG_FILE_NAME,
     DEFAULT_RUN_PROPERTIES_FILE_NAME,
 )
-from ..project import Stage, Target
-from ..run_plan import create_run_plan, print_run_plan
+from ..project import Stage
+from ..run_plan import discover_run_plan, load_run_plan_from_file
 from ..steps.models import ConsoleProperties
-from ..steps.run_properties import construct_run_properties, validate_run_properties
 from ..utilities.pyaml_env import parse_config
+from ..validation import validate_run_properties
 
 
 @dataclass(frozen=True)
@@ -52,7 +52,9 @@ def plan(ctx, config, properties):
     parsed_properties = parse_config(properties)
     parsed_config = parse_config(config)
 
-    console_config = ConsoleProperties.from_configuration(ctx.run_properties)
+    validate_run_properties(parsed_properties)
+
+    console_config = ConsoleProperties.from_configuration(parsed_properties)
     console = create_console_logger(
         show_path=console_config.show_paths,
         max_width=console_config.width,
@@ -63,40 +65,33 @@ def plan(ctx, config, properties):
 
 
 @click.command("create")
-@click.option("--tag", "-t", help="Tag to build", type=click.STRING, required=False)
 @click.pass_obj
-def create_plan(ctx: Context, tag: str):
+def create_plan(ctx: Context):
     changed_files_path = ctx.config["vcs"]["changedFilesPath"]
     if not Path(changed_files_path).exists():
         raise ValueError(
             "Unable to calculate run plan without a changed files JSON file."
         )
 
-    run_properties = construct_run_properties(
-        target=Target.PULL_REQUEST,  # FIXME
-        config=ctx.config,
-        properties=ctx.run_properties,
-        tag=tag,
+    all_stages = [
+        Stage(stage["name"], stage["icon"]) for stage in ctx.run_properties["stages"]
+    ]
+
+    run_plan = discover_run_plan(
+        revision=ctx.run_properties["build"]["versioning"]["revision"],
+        all_stages=all_stages,
+        changed_files_path=changed_files_path,
     )
 
-    create_run_plan(
-        console=ctx.console,
-        changed_files_path=changed_files_path,
-        revision=run_properties.versioning.revision,
-        all_projects=run_properties.projects,
-        all_stages=run_properties.stages,
-    )
+    run_plan.write_to_json_file()
+    run_plan.print_markdown(ctx.console, all_stages)
 
 
 @click.command("print")
 @click.pass_obj
 def print_plan(ctx: Context):
-    validate_run_properties(ctx.run_properties)
-
-    print_run_plan(
-        console=ctx.console,
-        all_stages=[
-            Stage(stage["name"], stage["icon"])
-            for stage in ctx.run_properties["stages"]
-        ],
-    )
+    all_stages = [
+        Stage(stage["name"], stage["icon"]) for stage in ctx.run_properties["stages"]
+    ]
+    run_plan = load_run_plan_from_file(selected_projects=None, selected_stage=None)
+    run_plan.print_markdown(ctx.console, all_stages)

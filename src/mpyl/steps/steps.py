@@ -8,8 +8,6 @@ from datetime import datetime
 from logging import Logger
 from typing import Optional
 
-from ruamel.yaml import YAML  # type: ignore
-
 from .collection import StepsCollection
 from .input import Input
 from .models import RunProperties
@@ -20,8 +18,6 @@ from ..project import Stage
 from ..project_execution import ProjectExecution
 from ..run_plan import RunPlan
 from ..validation import validate
-
-yaml = YAML()
 
 
 class ExecutionException(Exception):

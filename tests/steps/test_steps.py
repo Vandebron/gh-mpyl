@@ -101,7 +101,6 @@ class TestSteps:
             versioning=VersioningProperties("", "feature/ARC-123", 1, None),
             config=config_values,
             stages=[],
-            projects=set(),
         )
         with pytest.raises(ValidationError) as excinfo:
             Steps(

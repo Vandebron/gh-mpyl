@@ -40,21 +40,20 @@ from kubernetes.client import (
     V1RoleRef,
     RbacV1Subject,
 )
-from ruamel.yaml import YAML
 
 from . import substitute_namespaces, get_namespace
 from .cluster import get_cluster_config_for_project
 from .resources import (
     CustomResourceDefinition,
     to_dict,
-)  # pylint: disable = no-name-in-module
+)
 from .resources.prometheus import V1PrometheusRule, V1ServiceMonitor
 from .resources.sealed_secret import V1SealedSecret
 from .resources.traefik import (
     V1AlphaIngressRoute,
     V1AlphaMiddleware,
     HostWrapper,
-)  # pylint: disable = no-name-in-module
+)
 from ... import deploy
 from ...input import Input
 from ....project import (
@@ -74,8 +73,6 @@ from ....project import (
     Metrics,
     TraefikAdditionalRoute,
 )
-
-yaml = YAML()
 
 # Determined (unscientifically) to be sensible factors.
 # Based on actual CPU usage, pods rarely use more than 10% of the allocated CPU. 60% usage is healthy, so we
@@ -751,7 +748,8 @@ class ChartBuilder:
         processed_env_vars = substitute_namespaces(
             env_vars=raw_env_vars,
             all_projects={
-                project.to_name for project in self.step_input.run_properties.projects
+                project.to_name
+                for project in self.step_input.run_plan.all_known_projects
             },
             projects_to_deploy={
                 project_execution.project.to_name
