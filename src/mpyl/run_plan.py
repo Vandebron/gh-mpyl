@@ -172,7 +172,7 @@ class RunPlan:
             for stage in stages:
                 executions = self.get_projects_for_stage(stage)
                 if not executions:
-                    result += "🤷 Nothing to do\n"
+                    result += "🤷 Nothing to do  \n"
 
                 project_names = [
                     f"_{execution.name}{' (cached)' if execution.cached else ''}_"
