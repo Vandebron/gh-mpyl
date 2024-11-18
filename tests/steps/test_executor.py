@@ -13,11 +13,11 @@ from src.mpyl.projects.versioning import yaml_to_string
 from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps import build
 from src.mpyl.steps.collection import StepsCollection
+from src.mpyl.steps.executor import Executor
 from src.mpyl.steps.models import (
     RunProperties,
     VersioningProperties,
 )
-from src.mpyl.steps.steps import Steps
 from src.mpyl.steps.output import Output
 from tests import root_test_path, test_resource_path
 from tests.test_resources import test_data
@@ -28,7 +28,7 @@ yaml = YAML()
 
 class TestSteps:
     resource_path = root_test_path / "test_resources"
-    executor = Steps(
+    executor = Executor(
         logger=logging.getLogger(),
         run_properties=test_data.RUN_PROPERTIES,
         run_plan=RunPlan.empty(),
@@ -74,7 +74,7 @@ class TestSteps:
         )
 
     def test_should_return_error_if_stage_not_defined(self):
-        steps = Steps(
+        steps = Executor(
             logger=Logger.manager.getLogger("logger"),
             run_properties=test_data.RUN_PROPERTIES,
             run_plan=RunPlan.empty(),
@@ -103,7 +103,7 @@ class TestSteps:
             stages=[],
         )
         with pytest.raises(ValidationError) as excinfo:
-            Steps(
+            Executor(
                 logger=Logger.manager.getLogger("logger"),
                 run_properties=properties,
                 run_plan=RunPlan.empty(),

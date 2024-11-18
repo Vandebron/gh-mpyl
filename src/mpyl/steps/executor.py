@@ -40,14 +40,14 @@ class ExecutionException(Exception):
 
 
 @dataclass(frozen=True)
-class StepResult:
+class ExecutionResult:
     stage: Stage
     project: Project
     output: Output
     timestamp: datetime = datetime.now()
 
 
-class Steps:
+class Executor:
     """Executor of individual steps within a pipeline."""
 
     _logger: Logger
@@ -188,7 +188,9 @@ class Steps:
                 project_execution.name, step.meta.name, stage.name, message
             ) from exc
 
-    def execute(self, stage: str, project_execution: ProjectExecution) -> StepResult:
+    def execute(
+        self, stage: str, project_execution: ProjectExecution
+    ) -> ExecutionResult:
         """
         :param stage: the stage to execute
         :param project_execution: the project execution information
@@ -199,6 +201,6 @@ class Steps:
         step_output = self._execute_stage(
             stage=stage_object, project_execution=project_execution
         )
-        return StepResult(
+        return ExecutionResult(
             stage=stage_object, project=project_execution.project, output=step_output
         )

@@ -7,11 +7,13 @@ from typing import Optional
 
 from ...project import Stage
 from ...project_execution import ProjectExecution
+from ...steps.executor import ExecutionResult
 from ...steps.run import RunResult
-from ...steps.steps import StepResult
 
 
-def wrap_project_name(project_execution: ProjectExecution, result: list[StepResult]):
+def wrap_project_name(
+    project_execution: ProjectExecution, result: list[ExecutionResult]
+):
     project_name = project_execution.name
     encapsulation = "_"
     found_result = next((r for r in result if r.project.name == project_name), None)
@@ -22,7 +24,7 @@ def wrap_project_name(project_execution: ProjectExecution, result: list[StepResu
 
 
 def __to_oneliner(
-    result: list[StepResult], plan: Optional[set[ProjectExecution]]
+    result: list[ExecutionResult], plan: Optional[set[ProjectExecution]]
 ) -> str:
     project_names: list[str] = []
     if plan:
@@ -36,7 +38,7 @@ def __to_oneliner(
 
 
 def markdown_for_stage(run_result: RunResult, stage: Stage):
-    step_results: list[StepResult] = run_result.results_for_stage(stage)
+    step_results: list[ExecutionResult] = run_result.results_for_stage(stage)
     plan = run_result.run_plan.get_projects_for_stage(stage)
     if not step_results and not plan:
         return ""

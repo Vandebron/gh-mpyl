@@ -4,11 +4,11 @@ from src.mpyl.build import run_build
 from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps.build import STAGE_NAME
+from src.mpyl.steps.executor import Executor, StepsCollection, ExecutionException
 from src.mpyl.steps.input import Input
 from src.mpyl.steps.output import Output
 from src.mpyl.steps.run import RunResult
 from src.mpyl.steps.step import Meta, Step
-from src.mpyl.steps.steps import Steps, StepsCollection, ExecutionException
 from tests import root_test_path
 from tests.cli.commands import invoke, config_path, run_properties_path
 from tests.test_resources.test_data import (
@@ -44,7 +44,7 @@ class TestBuildCli:
         run_plan = RunPlan.empty()
 
         accumulator = RunResult(run_properties=run_properties, run_plan=run_plan)
-        executor = Steps(
+        executor = Executor(
             logging.getLogger(),
             run_properties=run_properties,
             run_plan=run_plan,
@@ -69,7 +69,7 @@ class TestBuildCli:
         run_properties = stub_run_properties()
         accumulator = RunResult(run_properties=run_properties, run_plan=run_plan)
         collection = StepsCollection(logging.getLogger())
-        executor = Steps(
+        executor = Executor(
             logging.getLogger(),
             run_properties=run_properties,
             run_plan=run_plan,
@@ -91,7 +91,7 @@ class TestBuildCli:
         accumulator = RunResult(run_properties=run_properties, run_plan=run_plan)
         logger = logging.getLogger()
         collection = StepsCollection(logger)
-        executor = Steps(
+        executor = Executor(
             logger,
             run_properties=run_properties,
             run_plan=run_plan,

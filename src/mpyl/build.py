@@ -13,10 +13,10 @@ from .run_plan import RunPlan
 from .reporting.formatting.markdown import run_result_to_markdown
 from .steps import deploy
 from .steps.collection import StepsCollection
+from .steps.executor import ExecutionException, ExecutionResult, Executor
 from .steps.models import RunProperties, ConsoleProperties
 from .steps.output import Output
 from .steps.run import RunResult
-from .steps.steps import ExecutionException, StepResult, Steps
 
 
 FORMAT = "%(name)s  %(message)s"
@@ -58,7 +58,7 @@ def run_mpyl(
         run_plan.print_markdown(console, run_properties.stages)
 
         try:
-            executor = Steps(
+            executor = Executor(
                 logger=logger,
                 run_properties=run_properties,
                 run_plan=run_plan,
@@ -90,7 +90,7 @@ def run_mpyl(
         raise exc
 
 
-def run_build(logger: logging.Logger, accumulator: RunResult, executor: Steps):
+def run_build(logger: logging.Logger, accumulator: RunResult, executor: Executor):
     try:
         for stage, project_executions in accumulator.run_plan.selected_plan.items():
             for project_execution in project_executions:
@@ -98,7 +98,7 @@ def run_build(logger: logging.Logger, accumulator: RunResult, executor: Steps):
                     logger.info(
                         f"Skipping {project_execution.name} for stage {stage.name} because it is cached"
                     )
-                    result = StepResult(
+                    result = ExecutionResult(
                         stage=stage,
                         project=project_execution.project,
                         output=Output(success=True, message="This step was cached"),

@@ -8,8 +8,8 @@ import uuid
 from pathlib import Path
 from typing import Optional
 
+from .executor import ExecutionResult, ExecutionException
 from .models import RunProperties
-from .steps import StepResult, ExecutionException
 from ..constants import RUN_ARTIFACTS_FOLDER
 from ..project import Stage
 from ..run_plan import RunPlan
@@ -17,7 +17,7 @@ from ..run_plan import RunPlan
 
 class RunResult:
     _run_plan: RunPlan
-    _results: list[StepResult]
+    _results: list[ExecutionResult]
     _run_properties: RunProperties
     _exception: Optional[ExecutionException]
 
@@ -41,7 +41,7 @@ class RunResult:
         return "❌ Failed"
 
     @property
-    def failed_results(self) -> Optional[list[StepResult]]:
+    def failed_results(self) -> Optional[list[ExecutionResult]]:
         failed_results = list((r for r in self._results if not r.output.success))
 
         return failed_results if len(failed_results) > 0 else None
@@ -89,13 +89,13 @@ class RunResult:
         return self.run_plan.has_projects_to_run(include_cached_projects)
 
     @property
-    def results(self) -> list[StepResult]:
+    def results(self) -> list[ExecutionResult]:
         return self._results
 
-    def append(self, result: StepResult):
+    def append(self, result: ExecutionResult):
         self._results.append(result)
 
-    def extend(self, results: list[StepResult]):
+    def extend(self, results: list[ExecutionResult]):
         self._results.extend(results)
 
     @property
@@ -124,10 +124,10 @@ class RunResult:
         return not self.has_results or all(r.output.success for r in self._results)
 
     @staticmethod
-    def sort_chronologically(results: list[StepResult]) -> list[StepResult]:
+    def sort_chronologically(results: list[ExecutionResult]) -> list[ExecutionResult]:
         return sorted(results, key=operator.attrgetter("timestamp"))
 
-    def results_for_stage(self, stage: Stage) -> list[StepResult]:
+    def results_for_stage(self, stage: Stage) -> list[ExecutionResult]:
         return RunResult.sort_chronologically(
             [res for res in self._results if res.stage == stage]
         )

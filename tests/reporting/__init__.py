@@ -3,9 +3,9 @@ from datetime import datetime
 from src.mpyl.project import Stages, Project
 from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.run_plan import RunPlan
+from src.mpyl.steps.executor import ExecutionResult
 from src.mpyl.steps.output import Output
 from src.mpyl.steps.run import RunResult
-from src.mpyl.steps.steps import StepResult
 from tests import root_test_path
 from tests.test_resources import test_data
 from tests.test_resources.test_data import TestStage, stub_run_properties
@@ -41,7 +41,7 @@ def create_test_result_with_plan() -> RunResult:
 def append_results(result: RunResult) -> None:
     other_project = __get_other_project()
     result.append(
-        StepResult(
+        ExecutionResult(
             stage=TestStage.build(),
             project=test_data.get_project(),
             output=Output(success=False, message="Build failed"),
@@ -49,7 +49,7 @@ def append_results(result: RunResult) -> None:
         )
     )
     result.append(
-        StepResult(
+        ExecutionResult(
             stage=TestStage.build(),
             project=other_project,
             output=Output(success=True, message="Build successful"),
@@ -57,7 +57,7 @@ def append_results(result: RunResult) -> None:
         )
     )
     result.append(
-        StepResult(
+        ExecutionResult(
             stage=TestStage.test(),
             project=other_project,
             output=Output(success=True, message="Tests successful"),
@@ -65,7 +65,7 @@ def append_results(result: RunResult) -> None:
         )
     )
     result.append(
-        StepResult(
+        ExecutionResult(
             stage=TestStage.deploy(),
             project=other_project,
             output=Output(success=True, message="Deploy successful"),
