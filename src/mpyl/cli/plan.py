@@ -67,9 +67,9 @@ def plan(ctx, config, properties):
 @click.pass_obj
 def create_plan(ctx: Context):
     changed_files_path = Path(ctx.config["vcs"]["changedFilesPath"])
-    if not changed_files_path.exists():
+    if not changed_files_path.is_dir():
         raise ValueError(
-            "Unable to calculate run plan without a changed files JSON file."
+            "Unable to calculate run plan without a changed files directory."
         )
 
     all_stages = [

@@ -74,9 +74,12 @@ class TestDiscovery:
             sha="a git commit",
             changed_files_path=Path("tests/test_resources/changed-files/"),
         )
-        assert len(changeset.files_touched()) == 15
+        assert len(changeset.files_touched()) == 9
 
-        for operation in ["added", "copied", "deleted", "modified", "renamed"]:
+        # modified_files is empty
+        # renamed_files does not exist
+        # ignored_files should be ignored
+        for operation in ["added", "copied", "deleted"]:
             assert f"{operation}/file with spaces.py" in changeset.files_touched()
             assert f"{operation}/file,with,commas.py" in changeset.files_touched()
             assert f"{operation}/file|with|pipes.py" in changeset.files_touched()
