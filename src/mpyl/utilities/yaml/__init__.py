@@ -1,4 +1,5 @@
 """Utilities for working with YAML files."""
+
 from io import StringIO
 from pathlib import Path
 
