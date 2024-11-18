@@ -32,7 +32,7 @@ inputs:
     required: false
 runs:
   using: docker
-  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.6.5
+  image: docker://public.ecr.aws/vdb-public/gh-mpyl:pr-85
   args:
     - build
     - --environment
