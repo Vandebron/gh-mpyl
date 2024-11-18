@@ -20,7 +20,7 @@ from src.mpyl.steps.deploy.k8s.chart import (
 from src.mpyl.steps.deploy.k8s.resources import to_yaml, CustomResourceDefinition
 from src.mpyl.steps.deploy.k8s.resources.traefik import V1AlphaIngressRoute
 from src.mpyl.steps.deploy.kubernetes import DeployKubernetes
-from src.mpyl.steps.models import Input, RunProperties
+from src.mpyl.steps.input import Input
 from src.mpyl.utilities.docker import DockerConfig
 from tests import root_test_path
 from tests.test_resources import test_data
@@ -31,10 +31,10 @@ from tests.test_resources.test_data import (
     get_job_project,
     get_cron_job_project,
     get_minimal_project,
-    TestStage,
     get_project_execution,
     stub_run_properties,
     RUN_PROPERTIES,
+    TestStage,
 )
 
 
@@ -64,23 +64,16 @@ class TestKubernetesChart:
         project_execution = ProjectExecution.run(project)
 
         if not run_properties:
-            run_plan = RunPlan.from_plan(
-                {
-                    TestStage.build(): {project_execution},
-                    TestStage.test(): {project_execution},
-                    TestStage.deploy(): {project_execution},
-                }
-            )
-            run_properties = stub_run_properties(
-                run_plan=run_plan,
-                all_projects={get_minimal_project()},
-                deploy_image="registry/image:123",
-            )
+            run_properties = stub_run_properties(deploy_image="registry/image:123")
 
         return ChartBuilder(
             step_input=Input(
                 project_execution=project_execution,
                 run_properties=run_properties,
+                run_plan=RunPlan.create(
+                    all_known_projects={project, get_minimal_project()},
+                    plan={TestStage.deploy(): {project_execution}},
+                ),
             ),
         )
 
@@ -125,7 +118,8 @@ class TestKubernetesChart:
     def test_load_cluster_config(self):
         step_input = Input(
             get_project_execution(),
-            test_data.RUN_PROPERTIES,
+            run_properties=test_data.RUN_PROPERTIES,
+            run_plan=RunPlan.empty(),
         )
         config = get_cluster_config_for_project(
             step_input.run_properties,
@@ -136,7 +130,8 @@ class TestKubernetesChart:
     def test_load_cluster_config_with_project_override(self):
         step_input = Input(
             get_project_execution(),
-            test_data.RUN_PROPERTIES,
+            run_properties=test_data.RUN_PROPERTIES,
+            run_plan=RunPlan.empty(),
         )
         config = get_cluster_config_for_project(
             step_input.run_properties,
@@ -234,24 +229,16 @@ class TestKubernetesChart:
 
     def test_production_ingress(self):
         project = get_minimal_project()
+        run_properties_prod = stub_run_properties(deploy_image="registry/image:123")
+        run_properties_prod = dataclasses.replace(
+            run_properties_prod,
+            target=Target.PRODUCTION,
+            versioning=dataclasses.replace(
+                RUN_PROPERTIES.versioning, tag="20230829-1234", pr_number=None
+            ),
+        )
 
-        def run_properties_prod_with_plan() -> RunProperties:
-            run_properties_prod = stub_run_properties(
-                run_plan=RunPlan.from_plan(
-                    {TestStage.deploy(): {ProjectExecution.run(get_minimal_project())}}
-                ),
-                all_projects={get_minimal_project()},
-                deploy_image="registry/image:123",
-            )
-            return dataclasses.replace(
-                run_properties_prod,
-                target=Target.PRODUCTION,
-                versioning=dataclasses.replace(
-                    RUN_PROPERTIES.versioning, tag="20230829-1234", pr_number=None
-                ),
-            )
-
-        builder = self._get_builder(project, run_properties_prod_with_plan())
+        builder = self._get_builder(project, run_properties_prod)
         chart = to_service_chart(builder)
         self._roundtrip(
             self.template_path / "ingress-prod", "minimalService-ingress-0-https", chart
@@ -307,20 +294,9 @@ class TestKubernetesChart:
         assert endpoint_without_swagger == "/"
 
     def test_passed_deploy_image(self):
-        project = get_minimal_project()
-        project_executions = {ProjectExecution.run(project)}
-        run_plan = RunPlan.from_plan(
-            {
-                TestStage.deploy(): project_executions,
-            }
-        )
         builder = self._get_builder(
-            project,
-            stub_run_properties(
-                run_plan=run_plan,
-                all_projects={get_minimal_project()},
-                deploy_image="test-image:latest",
-            ),
+            get_minimal_project(),
+            stub_run_properties(deploy_image="test-image:latest"),
         )
         assert builder._get_image() == "test-image:latest"
         chart = to_service_chart(builder)

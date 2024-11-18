@@ -6,8 +6,9 @@ from logging import Logger
 from . import STAGE_NAME
 from .k8s import generate_helm_charts
 from .k8s.chart import ChartBuilder, to_service_chart
-from .. import Step, Meta
-from ..models import Input, Output
+from ..input import Input
+from ..output import Output
+from ..step import Step, Meta
 from ...project import Target
 
 

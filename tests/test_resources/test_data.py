@@ -11,7 +11,6 @@ from src.mpyl.constants import (
 )
 from src.mpyl.project import load_project, Target, Project, Stages, Stage
 from src.mpyl.project_execution import ProjectExecution
-from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps.models import RunProperties
 from src.mpyl.utilities.pyaml_env import parse_config
 from tests import root_test_path
@@ -24,18 +23,12 @@ properties_values = parse_config(resource_path / DEFAULT_RUN_PROPERTIES_FILE_NAM
 def stub_run_properties(
     config: dict = config_values,
     properties: dict = properties_values,
-    run_plan: RunPlan = RunPlan.empty(),
-    all_projects: set[Project] = set(),
-    tag: Optional[str] = None,
     deploy_image: Optional[str] = None,
 ):
     return RunProperties.from_configuration(
         target=Target.PULL_REQUEST,
         run_properties=properties,
         config=config,
-        run_plan=run_plan,
-        all_projects=all_projects,
-        cli_tag=tag or properties["build"]["versioning"].get("tag"),
         deploy_image=deploy_image,
     )
 

@@ -33,7 +33,7 @@ from ..stages.discovery import find_projects
 from ..utilities.pyaml_env import parse_config
 
 
-@dataclass
+@dataclass(frozen=True)
 class Context:
     config: dict
     console: Console = create_console_logger(show_path=False, max_width=0)
@@ -57,17 +57,17 @@ def projects(ctx, config):
 
 @projects.command(name="list", help="List found projects")
 @click.pass_obj
-def list_projects(obj: Context):
+def list_projects(ctx: Context):
     found_projects = find_projects()
 
     for proj in found_projects:
         project = load_project(proj, validate_project_yaml=False, log=False)
-        obj.console.print(Markdown(f"{proj} `{project.name}`"))
+        ctx.console.print(Markdown(f"{proj} `{project.name}`"))
 
 
 @projects.command(name="names", help="List found project names")
 @click.pass_obj
-def list_project_names(obj: Context):
+def list_project_names(ctx: Context):
     names = sorted(
         [
             load_project(project, validate_project_yaml=False, log=False).name
@@ -76,22 +76,22 @@ def list_project_names(obj: Context):
     )
 
     for name in names:
-        obj.console.print(name)
+        ctx.console.print(name)
 
 
 @projects.command(help="Validate the yaml of changed projects against their schema")
 @click.pass_obj
 # pylint: disable=too-many-branches
-def lint(obj: Context):
+def lint(ctx: Context):
     all_projects = _check_and_load_projects(
-        console=obj.console, project_paths=find_projects()
+        console=ctx.console, project_paths=find_projects()
     )
 
-    console = obj.console
+    console = ctx.console
     failed = False
 
     duplicates = _assert_unique_project_names(
-        console=console,
+        console=ctx.console,
         all_projects=all_projects,
     )
     if duplicates:
@@ -129,7 +129,7 @@ def lint(obj: Context):
         wrong_whitelists = _lint_whitelisting_rules(
             console=console,
             projects=all_projects,
-            config=obj.config,
+            config=ctx.config,
             target=target,
         )
         if len(wrong_whitelists) == 0:
@@ -163,10 +163,10 @@ def lint(obj: Context):
     help="Apply upgrade operations to the project files",
 )
 @click.pass_obj
-def upgrade(obj: Context, apply: bool):
+def upgrade(ctx: Context, apply: bool):
     paths = find_projects()
     candidates = check_upgrades_needed(paths, PROJECT_UPGRADERS)
-    console = obj.console
+    console = ctx.console
     if not apply:
         upgradable = check_upgrade(console, candidates)
         number_in_need_of_upgrade = len(upgradable)

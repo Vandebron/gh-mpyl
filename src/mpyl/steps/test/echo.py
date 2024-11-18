@@ -4,8 +4,9 @@ from logging import Logger
 from pathlib import Path
 
 from . import STAGE_NAME
-from .. import Step, Meta
-from ..models import Input, Output
+from ..input import Input
+from ..output import Output
+from ..step import Step, Meta
 
 SAMPLE_JUNIT_RESULT = """
 <?xml version="1.0" encoding="UTF-8"?>

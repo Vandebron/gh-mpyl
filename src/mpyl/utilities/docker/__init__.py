@@ -3,12 +3,7 @@
 from dataclasses import dataclass
 from typing import Dict, Optional
 
-from ruamel.yaml import yaml_object, YAML
-
 from ...project import Project
-from ...steps.models import Input
-
-yaml = YAML()
 
 
 @dataclass(frozen=True)
@@ -98,12 +93,6 @@ class DockerConfig:
             )
         except KeyError as exc:
             raise KeyError(f"Docker config could not be loaded from {config}") from exc
-
-
-def docker_image_tag(step_input: Input) -> str:
-    git = step_input.run_properties.versioning
-    tag = git.tag if git.tag else f"pr-{git.pr_number}"
-    return f"{step_input.project_execution.name.lower()}:{tag}".replace("/", "_")
 
 
 def registry_for_project(

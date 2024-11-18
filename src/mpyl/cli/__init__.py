@@ -2,22 +2,11 @@
 
 import logging
 import os
-from dataclasses import dataclass
 from typing import Optional
-
 from rich.console import Console
 from rich.logging import RichHandler
 
 CONFIG_PATH_HELP = "Path to the config.yml. Can be set via `MPYL_CONFIG_PATH` env var. "
-
-
-@dataclass(frozen=True)
-class MpylCliParameters:
-    tag: Optional[str] = None
-    stage: Optional[str] = None
-    projects: Optional[str] = None
-    deploy_image: Optional[str] = None
-
 
 FORMAT = "%(message)s"
 

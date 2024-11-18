@@ -4,8 +4,6 @@ import os
 import shutil
 from pathlib import Path
 
-from ruamel.yaml import YAML  # type: ignore
-
 from src.mpyl.constants import RUN_ARTIFACTS_FOLDER
 from src.mpyl.project import load_project, Stage
 from src.mpyl.stages.discovery import (
@@ -13,15 +11,12 @@ from src.mpyl.stages.discovery import (
     is_project_cached_for_stage,
     is_file_a_dependency,
 )
-from src.mpyl.steps import Output
 from src.mpyl.steps import build, test, deploy
-from src.mpyl.steps.collection import StepsCollection
+from src.mpyl.steps.output import Output
 from src.mpyl.utilities.repo import Changeset
 from tests.projects.find import load_projects
 from tests.reporting import test_resource_path
 from tests.test_resources.test_data import TestStage
-
-yaml = YAML()
 
 HASHED_CHANGES_OF_JOB = (
     "e16e7b0fec422c931b1fbab51bf5942f057d3591c74f495d3db60e2c0ac17616"
@@ -51,7 +46,6 @@ def _caching_for(
 
 class TestDiscovery:
     logger = logging.getLogger(__name__)
-    steps = StepsCollection(logger=logger)
     project_paths = [
         "tests/projects/job/deployment/project.yml",
         "tests/projects/service/deployment/project.yml",
@@ -72,7 +66,6 @@ class TestDiscovery:
                 sha="a git SHA",
                 _files_touched=files_touched,
             ),
-            steps=self.steps,
         )
 
     def test_changed_files_from_file(self):
@@ -100,7 +93,6 @@ class TestDiscovery:
                     projects,
                     build.STAGE_NAME,
                     changeset,
-                    self.steps,
                 )
             )
             == 1
@@ -112,7 +104,6 @@ class TestDiscovery:
                     projects,
                     test.STAGE_NAME,
                     changeset,
-                    self.steps,
                 )
             )
             == 0
@@ -124,7 +115,6 @@ class TestDiscovery:
                     projects,
                     deploy.STAGE_NAME,
                     changeset,
-                    self.steps,
                 )
             )
             == 1
@@ -228,7 +218,6 @@ class TestDiscovery:
             ),
             stage="build",
             path="tests/projects/sbt-service-other/file.py",
-            steps=self.steps,
         )
 
     def test_is_stage_cached(self):
@@ -304,21 +293,18 @@ class TestDiscovery:
             projects,
             build.STAGE_NAME,
             Changeset("revision", touched_files),
-            self.steps,
         )
         projects_for_test = find_projects_to_execute(
             self.logger,
             projects,
             test.STAGE_NAME,
             Changeset("revision", touched_files),
-            self.steps,
         )
         projects_for_deploy = find_projects_to_execute(
             self.logger,
             projects,
             deploy.STAGE_NAME,
             Changeset("revision", touched_files),
-            self.steps,
         )
         assert len(projects_for_build) == 1
         assert len(projects_for_test) == 1
