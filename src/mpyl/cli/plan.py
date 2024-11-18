@@ -69,7 +69,7 @@ def create_plan(ctx: Context):
     changed_files_path = Path(ctx.config["vcs"]["changedFilesPath"])
     if not changed_files_path.is_dir():
         raise ValueError(
-            "Unable to calculate run plan without a changed files directory."
+            f"Unable to calculate run plan because {changed_files_path} is not a directory"
         )
 
     all_stages = [
