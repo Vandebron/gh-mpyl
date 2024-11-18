@@ -30,7 +30,7 @@ coverage = "==7.6.7"
 black = "==23.3.0"
 
 [requires]
-python_version = "3.11"
+python_version = "3.13"
 
 [scripts]
 cli = "python run.py"
