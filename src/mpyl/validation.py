@@ -60,12 +60,6 @@ def load_schema(schema_string: str) -> Validator:
     return extended_validator(schema=schema, registry=registry)
 
 
-def validate_run_properties(properties: dict):
-    build_dict = pkgutil.get_data(__name__, "schema/run_properties.schema.yml")
-    if build_dict:
-        validate(properties, build_dict.decode("utf-8"))
-
-
 def validate(values: dict, schema_string: str):
     schema = load_schema(schema_string)
     return schema.validate(values)

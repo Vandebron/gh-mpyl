@@ -23,7 +23,6 @@ from ..stages.discovery import find_projects
 from ..steps import deploy
 from ..steps.models import ConsoleProperties, RunProperties
 from ..utilities.pyaml_env import parse_config
-from ..validation import validate_run_properties
 
 
 @dataclass(frozen=True)
@@ -65,7 +64,7 @@ class Context:
 def build(ctx, environment, config, properties):
     """Pipeline build commands"""
     parsed_properties = parse_config(properties)
-    validate_run_properties(parsed_properties)
+    RunProperties.validate(parsed_properties)
 
     console_config = ConsoleProperties.from_configuration(parsed_properties)
     console = create_console_logger(

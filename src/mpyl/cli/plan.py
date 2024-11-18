@@ -14,9 +14,8 @@ from ..constants import (
 )
 from ..project import Stage
 from ..run_plan import discover_run_plan, RunPlan
-from ..steps.models import ConsoleProperties
+from ..steps.models import ConsoleProperties, RunProperties
 from ..utilities.pyaml_env import parse_config
-from ..validation import validate_run_properties
 
 
 @dataclass(frozen=True)
@@ -52,7 +51,7 @@ def plan(ctx, config, properties):
     parsed_properties = parse_config(properties)
     parsed_config = parse_config(config)
 
-    validate_run_properties(parsed_properties)
+    RunProperties.validate(parsed_properties)
 
     console_config = ConsoleProperties.from_configuration(parsed_properties)
     console = create_console_logger(

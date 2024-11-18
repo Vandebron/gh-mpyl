@@ -1,12 +1,14 @@
 """ Model representation of run-specific configuration. """
 
 import os
+import pkgutil
 from dataclasses import dataclass
 from typing import Optional
 
 from ruamel.yaml import YAML, yaml_object
 
 from ..project import Stage, Target
+from ..validation import validate
 
 
 @dataclass(frozen=True)
@@ -129,6 +131,12 @@ class RunProperties:
             ],
             deploy_image=deploy_image,
         )
+
+    @staticmethod
+    def validate(properties: dict):
+        schema = pkgutil.get_data(__name__, "../schema/run_properties.schema.yml")
+        if schema:
+            validate(properties, schema.decode("utf-8"))
 
     def to_stage(self, stage_name: str) -> Stage:
         stage_by_name = next(stage for stage in self.stages if stage.name == stage_name)

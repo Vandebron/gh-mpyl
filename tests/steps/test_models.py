@@ -3,12 +3,11 @@ import os
 import pytest
 from jsonschema import ValidationError
 
-from src.mpyl.validation import validate_run_properties
 from src.mpyl.constants import (
     DEFAULT_CONFIG_FILE_NAME,
     DEFAULT_RUN_PROPERTIES_FILE_NAME,
 )
-from src.mpyl.steps.models import VersioningProperties
+from src.mpyl.steps.models import VersioningProperties, RunProperties
 from src.mpyl.utilities.pyaml_env import parse_config
 from tests import root_test_path
 from tests.test_resources.test_data import stub_run_properties
@@ -23,7 +22,7 @@ class TestModels:
 
     def test_should_return_error_if_validation_fails(self):
         with pytest.raises(ValidationError) as excinfo:
-            validate_run_properties(
+            RunProperties.validate(
                 parse_config(self.resource_path / "run_properties_invalid.yml")
             )
 
