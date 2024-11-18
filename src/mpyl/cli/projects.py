@@ -57,17 +57,17 @@ def projects(ctx, config):
 
 @projects.command(name="list", help="List found projects")
 @click.pass_obj
-def list_projects(obj: Context):
+def list_projects(ctx: Context):
     found_projects = find_projects()
 
     for proj in found_projects:
         project = load_project(proj, validate_project_yaml=False, log=False)
-        obj.console.print(Markdown(f"{proj} `{project.name}`"))
+        ctx.console.print(Markdown(f"{proj} `{project.name}`"))
 
 
 @projects.command(name="names", help="List found project names")
 @click.pass_obj
-def list_project_names(obj: Context):
+def list_project_names(ctx: Context):
     names = sorted(
         [
             load_project(project, validate_project_yaml=False, log=False).name
@@ -76,78 +76,79 @@ def list_project_names(obj: Context):
     )
 
     for name in names:
-        obj.console.print(name)
+        ctx.console.print(name)
 
 
 @projects.command(help="Validate the yaml of changed projects against their schema")
 @click.pass_obj
 # pylint: disable=too-many-branches
-def lint(obj: Context):
+def lint(ctx: Context):
     all_projects = _check_and_load_projects(
-        console=obj.console, project_paths=find_projects()
+        console=ctx.console, project_paths=find_projects()
     )
 
+    console = ctx.console
     failed = False
 
     duplicates = _assert_unique_project_names(
-        console=obj.console,
+        console=ctx.console,
         all_projects=all_projects,
     )
     if duplicates:
-        obj.console.print(
+        console.print(
             f"  ❌ Found {len(duplicates)} duplicate project names: {duplicates}"
         )
         failed = True
     else:
-        obj.console.print("  ✅ No duplicate project names found")
+        console.print("  ✅ No duplicate project names found")
 
     missing_project_ids = _assert_project_ids(
-        console=obj.console, all_projects=all_projects
+        console=console, all_projects=all_projects
     )
     if missing_project_ids:
-        obj.console.print(
+        console.print(
             f"  ❌ Found {len(missing_project_ids)} projects without a project id: {missing_project_ids}"
         )
         failed = True
     else:
-        obj.console.print("  ✅ All kubernetes projects have a project id")
+        console.print("  ✅ All kubernetes projects have a project id")
 
     wrong_substitutions = _assert_correct_project_linkup(
-        console=obj.console,
+        console=console,
         target=Target.PULL_REQUEST,
         projects=all_projects,
         pr_identifier=123,
     )
     if len(wrong_substitutions) == 0:
-        obj.console.print("  ✅ No wrong namespace substitutions found")
+        console.print("  ✅ No wrong namespace substitutions found")
     else:
         failed = True
-        __detail_wrong_substitutions(obj.console, all_projects, wrong_substitutions)
+        __detail_wrong_substitutions(console, all_projects, wrong_substitutions)
 
     for target in Target:
         wrong_whitelists = _lint_whitelisting_rules(
-            console=obj.console,
+            console=console,
             projects=all_projects,
-            config=obj.config,
+            config=ctx.config,
             target=target,
         )
         if len(wrong_whitelists) == 0:
-            obj.console.print("  ✅ No undefined whitelists found")
+            console.print("  ✅ No undefined whitelists found")
         else:
             for project, diff in wrong_whitelists:
-                obj.console.log(
+                console.log(
                     f"  ❌ Project {project.name} has undefined whitelists: {diff}"
                 )
                 failed = True
 
     projects_with_self_dependencies = _assert_no_self_dependencies(
-        obj.console, all_projects
+        console, all_projects
     )
     if len(projects_with_self_dependencies) == 0:
-        obj.console.print("  ✅ No project with a dependency on itself found")
+        console.print("  ✅ No project with a dependency on itself found")
     else:
         for project in projects_with_self_dependencies:
-            obj.console.print(f"  ❌ Project {project.name} has a dependency on itself")
+            console.print(f"  ❌ Project {project.name} has a dependency on itself")
         failed = True
 
     if failed:
@@ -162,19 +163,18 @@ def lint(obj: Context):
     help="Apply upgrade operations to the project files",
 )
 @click.pass_obj
-def upgrade(obj: Context, apply: bool):
+def upgrade(ctx: Context, apply: bool):
     paths = find_projects()
     candidates = check_upgrades_needed(paths, PROJECT_UPGRADERS)
+    console = ctx.console
     if not apply:
-        upgradable = check_upgrade(obj.console, candidates)
+        upgradable = check_upgrade(console, candidates)
         number_in_need_of_upgrade = len(upgradable)
         if number_in_need_of_upgrade > 0:
-            obj.console.print(
-                f"{number_in_need_of_upgrade} projects need to be upgraded"
-            )
+            console.print(f"{number_in_need_of_upgrade} projects need to be upgraded")
             sys.exit(1)
 
-    with obj.console.status("Checking for upgrades...") as status:
+    with console.status("Checking for upgrades...") as status:
         materialized = list(candidates)
         need_upgrade = [path for path, diff in materialized if diff is not None]
         number_of_upgrades = len(need_upgrade)
