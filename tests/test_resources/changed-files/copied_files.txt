@@ -1,3 +1,0 @@
-copied/file with spaces.py
-copied/file,with,commas.py
-copied/file|with|pipes.py

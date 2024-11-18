@@ -1,3 +1,0 @@
-deleted/file with spaces.py
-deleted/file,with,commas.py
-deleted/file|with|pipes.py

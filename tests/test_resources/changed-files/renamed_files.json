@@ -1,0 +1,5 @@
+[
+  "renamed/file with spaces.py",
+  "renamed/file,with,commas.py",
+  "renamed/file|with|pipes.py"
+]

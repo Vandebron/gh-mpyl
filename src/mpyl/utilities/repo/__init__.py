@@ -30,10 +30,10 @@ class Changeset:
         changed_files = {}
 
         def add_changed_files(operation: str, change_type: str):
-            path = changed_files_path / f"{operation}_files.txt"
+            path = changed_files_path / f"{operation}_files.json"
             if path.exists():
                 with open(path, encoding="utf-8") as file:
-                    files = [line.rstrip() for line in file]
+                    files = json.load(file)
                     for changed in files:
                         changed_files[changed] = change_type
 
