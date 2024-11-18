@@ -36,6 +36,10 @@ class Changeset:
                     files = json.load(file)
                     for changed in files:
                         changed_files[changed] = change_type
+            else:
+                raise ValueError(
+                    f"Unable to create Changeset due to missing file {path}"
+                )
 
         add_changed_files("added", "A")
         add_changed_files("copied", "C")

@@ -74,15 +74,25 @@ class TestDiscovery:
             sha="a git commit",
             changed_files_path=Path("tests/test_resources/changed-files/"),
         )
-        assert len(changeset.files_touched()) == 9
+        assert len(changeset.files_touched()) == 12
 
-        # modified_files is empty
-        # renamed_files does not exist
+        # renamed_files is empty
         # ignored_files should be ignored
-        for operation in ["added", "copied", "deleted"]:
-            assert f"{operation}/file with spaces.py" in changeset.files_touched()
-            assert f"{operation}/file,with,commas.py" in changeset.files_touched()
-            assert f"{operation}/file|with|pipes.py" in changeset.files_touched()
+        for operation, status in {
+            "added": "A",
+            "copied": "C",
+            "deleted": "D",
+            "modified": "M",
+        }.items():
+            assert f"{operation}/file with spaces.py" in changeset.files_touched(
+                {status}
+            )
+            assert f"{operation}/file,with,commas.py" in changeset.files_touched(
+                {status}
+            )
+            assert f"{operation}/file|with|pipes.py" in changeset.files_touched(
+                {status}
+            )
 
     def test_find_projects_to_execute_for_each_stage(self):
         changeset = Changeset(
