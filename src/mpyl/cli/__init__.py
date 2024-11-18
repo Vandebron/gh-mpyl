@@ -1,66 +1,12 @@
 """Command Line Interface parsing for MPyL"""
 
-import asyncio
-import importlib
 import logging
 import os
-from importlib.metadata import version as version_meta
-from pathlib import Path
 from typing import Optional
-
-import click
-import requests
-
-from click import BadParameter
 from rich.console import Console
 from rich.logging import RichHandler
 
-from ..utilities.pyaml_env import parse_config
-
 CONFIG_PATH_HELP = "Path to the config.yml. Can be set via `MPYL_CONFIG_PATH` env var. "
-
-
-async def load_url(test: bool = False):
-    try:
-        return requests.get(
-            f"https://{'test.' if test else ''}pypi.org/pypi/mpyl/json", timeout=10
-        ).json()
-    except (
-        requests.exceptions.Timeout,
-        IOError,
-    ):
-        return {}
-
-
-async def get_publication_info(test: bool = False) -> dict:
-    try:
-        return await load_url(test)
-    except (
-        asyncio.exceptions.TimeoutError,
-        asyncio.exceptions.CancelledError,
-        requests.exceptions.RequestException,
-    ):
-        return {}
-
-
-async def get_latest_publication(test: bool = False) -> Optional[str]:
-    body = await get_publication_info(test)
-    return body.get("info", {}).get("version", None)
-
-
-def get_meta_version():
-    try:
-        return version_meta("mpyl")
-    except importlib.metadata.PackageNotFoundError:
-        return None
-
-
-def get_version():
-    try:
-        return f"{version_meta('mpyl')}"
-    except importlib.metadata.PackageNotFoundError:
-        return "(local)"
-
 
 FORMAT = "%(message)s"
 
@@ -82,17 +28,3 @@ def create_console_logger(show_path: bool, max_width: Optional[int] = None) -> C
         handlers=[RichHandler(markup=True, console=console, show_path=show_path)],
     )
     return console
-
-
-def parse_config_from_supplied_location(ctx: click.Context, param) -> dict[str, str]:
-    if (
-        not ctx.parent
-        or ctx.parent.params["config"] is None
-        or not Path(ctx.parent.params["config"]).exists()
-    ):
-        raise BadParameter(
-            "Either --config parameter must or MPYL_CONFIG_PATH env var must be set",
-            ctx=ctx,
-            param=param,
-        )
-    return parse_config(ctx.parent.params["config"])

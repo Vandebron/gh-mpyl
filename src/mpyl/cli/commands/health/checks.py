@@ -1,17 +1,16 @@
 """Health checks"""
 
-import asyncio
 import os
 import pkgutil
 from pathlib import Path
 from typing import Optional
 
+import click
 import jsonschema
 from dotenv import load_dotenv
 from rich.console import Console
 from rich.markdown import Markdown
 
-from ....cli import get_latest_publication, get_meta_version
 from ....constants import (
     DEFAULT_CONFIG_FILE_NAME,
     DEFAULT_RUN_PROPERTIES_FILE_NAME,
@@ -23,11 +22,14 @@ from ....validation import validate
 class HealthConsole:
     def __init__(self, console: Console):
         self.console = console
+        self.failure = False
 
     def title(self, title: str):
         self.console.print(Markdown(f"*{title}*"))
 
     def check(self, check: str, success: bool):
+        if not success:
+            self.failure = True
         icon = "✅" if success else "❌"
         self.console.print(Markdown(f"&nbsp;&nbsp;{icon} {check}"))
 
@@ -39,11 +41,7 @@ def perform_health_checks(bare_console: Console):
     console = HealthConsole(bare_console)
     load_dotenv(Path(".env"))
 
-    console.title("Version")
-    __check_version(console)
-
     console.title("Run configuration")
-
     if properties_path := __validate_config_path(
         console,
         env_var="MPYL_RUN_PROPERTIES_PATH",
@@ -69,19 +67,8 @@ def perform_health_checks(bare_console: Console):
             schema_path="../../../schema/mpyl_config.schema.yml",
         )
 
-
-def __check_version(console):
-    update = asyncio.get_event_loop().run_until_complete(get_latest_publication())
-    meta_version = get_meta_version()
-    if update and meta_version:
-        if meta_version == update:
-            console.check(f"At latest version: {update}", success=True)
-        else:
-            console.check(
-                f"Outdated version: {meta_version} (latest: {update})", success=False
-            )
-    else:
-        console.check("Could not determine latest version", success=False)
+    if console.failure:
+        raise click.ClickException("Health check failed")
 
 
 def __validate_config_path(

@@ -118,12 +118,7 @@ class DeployDagster(Step):
         values_path = Path(step_input.project_execution.project.target_path)
         self._logger.info(f"Writing Helm values to {values_path}")
 
-        write_chart(
-            chart={},
-            chart_path=values_path,
-            chart_metadata="",
-            values=user_code_deployment,
-        )
+        write_chart(chart={}, chart_path=values_path, values=user_code_deployment)
 
         helm_install_result = helm.install_chart_with_values(
             logger=self._logger,
