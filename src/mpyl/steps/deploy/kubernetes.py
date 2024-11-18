@@ -51,6 +51,4 @@ class DeployKubernetes(Step):
         builder = ChartBuilder(step_input)
         chart = to_service_chart(builder)
 
-        return generate_helm_charts(
-            self._logger, chart, step_input, builder.release_name
-        )
+        return generate_helm_charts(self._logger, chart, step_input)

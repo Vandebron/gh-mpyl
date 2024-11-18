@@ -27,6 +27,4 @@ class DeployKubernetesJob(Step):
             to_cron_job_chart(builder) if builder.is_cron_job else to_job_chart(builder)
         )
 
-        return generate_helm_charts(
-            self._logger, chart, step_input, builder.release_name
-        )
+        return generate_helm_charts(self._logger, chart, step_input)

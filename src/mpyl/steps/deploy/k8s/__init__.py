@@ -106,15 +106,10 @@ def replace_config_map(
 
 
 def generate_helm_charts(  # pylint: disable=too-many-locals
-    logger: Logger,
-    chart: dict[str, CustomResourceDefinition],
-    step_input: Input,
-    release_name: str,
+    logger: Logger, chart: dict[str, CustomResourceDefinition], step_input: Input
 ) -> Output:
-    run_properties = step_input.run_properties
-    project = step_input.project_execution.project
     chart_path = write_helm_chart(
-        logger, chart, Path(project.target_path), run_properties, release_name
+        logger, chart, Path(step_input.project_execution.project.target_path)
     )
 
     return Output(
