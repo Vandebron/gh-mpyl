@@ -193,7 +193,7 @@ class RunPlan:
 def discover_run_plan(
     revision: str,
     all_stages: list[Stage],
-    changed_files_path: str,
+    changed_files_path: Path,
 ) -> RunPlan:
     logger = logging.getLogger("mpyl")
     logger.info("Discovering run plan...")
@@ -207,7 +207,7 @@ def discover_run_plan(
         )
     )
 
-    changeset = Changeset.from_file(
+    changeset = Changeset.from_files(
         logger=logger, sha=revision, changed_files_path=changed_files_path
     )
 

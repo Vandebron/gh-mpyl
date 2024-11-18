@@ -11,8 +11,8 @@ on:
     paths:
       - actions/**
       - mpyl_config.example.yml
-      - tests/test_resources/repository/changed_files.json
       - tests/projects/job/**
+      - tests/test_resources/changed-files/*
 
 # If multiple commits are pushed simultaneously, only build the last one.
 concurrency:
@@ -66,7 +66,7 @@ jobs:
 
       - uses: ./actions/run-plan
         with:
-          changed-files-path: tests/test_resources/repository/changed_files.json
+          changed-files-path: tests/test_resources/changed-files
           config-path: mpyl_config.example.yml
 
   run-stage:
@@ -85,7 +85,7 @@ jobs:
 
       - uses: ./actions/run-plan
         with:
-          changed-files-path: tests/test_resources/repository/changed_files.json
+          changed-files-path: tests/test_resources/changed-files
           config-path: mpyl_config.example.yml
 
       - uses: ./actions/run-stage

@@ -120,7 +120,7 @@ class TestBuildCli:
                 "clean",
             ],
             env={
-                "CHANGED_FILES_PATH": f"{root_test_path}/test_resources/repository/changed_files.json"
+                "CHANGED_FILES_PATH": f"{root_test_path}/test_resources/changed-files/"
             },
         )
 

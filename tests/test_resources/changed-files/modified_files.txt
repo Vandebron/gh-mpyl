@@ -1,0 +1,3 @@
+modified/file with spaces.py
+modified/file,with,commas.py
+modified/file|with|pipes.py
