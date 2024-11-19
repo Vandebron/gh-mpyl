@@ -7,6 +7,7 @@
 
 .. include:: ../../releases/README.md
 """
+
 import logging
 
 import click

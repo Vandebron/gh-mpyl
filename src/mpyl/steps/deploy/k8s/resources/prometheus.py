@@ -1,6 +1,7 @@
 """
 This module contains the PrometheusRule CRD
 """
+
 from kubernetes.client import V1ObjectMeta
 
 from .....project import Alert, Metrics
