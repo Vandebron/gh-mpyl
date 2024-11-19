@@ -98,11 +98,19 @@ jobs:
             yq -i '.runs.image = strenv(IMAGE)' "$file"
           done
 
+      - name: Generate token to commit to main
+        uses: actions/create-github-app-token@v1.11.0
+        id: commit-token
+        with:
+          repositories: gh-mpyl
+          app-id: ${{ vars.AUTOMATION_APP_ID }}
+          private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
+
       - name: Commit changes
         uses: ryancyq/github-signed-commit@v1.2.0
         id: commit
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.commit-token.outputs.token }}
         with:
           files: actions/**/action.yaml
           commit-message: Update action.yaml files to ${{ env.image-name }}:${{ steps.semver.outputs.next }}
@@ -142,6 +150,7 @@ jobs:
       - name: Update Tags
         env:
           SHORT_VERSION: ${{ steps.semver.outputs.nextMajor }}
+          GITHUB_TOKEN: ${{ steps.commit-token.outputs.token }}
         run: |-
           git tag -f "${SHORT_VERSION}"
           git push origin --tags --force
