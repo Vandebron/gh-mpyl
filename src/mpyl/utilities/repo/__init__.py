@@ -4,7 +4,9 @@ Represents the files modified in this unit of change (pull request, etc).
 
 import json
 import logging
+import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
 
 
@@ -21,10 +23,28 @@ class Changeset:
         return {file for file, s in self._files_touched.items() if s in status}
 
     @staticmethod
-    def from_file(logger: logging.Logger, sha: str, changed_files_path: str):
-        with open(changed_files_path, encoding="utf-8") as file:
-            logger.debug(
-                f"Creating Changeset based on changed files in {changed_files_path}"
-            )
-            changed_files = json.load(file)
-            return Changeset(sha=sha, _files_touched=changed_files)
+    def from_files(logger: logging.Logger, sha: str, changed_files_path: Path):
+        logger.debug(
+            f"Creating Changeset based on changed files in {changed_files_path}"
+        )
+        changed_files = {}
+
+        def add_changed_files(operation: str, change_type: str):
+            path = changed_files_path / f"{operation}_files.json"
+            if path.is_file():
+                with open(path, encoding="utf-8") as file:
+                    files = json.load(file)
+                    for changed in files:
+                        changed_files[changed] = change_type
+            else:
+                raise ValueError(
+                    f"Unable to create Changeset due to missing file {path}"
+                )
+
+        add_changed_files("added", "A")
+        add_changed_files("copied", "C")
+        add_changed_files("deleted", "D")
+        add_changed_files("modified", "M")
+        add_changed_files("renamed", "R")
+
+        return Changeset(sha=sha, _files_touched=changed_files)

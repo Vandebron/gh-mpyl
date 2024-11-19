@@ -1,0 +1,5 @@
+[
+  "ignored/file with spaces.py",
+  "ignored/file,with,commas.py",
+  "ignored/file|with|pipes.py"
+]

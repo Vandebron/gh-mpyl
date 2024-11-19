@@ -68,14 +68,31 @@ class TestDiscovery:
             ),
         )
 
-    def test_changed_files_from_file(self):
-        changeset = Changeset.from_file(
+    def test_changeset_from_files(self):
+        changeset = Changeset.from_files(
             self.logger,
             sha="a git commit",
-            changed_files_path="tests/test_resources/repository/changed_files.json",
+            changed_files_path=Path("tests/test_resources/changed-files/"),
         )
-        assert len(changeset.files_touched()) == 1
-        assert "tests/projects/job/src/hello-world.py" in changeset.files_touched()
+        assert len(changeset.files_touched()) == 12
+
+        # renamed_files is empty
+        # ignored_files should be ignored
+        for operation, status in {
+            "added": "A",
+            "copied": "C",
+            "deleted": "D",
+            "modified": "M",
+        }.items():
+            assert f"{operation}/file with spaces.py" in changeset.files_touched(
+                {status}
+            )
+            assert f"{operation}/file,with,commas.py" in changeset.files_touched(
+                {status}
+            )
+            assert f"{operation}/file|with|pipes.py" in changeset.files_touched(
+                {status}
+            )
 
     def test_find_projects_to_execute_for_each_stage(self):
         changeset = Changeset(
