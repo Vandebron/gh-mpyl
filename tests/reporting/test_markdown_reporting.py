@@ -1,8 +1,8 @@
 from datetime import datetime
 
 from src.mpyl.reporting.formatting.markdown import run_result_to_markdown
-from src.mpyl.steps.models import Output
-from src.mpyl.steps.steps import StepResult, ExecutionException
+from src.mpyl.steps.executor import ExecutionResult, ExecutionException
+from src.mpyl.steps.output import Output
 from tests import root_test_path
 from tests.reporting import (
     create_test_result,
@@ -43,7 +43,7 @@ class TestMarkdownReporting:
         result = create_test_result_with_plan()
         assert result.progress_fraction == 0.0, "Should start at zero progress"
         result.append(
-            StepResult(
+            ExecutionResult(
                 stage=TestStage.build(),
                 project=test_data.get_project(),
                 output=Output(success=False, message="Build failed"),
@@ -57,7 +57,7 @@ class TestMarkdownReporting:
     def test_should_combine_duplicate_urls(self):
         run_result = create_test_result()
         run_result.append(
-            StepResult(
+            ExecutionResult(
                 stage=TestStage.test(),
                 project=test_data.get_project(),
                 output=Output(success=True, message="Tests successful"),
@@ -65,7 +65,7 @@ class TestMarkdownReporting:
             )
         )
         run_result.append(
-            StepResult(
+            ExecutionResult(
                 stage=TestStage.test(),
                 project=test_data.get_project(),
                 output=Output(success=True, message="Tests successful"),

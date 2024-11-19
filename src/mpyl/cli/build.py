@@ -1,22 +1,16 @@
 """Commands related to build"""
 
-import asyncio
-import pickle
 import shutil
 import sys
-import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
 import click
 from rich.console import Console
 
-from . import (
-    CONFIG_PATH_HELP,
-    MpylCliParameters,
-)
+from . import CONFIG_PATH_HELP
 from . import create_console_logger
-from ..build import print_status, run_mpyl
+from ..build import run_mpyl
 from ..constants import (
     DEFAULT_CONFIG_FILE_NAME,
     DEFAULT_RUN_PROPERTIES_FILE_NAME,
@@ -24,10 +18,10 @@ from ..constants import (
     RUN_RESULT_FILE_GLOB,
 )
 from ..project import load_project, Target
+from ..run_plan import RunPlan
 from ..stages.discovery import find_projects
 from ..steps import deploy
-from ..steps.models import ConsoleProperties
-from ..steps.run_properties import construct_run_properties
+from ..steps.models import ConsoleProperties, RunProperties
 from ..utilities.pyaml_env import parse_config
 
 
@@ -70,8 +64,9 @@ class Context:
 def build(ctx, environment, config, properties):
     """Pipeline build commands"""
     parsed_properties = parse_config(properties)
+    RunProperties.validate(parsed_properties)
 
-    console_config = ConsoleProperties.from_configuration(parsed_properties["build"])
+    console_config = ConsoleProperties.from_configuration(parsed_properties)
     console = create_console_logger(
         show_path=console_config.show_paths,
         max_width=console_config.width,
@@ -99,15 +94,14 @@ class CustomValidation(click.Command):
 
 
 @build.command(help="Run an MPyL build", cls=CustomValidation)
-@click.option("--tag", "-t", help="Tag to build", type=click.STRING, required=False)
 @click.option(
-    "--stage", default=None, type=click.STRING, required=False, help="Stage to run"
+    "--stage", default=None, type=click.STRING, required=True, help="Stage to run"
 )
 @click.option(
     "--projects",
     "-p",
     type=click.STRING,
-    required=False,
+    required=True,
     help="Comma separated list of the projects to build",
 )
 @click.option(
@@ -116,7 +110,6 @@ class CustomValidation(click.Command):
 @click.pass_obj
 def run(
     obj: Context,
-    tag,
     stage,
     projects,
     image,
@@ -139,58 +132,26 @@ def run(
                 message="Need to pass exactly one project to deploy when passing an image"
             )
 
-    parameters = MpylCliParameters(
-        tag=tag, stage=stage, projects=projects, deploy_image=image
-    )
-    obj.console.log(parameters)
-
-    run_properties = construct_run_properties(
+    run_properties = RunProperties.from_configuration(
         target=obj.target,
+        run_properties=obj.run_properties,
         config=obj.config,
-        properties=obj.run_properties,
-        cli_parameters=parameters,
+        deploy_image=image,
     )
-    run_result = run_mpyl(run_properties=run_properties)
 
-    Path(RUN_ARTIFACTS_FOLDER).mkdir(parents=True, exist_ok=True)
-    run_result_file = Path(RUN_ARTIFACTS_FOLDER) / f"run_result-{uuid.uuid4()}.pickle"
-    with open(run_result_file, "wb") as file:
-        pickle.dump(run_result, file, pickle.HIGHEST_PROTOCOL)
+    run_plan = RunPlan.load_from_pickle_file(
+        selected_stage=run_properties.selected_stage(stage),
+        selected_projects=run_properties.selected_projects(projects),
+    )
 
+    run_result = run_mpyl(
+        console_properties=ConsoleProperties.from_configuration(obj.run_properties),
+        run_properties=run_properties,
+        run_plan=run_plan,
+    )
+
+    run_result.write_to_pickle_file()
     sys.exit(0 if run_result.is_success else 1)
-
-
-@build.command(help="The status of the current local branch from MPyL's perspective")
-@click.option(
-    "--projects",
-    "-p",
-    type=click.STRING,
-    required=False,
-    help="Comma separated list of the projects to build",
-)
-@click.option(
-    "--stage",
-    default=None,
-    type=click.STRING,
-    required=False,
-    help="Stage to get status for",
-)
-@click.option("--tag", "-t", help="Tag to build", type=click.STRING, required=False)
-@click.option("--explain", "-e", is_flag=True, help="Explain the current run plan")
-@click.pass_obj
-def status(obj: Context, projects, stage, tag, explain):
-    try:
-        parameters = MpylCliParameters(projects=projects, stage=stage, tag=tag)
-        run_properties = construct_run_properties(
-            target=obj.target,
-            config=obj.config,
-            properties=obj.run_properties,
-            cli_parameters=parameters,
-            explain_run_plan=explain,
-        )
-        print_status(obj.console, run_properties)
-    except asyncio.exceptions.TimeoutError:
-        pass
 
 
 @build.command(help=f"Clean all MPyL metadata in `{RUN_ARTIFACTS_FOLDER}` folders")

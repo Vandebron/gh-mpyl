@@ -23,7 +23,9 @@ from .k8s.chart import ChartBuilder
 from .k8s.cluster import get_cluster_config_for_project
 from .k8s.helm import write_chart
 from .k8s.resources.dagster import to_user_code_values, to_grpc_server_entry, Constants
-from .. import Step, Meta, Input, Output
+from ..input import Input
+from ..output import Output
+from ..step import Step, Meta
 from ...utilities.dagster import DagsterConfig
 from ...utilities.docker import DockerConfig
 from ...utilities.helm import convert_to_helm_release_name, get_name_suffix
@@ -116,12 +118,7 @@ class DeployDagster(Step):
         values_path = Path(step_input.project_execution.project.target_path)
         self._logger.info(f"Writing Helm values to {values_path}")
 
-        write_chart(
-            chart={},
-            chart_path=values_path,
-            chart_metadata="",
-            values=user_code_deployment,
-        )
+        write_chart(chart={}, chart_path=values_path, values=user_code_deployment)
 
         helm_install_result = helm.install_chart_with_values(
             logger=self._logger,

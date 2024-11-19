@@ -5,9 +5,10 @@ from ruamel.yaml import YAML
 from src.mpyl import parse_config
 from src.mpyl.project import load_project
 from src.mpyl.project_execution import ProjectExecution
-from src.mpyl.steps import Input
+from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps.deploy.k8s.chart import ChartBuilder
 from src.mpyl.steps.deploy.k8s.resources.dagster import to_user_code_values
+from src.mpyl.steps.input import Input
 from src.mpyl.utilities.docker import DockerConfig
 from src.mpyl.utilities.helm import get_name_suffix
 from src.mpyl.utilities.yaml import yaml_to_string
@@ -45,7 +46,8 @@ class TestDagster:
                     self.resource_path / "project.yml", validate_project_yaml=True
                 )
             ),
-            test_data.RUN_PROPERTIES,
+            run_properties=test_data.RUN_PROPERTIES,
+            run_plan=RunPlan.empty(),
         )
 
         values = to_user_code_values(
@@ -70,7 +72,8 @@ class TestDagster:
                     Path(self.resource_path, "project.yml"), validate_project_yaml=True
                 )
             ),
-            test_data.RUN_PROPERTIES_PROD,
+            run_properties=test_data.RUN_PROPERTIES_PROD,
+            run_plan=RunPlan.empty(),
         )
 
         values = to_user_code_values(
@@ -93,7 +96,8 @@ class TestDagster:
                     Path(self.resource_path, "project.yml"), validate_project_yaml=True
                 )
             ),
-            test_data.RUN_PROPERTIES,
+            run_properties=test_data.RUN_PROPERTIES,
+            run_plan=RunPlan.empty(),
         )
 
         values = to_user_code_values(
@@ -119,7 +123,8 @@ class TestDagster:
                     validate_project_yaml=True,
                 )
             ),
-            test_data.RUN_PROPERTIES,
+            run_properties=test_data.RUN_PROPERTIES,
+            run_plan=RunPlan.empty(),
         )
 
         values = to_user_code_values(

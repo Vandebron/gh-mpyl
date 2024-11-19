@@ -3,23 +3,27 @@ Accumulate `mpyl.steps.run.RunResult` from executed `mpyl.steps.step.Step`
 """
 
 import operator
+import pickle
+import uuid
+from pathlib import Path
 from typing import Optional
 
+from .executor import ExecutionResult, ExecutionException
 from .models import RunProperties
-from .steps import StepResult, ExecutionException
+from ..constants import RUN_ARTIFACTS_FOLDER
 from ..project import Stage
 from ..run_plan import RunPlan
 
 
 class RunResult:
     _run_plan: RunPlan
-    _results: list[StepResult]
+    _results: list[ExecutionResult]
     _run_properties: RunProperties
     _exception: Optional[ExecutionException]
 
-    def __init__(self, run_properties: RunProperties):
+    def __init__(self, run_properties: RunProperties, run_plan: RunPlan):
         self._run_properties = run_properties
-        self._run_plan = run_properties.run_plan
+        self._run_plan = run_plan
         self._exception = None
         self._results = []
 
@@ -37,7 +41,7 @@ class RunResult:
         return "❌ Failed"
 
     @property
-    def failed_results(self) -> Optional[list[StepResult]]:
+    def failed_results(self) -> Optional[list[ExecutionResult]]:
         failed_results = list((r for r in self._results if not r.output.success))
 
         return failed_results if len(failed_results) > 0 else None
@@ -85,17 +89,14 @@ class RunResult:
         return self.run_plan.has_projects_to_run(include_cached_projects)
 
     @property
-    def results(self) -> list[StepResult]:
+    def results(self) -> list[ExecutionResult]:
         return self._results
 
-    def append(self, result: StepResult):
+    def append(self, result: ExecutionResult):
         self._results.append(result)
 
-    def extend(self, results: list[StepResult]):
+    def extend(self, results: list[ExecutionResult]):
         self._results.extend(results)
-
-    def update_run_plan(self, run_plan: RunPlan):
-        self._run_plan.update(run_plan)
 
     @property
     def is_success(self):
@@ -123,10 +124,18 @@ class RunResult:
         return not self.has_results or all(r.output.success for r in self._results)
 
     @staticmethod
-    def sort_chronologically(results: list[StepResult]) -> list[StepResult]:
+    def sort_chronologically(results: list[ExecutionResult]) -> list[ExecutionResult]:
         return sorted(results, key=operator.attrgetter("timestamp"))
 
-    def results_for_stage(self, stage: Stage) -> list[StepResult]:
+    def results_for_stage(self, stage: Stage) -> list[ExecutionResult]:
         return RunResult.sort_chronologically(
             [res for res in self._results if res.stage == stage]
         )
+
+    def write_to_pickle_file(self):
+        Path(RUN_ARTIFACTS_FOLDER).mkdir(parents=True, exist_ok=True)
+        run_result_file = (
+            Path(RUN_ARTIFACTS_FOLDER) / f"run_result-{uuid.uuid4()}.pickle"
+        )
+        with open(run_result_file, "wb") as file:
+            pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)

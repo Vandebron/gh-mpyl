@@ -3,12 +3,12 @@
 from logging import Logger
 import os
 
+from ...output import Output
 from ....utilities.subprocess import custom_check_output
 from ..bpm.camunda_modeler_client import CamundaModelerClient
 from ..bpm.modeler import deploy_diagram_to_modeler
 from ....utilities.bpm import CamundaConfig
 from ....utilities.http_client.exceptions import HTTPRequestError, AuthorizationError
-from ...models import Output
 
 
 def deploy_to_cluster(

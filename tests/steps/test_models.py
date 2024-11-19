@@ -2,18 +2,15 @@ import os
 
 import pytest
 from jsonschema import ValidationError
-from ruamel.yaml import YAML  # type: ignore
 
 from src.mpyl.constants import (
     DEFAULT_CONFIG_FILE_NAME,
     DEFAULT_RUN_PROPERTIES_FILE_NAME,
 )
-from src.mpyl.steps.models import VersioningProperties
+from src.mpyl.steps.models import VersioningProperties, RunProperties
 from src.mpyl.utilities.pyaml_env import parse_config
 from tests import root_test_path
 from tests.test_resources.test_data import stub_run_properties
-
-yaml = YAML()
 
 
 class TestModels:
@@ -25,11 +22,8 @@ class TestModels:
 
     def test_should_return_error_if_validation_fails(self):
         with pytest.raises(ValidationError) as excinfo:
-            stub_run_properties(
-                config=self.config_values,
-                properties=parse_config(
-                    self.resource_path / "run_properties_invalid.yml"
-                ),
+            RunProperties.validate(
+                parse_config(self.resource_path / "run_properties_invalid.yml")
             )
 
         assert "'stages' is a required property" in excinfo.value.message
@@ -47,10 +41,9 @@ class TestModels:
         assert run_properties
 
     def test_should_return_error_if_pr_number_or_tag_not_set(self):
-        properties = VersioningProperties(
-            "reviesion_hash",
-            "some_branch",
-            None,
-            None,
+        with pytest.raises(ValueError) as excinfo:
+            VersioningProperties.from_run_properties({"build": {"versioning": {}}})
+        assert (
+            "Either build.versioning.tag or build.versioning.pr_number need to be set"
+            in str(excinfo.value)
         )
-        assert properties.validate() == "Either pr_number or tag need to be set"

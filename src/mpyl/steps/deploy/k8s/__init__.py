@@ -8,13 +8,13 @@ from typing import Optional
 import yaml as dict_to_yaml_str
 from kubernetes import client
 from kubernetes.client import V1ConfigMap, ApiException, V1Deployment
-from ruamel.yaml import YAML
 
 from .helm import write_helm_chart, GENERATED_WARNING
 from ...deploy.k8s.resources import CustomResourceDefinition
+from ...input import Input
 from ...models import RunProperties
+from ...output import Output
 from ....project import ProjectName, Project, Target
-from ....steps import Input, Output
 from ....steps.deploy.k8s import helm
 from ....steps.deploy.k8s.cluster import (
     get_namespace_metadata,
@@ -23,8 +23,6 @@ from ....steps.deploy.k8s.cluster import (
 )
 from ....steps.deploy.k8s.resources import to_yaml
 from ....utilities import replace_pr_number
-
-yaml = YAML()
 
 
 def rollout_restart_deployment(
@@ -106,15 +104,10 @@ def replace_config_map(
 
 
 def generate_helm_charts(  # pylint: disable=too-many-locals
-    logger: Logger,
-    chart: dict[str, CustomResourceDefinition],
-    step_input: Input,
-    release_name: str,
+    logger: Logger, chart: dict[str, CustomResourceDefinition], step_input: Input
 ) -> Output:
-    run_properties = step_input.run_properties
-    project = step_input.project_execution.project
     chart_path = write_helm_chart(
-        logger, chart, Path(project.target_path), run_properties, release_name
+        logger, chart, Path(step_input.project_execution.project.target_path)
     )
 
     return Output(
