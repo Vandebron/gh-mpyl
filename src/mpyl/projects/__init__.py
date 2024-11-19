@@ -1,4 +1,5 @@
 """Projects and how they relate to each other"""
+
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional

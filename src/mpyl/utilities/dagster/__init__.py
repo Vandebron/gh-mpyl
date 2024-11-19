@@ -1,6 +1,7 @@
 """
 Dagster-related utility methods
 """
+
 from dataclasses import dataclass
 from typing import Dict, Optional
 

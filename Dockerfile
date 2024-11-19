@@ -1,4 +1,4 @@
-ARG PYTHON_VERSION=3.11
+ARG PYTHON_VERSION=3.13
 FROM public.ecr.aws/vdb-public/python:${PYTHON_VERSION}-slim-bookworm AS base
 
 USER root
