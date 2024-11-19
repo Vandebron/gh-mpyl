@@ -103,7 +103,7 @@ def replace_config_map(
         )
 
 
-def generate_helm_charts(  # pylint: disable=too-many-locals
+def generate_helm_charts(
     logger: Logger, chart: dict[str, CustomResourceDefinition], step_input: Input
 ) -> Output:
     chart_path = write_helm_chart(
