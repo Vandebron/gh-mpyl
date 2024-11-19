@@ -207,7 +207,6 @@ class DeploymentDefaults:
         )
 
 
-# pylint: disable = too-many-public-methods
 class ChartBuilder:
     step_input: Input
     project: Project
