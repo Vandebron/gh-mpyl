@@ -77,8 +77,8 @@ jobs:
       pull-requests: write  # required for Dependabot to run marocchino/sticky-pull-request-comment
       contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-python@v5.3.0
         id: cache-dependencies
         with:
           python-version: '3.13'
@@ -96,7 +96,7 @@ jobs:
       - name: Test
         run: pipenv run test-ci
 
-      - uses: mikepenz/action-junit-report@v5
+      - uses: mikepenz/action-junit-report@v5.0.0
         if: success() || failure()
         with:
           report_paths: build/test-result/test.xml
