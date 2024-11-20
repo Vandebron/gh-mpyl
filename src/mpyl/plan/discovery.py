@@ -1,5 +1,5 @@
 """ Discovery of projects that are relevant to a specific `mpyl.stage.Stage` . Determine which of the
-discovered projects have been invalidated due to changes in the source code since the last build of the project's
+discovered projects have to be run due to changes in the source code since the last build of the project's
 output."""
 
 import hashlib

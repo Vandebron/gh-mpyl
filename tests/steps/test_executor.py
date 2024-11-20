@@ -11,7 +11,7 @@ from src.mpyl.project import Project, Stages, Target
 from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.projects.versioning import yaml_to_string
 from src.mpyl.run_plan import RunPlan
-from src.mpyl.steps import build
+from src.mpyl.steps import deploy
 from src.mpyl.steps.collection import StepsCollection
 from src.mpyl.steps.executor import Executor
 from src.mpyl.steps.models import (
@@ -86,11 +86,11 @@ class TestSteps:
             "test", "Test project", "", None, stages, [], None, None, None, None
         )
         output = steps.execute(
-            stage=build.STAGE_NAME,
+            stage=deploy.STAGE_NAME,
             project_execution=ProjectExecution.run(project),
         ).output
         assert not output.success
-        assert output.message == "Stage 'build' not defined on project 'test'"
+        assert output.message == "Stage 'deploy' not defined on project 'test'"
 
     def test_should_return_error_if_config_invalid(self):
         config_values = parse_config(self.resource_path / DEFAULT_CONFIG_FILE_NAME)
@@ -112,35 +112,37 @@ class TestSteps:
 
     def test_should_succeed_if_step_is_known(self):
         project = test_data.get_project_with_stages(
-            stage_config={"build": "Echo Build"},
+            stage_config={"deploy": "Echo Deploy"},
             path=str(self.resource_path / "metapath" / "project.yml"),
         )
         result = self.executor.execute(
-            stage=build.STAGE_NAME,
+            stage=deploy.STAGE_NAME,
             project_execution=ProjectExecution.run(project),
         )
         assert result.output.success
-        assert result.output.message == "Built test"
+        assert result.output.message == "Deployed project test"
 
     def test_should_fail_if_step_is_not_known(self):
-        project = test_data.get_project_with_stages({"build": "Unknown Build"})
+        project = test_data.get_project_with_stages({"deploy": "Unknown Deploy"})
         result = self.executor.execute(
-            stage=build.STAGE_NAME,
+            stage=deploy.STAGE_NAME,
             project_execution=ProjectExecution.run(project),
         )
         assert not result.output.success
         assert (
             result.output.message
-            == "Step 'Unknown Build' for 'build' not known or registered"
+            == "Step 'Unknown Deploy' for 'deploy' not known or registered"
         )
 
     def test_should_fail_if_maintainer_is_not_known(self):
         project = test_data.get_project_with_stages(
-            stage_config={"build": "Echo Build"}, path="", maintainers=["Unknown Team"]
+            stage_config={"deploy": "Echo Deploy"},
+            path="",
+            maintainers=["Unknown Team"],
         )
 
         result = self.executor.execute(
-            stage=build.STAGE_NAME,
+            stage=deploy.STAGE_NAME,
             project_execution=ProjectExecution.run(project),
         )
         assert not result.output.success

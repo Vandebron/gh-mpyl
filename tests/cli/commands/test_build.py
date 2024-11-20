@@ -3,7 +3,7 @@ import logging
 from src.mpyl.build import run_build
 from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.run_plan import RunPlan
-from src.mpyl.steps.build import STAGE_NAME
+from src.mpyl.steps.deploy import STAGE_NAME
 from src.mpyl.steps.executor import Executor, StepsCollection, ExecutionException
 from src.mpyl.steps.input import Input
 from src.mpyl.steps.output import Output
@@ -25,15 +25,15 @@ class ThrowingStep(Step):
         super().__init__(
             logger,
             Meta(
-                name="Throwing Build",
-                description="Throwing build step to validate error handling",
+                name="Throwing Deploy",
+                description="Throwing deploy step to validate error handling",
                 version="0.0.1",
                 stage=STAGE_NAME,
             ),
         )
 
     def execute(self, step_input: Input) -> Output:
-        raise ExecutionException("test", "tester", "build", "this is not good")
+        raise ExecutionException("test", "tester", "deploy", "this is not good")
 
 
 class TestBuildCli:
@@ -61,8 +61,6 @@ class TestBuildCli:
         run_plan = RunPlan.create(
             all_known_projects={project},
             plan={
-                TestStage.build(): project_executions,
-                TestStage.test(): project_executions,
                 TestStage.deploy(): project_executions,
             },
         )
@@ -82,10 +80,10 @@ class TestBuildCli:
         assert result.exception is None
 
     def test_run_build_throwing_step_should_be_handled(self):
-        projects = {get_project_with_stages({"build": "Throwing Build"})}
+        projects = {get_project_with_stages({"deploy": "Throwing Deploy"})}
         run_plan = RunPlan.create(
             all_known_projects=projects,
-            plan={TestStage.build(): {ProjectExecution.run(p) for p in projects}},
+            plan={TestStage.deploy(): {ProjectExecution.run(p) for p in projects}},
         )
         run_properties = stub_run_properties()
         accumulator = RunResult(run_properties=run_properties, run_plan=run_plan)
@@ -103,9 +101,9 @@ class TestBuildCli:
         assert result.status_line == "❗ Failed with exception"
 
         assert result.exception.message == "this is not good"
-        assert result.exception.stage == TestStage.build().name
+        assert result.exception.stage == TestStage.deploy().name
         assert result.exception.project_name == "test"
-        assert result.exception.step == "Throwing Build"
+        assert result.exception.step == "Throwing Deploy"
 
     def test_build_clean_output(self):
         result = invoke(

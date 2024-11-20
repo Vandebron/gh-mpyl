@@ -19,7 +19,7 @@ from ..constants import (
 )
 from ..project import load_project, Target
 from ..run_plan import RunPlan
-from ..stages.discovery import find_projects
+from ..plan.discovery import find_projects
 from ..steps import deploy
 from ..steps.models import ConsoleProperties, RunProperties
 from ..utilities.pyaml_env import parse_config
