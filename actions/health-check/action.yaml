@@ -1,5 +1,4 @@
 ---
-# FIXME ptab remove me
 name: Run MPyL health check
 description: Perform MPyL health check inside a Docker container
 inputs:
