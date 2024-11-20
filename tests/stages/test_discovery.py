@@ -3,20 +3,20 @@ import logging
 import os
 import shutil
 from pathlib import Path
+from typing import Optional
 
 from src.mpyl.constants import RUN_ARTIFACTS_FOLDER
-from src.mpyl.project import load_project, Stage
-from src.mpyl.stages.discovery import (
+from src.mpyl.plan.discovery import (
     find_projects_to_execute,
     is_project_cached_for_stage,
     is_file_a_dependency,
 )
-from src.mpyl.steps import build, test, deploy
+from src.mpyl.project import load_project
+from src.mpyl.steps import deploy
 from src.mpyl.steps.output import Output
 from src.mpyl.utilities.repo import Changeset
 from tests.projects.find import load_projects
 from tests.reporting import test_resource_path
-from tests.test_resources.test_data import TestStage
 
 HASHED_CHANGES_OF_JOB = (
     "e16e7b0fec422c931b1fbab51bf5942f057d3591c74f495d3db60e2c0ac17616"
@@ -26,8 +26,8 @@ HASHED_CHANGES_OF_JOB = (
 @contextlib.contextmanager
 def _caching_for(
     project: str,
-    stage: Stage = TestStage.build(),
-    hashed_contents: str = HASHED_CHANGES_OF_JOB,
+    stage_name: Optional[str] = None,
+    hashed_contents: Optional[str] = HASHED_CHANGES_OF_JOB,
 ):
     path = f"tests/projects/{project}/deployment/{RUN_ARTIFACTS_FOLDER}"
 
@@ -37,7 +37,7 @@ def _caching_for(
     try:
         Output(success=True, message="a test output", hash=hashed_contents).write(
             target_path=Path(path),
-            stage=stage.name,
+            stage=stage_name or "build",
         )
         yield path
     finally:
@@ -56,12 +56,12 @@ class TestDiscovery:
     def _helper_find_projects_to_execute(
         self,
         files_touched: dict[str, str],
-        stage: Stage = TestStage.build(),
+        stage_name: str = "build",
     ):
         return find_projects_to_execute(
             logger=self.logger,
             all_projects=self.projects,
-            stage=stage.name,
+            stage=stage_name,
             changeset=Changeset(
                 sha="a git SHA",
                 _files_touched=files_touched,
@@ -108,7 +108,7 @@ class TestDiscovery:
                 find_projects_to_execute(
                     self.logger,
                     projects,
-                    build.STAGE_NAME,
+                    "build",
                     changeset,
                 )
             )
@@ -119,7 +119,7 @@ class TestDiscovery:
                 find_projects_to_execute(
                     self.logger,
                     projects,
-                    test.STAGE_NAME,
+                    "test",
                     changeset,
                 )
             )
@@ -308,13 +308,13 @@ class TestDiscovery:
         projects_for_build = find_projects_to_execute(
             self.logger,
             projects,
-            build.STAGE_NAME,
+            "build",
             Changeset("revision", touched_files),
         )
         projects_for_test = find_projects_to_execute(
             self.logger,
             projects,
-            test.STAGE_NAME,
+            "test",
             Changeset("revision", touched_files),
         )
         projects_for_deploy = find_projects_to_execute(

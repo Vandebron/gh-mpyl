@@ -4,7 +4,7 @@ import jsonschema
 
 from src.mpyl.project import load_project
 from src.mpyl.projects import ProjectWithDependents
-from src.mpyl.stages.discovery import find_projects
+from src.mpyl.plan.discovery import find_projects
 from tests.projects.find import load_projects, find_dependencies
 
 
