@@ -113,7 +113,7 @@ def run(
     stage,
     projects,
     image,
-):  # pylint: disable=invalid-name
+):
     run_result_files = list(Path(RUN_ARTIFACTS_FOLDER).glob(RUN_RESULT_FILE_GLOB))
     for run_result_file in run_result_files:
         run_result_file.unlink()

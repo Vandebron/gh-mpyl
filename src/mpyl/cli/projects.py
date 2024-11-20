@@ -195,7 +195,3 @@ def upgrade(ctx: Context, apply: bool):
                     f"Upgraded {number_of_upgrades} projects. Validate with `mpyl projects lint`"
                 )
             )
-
-
-if __name__ == "__main__":
-    projects()  # pylint: disable=no-value-for-parameter
