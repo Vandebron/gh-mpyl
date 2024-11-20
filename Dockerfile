@@ -26,6 +26,5 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # the application crashes without emitting any logs due to buffering.
 ENV PYTHONUNBUFFERED=1
 
-# FIXME ptab remove me
 # Run the application.
 ENTRYPOINT ["python", "/app/mpyl/__main__.py"]

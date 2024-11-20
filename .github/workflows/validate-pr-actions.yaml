@@ -101,7 +101,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4.2.2
 
-      - name: Point action.yaml to a new version
+      - name: Point action.yaml to the Docker image built in the previous job
         if: needs.changed-files.outputs.build-docker-image == 'true'
         env:
           IMAGE: docker://${{ needs.docker.outputs.image }}
@@ -121,7 +121,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4.2.2
 
-      - name: Point action.yaml to a new version
+      - name: Point action.yaml to the Docker image built in the previous job
         if: needs.changed-files.outputs.build-docker-image == 'true'
         env:
           IMAGE: docker://${{ needs.docker.outputs.image }}
@@ -141,7 +141,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4.2.2
 
-      - name: Point action.yaml to a new version
+      - name: Point action.yaml to the Docker image built in the previous job
         if: needs.changed-files.outputs.build-docker-image == 'true'
         env:
           IMAGE: docker://${{ needs.docker.outputs.image }}
@@ -162,7 +162,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4.2.2
 
-      - name: Point action.yaml files to a new version
+      - name: Point action.yaml to the Docker image built in the previous job
         if: needs.changed-files.outputs.build-docker-image == 'true'
         env:
           IMAGE: docker://${{ needs.docker.outputs.image }}
