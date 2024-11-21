@@ -3,22 +3,27 @@ FROM public.ecr.aws/vdb-public/python:${PYTHON_VERSION}-slim-bookworm AS dev
 
 USER root
 ENV PIPENV_VENV_IN_PROJECT=1
-ENV LANG C.UTF-8
-ENV LC_ALL C.UTF-8
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
 RUN pip install pipenv
 
 
 FROM dev AS application
 
+WORKDIR /app/mpyl
+
 # Install the project dependencies.
-COPY Pipfile.lock /app/mpyl/
-RUN pipenv sync
+COPY Pipfile Pipfile.lock ./
+RUN pipenv sync --system
 
 # Copy the source code into the container.
-COPY --link src/mpyl /app/mpyl/
+COPY --link src/mpyl ./
 
 # Set pythonpath for mpyl
 ENV PYTHONPATH=/app
+
+# Switch to the directory of the calling repo
+WORKDIR /repo
 
 # Prevents Python from writing pyc files.
 ENV PYTHONDONTWRITEBYTECODE=1
