@@ -1,24 +1,30 @@
 ARG PYTHON_VERSION=3.13
-FROM public.ecr.aws/vdb-public/python:${PYTHON_VERSION}-slim-bookworm AS base
+FROM public.ecr.aws/vdb-public/python:${PYTHON_VERSION}-slim-bookworm AS dev
 
 USER root
 
-# Switch to mpyl source code directory
-WORKDIR /app/mpyl
+# needed for devcontainers + IntelliJ IDEA
+RUN DEBIAN_FRONTEND=noninteractive \
+    && apt-get update -y && apt-get install -y  \
+    curl \
+    git \
+    procps \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install the dependencies.
 RUN pip install pipenv
-COPY Pipfile Pipfile.lock ./
+
+
+FROM dev AS application
+
+# Install the project dependencies.
+COPY Pipfile Pipfile.lock /app/mpyl/
 RUN pipenv install --system --deploy
 
 # Copy the source code into the container.
-COPY src/mpyl ./
+COPY --link src/mpyl /app/mpyl/
 
 # Set pythonpath for mpyl
 ENV PYTHONPATH=/app
-
-# Switch to the directory of the calling repo
-WORKDIR /repo
 
 # Prevents Python from writing pyc files.
 ENV PYTHONDONTWRITEBYTECODE=1

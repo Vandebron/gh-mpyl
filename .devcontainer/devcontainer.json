@@ -1,0 +1,39 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/docker-existing-dockerfile
+{
+  "name": "MPyL",
+  "build": {
+    // Sets the run context to one level up instead of the .devcontainer folder.
+    "context": "..",
+    // Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
+    "dockerfile": "../Dockerfile",
+    "target": "dev"
+  },
+  //
+  //
+  // Features to add to the dev container. More info: https://containers.dev/features.
+  // FIXME for some reason this makes IntelliJ not able to start the container (for now I'm installing it in the Dockerfile)
+  //  "features": {
+  //    "ghcr.io/devcontainers/features/git:1": {}
+  //  },
+  //
+  //
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  // "forwardPorts": [],
+  //
+  //
+  // Uncomment the next line to run commands after the container is created.
+  // FIXME it doesn't seem like this is running
+  "postCreateCommand": "pipenv install --deploy --dev",
+  //
+  //
+  // Configure tool-specific properties.
+  "customizations": {
+    "jetbrains": {
+      "backend": "IntelliJ"
+    }
+  }
+
+  // Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
+  // "remoteUser": "devcontainer"
+}
