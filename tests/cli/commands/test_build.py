@@ -3,7 +3,6 @@ import logging
 from src.mpyl.build import run_build
 from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.run_plan import RunPlan
-from src.mpyl.steps.deploy import STAGE_NAME
 from src.mpyl.steps.executor import Executor, StepsCollection, ExecutionException
 from src.mpyl.steps.input import Input
 from src.mpyl.steps.output import Output
@@ -28,7 +27,7 @@ class ThrowingStep(Step):
                 name="Throwing Deploy",
                 description="Throwing deploy step to validate error handling",
                 version="0.0.1",
-                stage=STAGE_NAME,
+                stage=TestStage.deploy().name,
             ),
         )
 

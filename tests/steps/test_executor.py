@@ -11,7 +11,6 @@ from src.mpyl.project import Project, Stages, Target
 from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.projects.versioning import yaml_to_string
 from src.mpyl.run_plan import RunPlan
-from src.mpyl.steps import deploy
 from src.mpyl.steps.collection import StepsCollection
 from src.mpyl.steps.executor import Executor
 from src.mpyl.steps.models import (
@@ -21,7 +20,7 @@ from src.mpyl.steps.models import (
 from src.mpyl.steps.output import Output
 from tests import root_test_path, test_resource_path
 from tests.test_resources import test_data
-from tests.test_resources.test_data import assert_roundtrip, RUN_PROPERTIES
+from tests.test_resources.test_data import assert_roundtrip, RUN_PROPERTIES, TestStage
 
 yaml = YAML()
 
@@ -86,7 +85,7 @@ class TestSteps:
             "test", "Test project", "", None, stages, [], None, None, None, None
         )
         output = steps.execute(
-            stage=deploy.STAGE_NAME,
+            stage=TestStage.deploy().name,
             project_execution=ProjectExecution.run(project),
         ).output
         assert not output.success
@@ -116,7 +115,7 @@ class TestSteps:
             path=str(self.resource_path / "metapath" / "project.yml"),
         )
         result = self.executor.execute(
-            stage=deploy.STAGE_NAME,
+            stage=TestStage.deploy().name,
             project_execution=ProjectExecution.run(project),
         )
         assert result.output.success
@@ -125,7 +124,7 @@ class TestSteps:
     def test_should_fail_if_step_is_not_known(self):
         project = test_data.get_project_with_stages({"deploy": "Unknown Deploy"})
         result = self.executor.execute(
-            stage=deploy.STAGE_NAME,
+            stage=TestStage.deploy().name,
             project_execution=ProjectExecution.run(project),
         )
         assert not result.output.success
@@ -142,7 +141,7 @@ class TestSteps:
         )
 
         result = self.executor.execute(
-            stage=deploy.STAGE_NAME,
+            stage=TestStage.deploy().name,
             project_execution=ProjectExecution.run(project),
         )
         assert not result.output.success
@@ -154,7 +153,7 @@ class TestSteps:
     def test_should_succeed_if_stage_is_not_known(self):
         project = test_data.get_project_with_stages(stage_config={"test": "Some Test"})
         result = self.executor.execute(
-            stage="build",
+            stage=TestStage.build().name,
             project_execution=ProjectExecution.run(project),
         )
         assert not result.output.success
