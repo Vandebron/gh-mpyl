@@ -152,8 +152,8 @@ jobs:
           changed-files-path: tests/test_resources/changed-files
           config-path: mpyl_config.example.yml
 
-  run-stage:
-    name: ▶️ Run actions/run-stage
+  generate-manifests:
+    name: ▶️ Run actions/generate-kubernetes-manifests
     runs-on: ubuntu-latest
     if: ${{ !failure() && !cancelled() }}
     needs:
@@ -168,14 +168,14 @@ jobs:
           IMAGE: docker://${{ needs.docker.outputs.image }}
         run: |-
           yq -i '.runs.image = strenv(IMAGE)' actions/run-plan/action.yaml
-          yq -i '.runs.image = strenv(IMAGE)' actions/run-stage/action.yaml
+          yq -i '.runs.image = strenv(IMAGE)' actions/generate-kubernetes-manifests/action.yaml
 
       - uses: ./actions/run-plan
         with:
           changed-files-path: tests/test_resources/changed-files
           config-path: mpyl_config.example.yml
 
-      - uses: ./actions/run-stage
+      - uses: ./actions/generate-kubernetes-manifests
         with:
           project: job
           environment: pull-request

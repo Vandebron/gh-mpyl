@@ -1,9 +1,9 @@
 ---
-name: Run a MPyL stage
-description: Run a MPyL stage inside a Docker container
+name: Generate kubernetes manifests
+description: Run MPyL to generate Kubernetes manifests
 inputs:
   project:
-    description: The project to run
+    description: The project to process
     required: true
   environment:
     description: The environment this Action runs in
