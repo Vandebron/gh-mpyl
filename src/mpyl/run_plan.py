@@ -115,7 +115,7 @@ class RunPlan:
             for execution in executions:
                 stages: list[dict[str, Union[str, bool]]] = run_plan.get(
                     execution.project.name, {}
-                ).get("plan", [])
+                ).get("stages", [])
                 stages.append({"name": stage.name, "cached": execution.cached})
 
                 run_plan.update(
