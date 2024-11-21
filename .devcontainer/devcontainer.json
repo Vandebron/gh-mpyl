@@ -3,31 +3,24 @@
 {
   "name": "MPyL",
   "build": {
-    // Sets the run context to one level up instead of the .devcontainer folder.
     "context": "..",
-    // Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
     "dockerfile": "../Dockerfile",
-    "target": "dev"
+    "target": "dev",
   },
-  //
-  //
-  // Features to add to the dev container. More info: https://containers.dev/features.
-  // FIXME for some reason this makes IntelliJ not able to start the container (for now I'm installing it in the Dockerfile)
+  // More info: https://containers.dev/features.
   "features": {
-    "ghcr.io/devcontainers/features/git:1": {}
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "configureZshAsDefaultShell": true,
+      "upgradePackages": false,
+    },
+    "ghcr.io/devcontainers/features/git:1": {},
   },
-  //
-  //
-  // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  // "forwardPorts": [],
-  //
-  //
-  // Uncomment the next line to run commands after the container is created.
-  "postCreateCommand": "pipenv sync --dev",
-  //
-  //
-  // Configure tool-specific properties.
+  "postCreateCommand": {
+    "install-project-dependencies": "pipenv sync --dev --system",
+    "pre-commit": "pre-commit install --install-hooks",
+  },
   "customizations": {
+    // 👇 IntelliJ settings
     "jetbrains": {
       "backend": "IntelliJ",
       "plugins": [
@@ -35,9 +28,8 @@
         "com.leinardi.pycharm.pylint",
         "ru.adelf.idea.dotenv"
       ]
-    }
-  }
-
-  // Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
-  // "remoteUser": "devcontainer"
+    },
+  },
+  // More info: https://aka.ms/dev-containers-non-root.
+  //"remoteUser": "devcontainer"
 }

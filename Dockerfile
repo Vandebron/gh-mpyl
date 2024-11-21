@@ -5,7 +5,7 @@ USER root
 ENV PIPENV_VENV_IN_PROJECT=1
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
-RUN pip install pipenv
+RUN pip install pipenv pre-commit
 
 
 FROM dev AS application
