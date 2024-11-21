@@ -13,9 +13,9 @@
   //
   // Features to add to the dev container. More info: https://containers.dev/features.
   // FIXME for some reason this makes IntelliJ not able to start the container (for now I'm installing it in the Dockerfile)
-  //  "features": {
-  //    "ghcr.io/devcontainers/features/git:1": {}
-  //  },
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
   //
   //
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
@@ -23,14 +23,18 @@
   //
   //
   // Uncomment the next line to run commands after the container is created.
-  // FIXME it doesn't seem like this is running
-  "postCreateCommand": "pipenv install --deploy --dev",
+  "postCreateCommand": "pipenv sync --dev",
   //
   //
   // Configure tool-specific properties.
   "customizations": {
     "jetbrains": {
-      "backend": "IntelliJ"
+      "backend": "IntelliJ",
+      "plugins": [
+        "Pythonid",
+        "com.leinardi.pycharm.pylint",
+        "ru.adelf.idea.dotenv"
+      ]
     }
   }
 
