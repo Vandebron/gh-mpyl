@@ -16,7 +16,7 @@
     "ghcr.io/devcontainers/features/git:1": {},
   },
   "postCreateCommand": {
-    "install-project-dependencies": "pipenv sync --dev --system",
+    "install-project-dependencies": "pipenv sync --dev",
     "pre-commit": "pre-commit install --install-hooks",
   },
   "customizations": {

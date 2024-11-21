@@ -2,7 +2,6 @@ ARG PYTHON_VERSION=3.13
 FROM public.ecr.aws/vdb-public/python:${PYTHON_VERSION}-slim-bookworm AS dev
 
 USER root
-ENV PIPENV_VENV_IN_PROJECT=1
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 RUN pip install pipenv pre-commit
