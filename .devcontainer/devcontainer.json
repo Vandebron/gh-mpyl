@@ -5,20 +5,28 @@
   "build": {
     "context": "..",
     "dockerfile": "../Dockerfile",
-    "target": "dev",
+    "target": "dev"
   },
+
   // More info: https://containers.dev/features.
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
       "configureZshAsDefaultShell": true,
-      "upgradePackages": false,
+      "upgradePackages": false
     },
-    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/git:1": {}
   },
+
+  "containerEnv": {
+    "PIPENV_CUSTOM_VENV_NAME": "gh-mpyl"  // helps IntelliJ keep a stable .idea/misc.xml file
+  },
+
+  // 👇 IntelliJ settings
   "postCreateCommand": {
-    "install-project-dependencies": "pipenv sync --dev",
-    "pre-commit": "pre-commit install --install-hooks",
+    "install-project-dependencies": "pipenv sync --dev",  // install Python dependencies
+    "pre-commit": "pre-commit install --install-hooks"    // install pre-commit and all configured hooks
   },
+
   "customizations": {
     // 👇 IntelliJ settings
     "jetbrains": {
@@ -29,9 +37,14 @@
         "ru.adelf.idea.dotenv"
       ]
     },
-  },
-  "containerEnv": {
-    "PIPENV_CUSTOM_VENV_NAME": "gh-mpyl",
-    //"PIPENV_VENV_IN_PROJECT": "1"
+
+    // 👇 VSCode settings
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.pylint",
+        "mikoz.black-py"
+      ]
+    }
   }
 }
