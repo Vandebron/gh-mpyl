@@ -5,6 +5,9 @@
 /usage.statistics.xml
 /shelf/
 
+# python applications will point to a machine-specific venv profile name
+misc.xml
+
 # Editor-based HTTP Client requests
 /httpRequests/
 # Datasource local storage ignored files
