@@ -30,6 +30,8 @@
       ]
     },
   },
-  // More info: https://aka.ms/dev-containers-non-root.
-  //"remoteUser": "devcontainer"
+  "containerEnv": {
+    "PIPENV_CUSTOM_VENV_NAME": "gh-mpyl",
+    //"PIPENV_VENV_IN_PROJECT": "1"
+  }
 }
