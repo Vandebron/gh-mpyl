@@ -19,7 +19,7 @@ from ..constants import (
 )
 from ..project import load_project, Target
 from ..run_plan import RunPlan
-from ..stages.discovery import find_projects
+from ..plan.discovery import find_projects
 from ..steps import deploy
 from ..steps.models import ConsoleProperties, RunProperties
 from ..utilities.pyaml_env import parse_config
@@ -95,9 +95,6 @@ class CustomValidation(click.Command):
 
 @build.command(help="Run an MPyL build", cls=CustomValidation)
 @click.option(
-    "--stage", default=None, type=click.STRING, required=True, help="Stage to run"
-)
-@click.option(
     "--projects",
     "-p",
     type=click.STRING,
@@ -110,7 +107,6 @@ class CustomValidation(click.Command):
 @click.pass_obj
 def run(
     obj: Context,
-    stage,
     projects,
     image,
 ):
@@ -118,19 +114,10 @@ def run(
     for run_result_file in run_result_files:
         run_result_file.unlink()
 
-    if image:
-        if not stage or not projects:
-            raise click.ClickException(
-                message="Need to pass stage and project when passing an image"
-            )
-        if stage != deploy.STAGE_NAME:
-            raise click.ClickException(
-                message="Images can only be passed when selecting the deploy stage"
-            )
-        if len(projects.split(",")) != 1:
-            raise click.ClickException(
-                message="Need to pass exactly one project to deploy when passing an image"
-            )
+    if image and len(projects.split(",")) != 1:
+        raise click.ClickException(
+            message="Need to pass exactly one project to deploy when passing an image"
+        )
 
     run_properties = RunProperties.from_configuration(
         target=obj.target,
@@ -140,7 +127,7 @@ def run(
     )
 
     run_plan = RunPlan.load_from_pickle_file(
-        selected_stage=run_properties.selected_stage(stage),
+        selected_stage=run_properties.selected_stage(deploy.STAGE_NAME),
         selected_projects=run_properties.selected_projects(projects),
     )
 

@@ -3,10 +3,10 @@
 from pathlib import Path
 from typing import Optional
 
+from src.mpyl.plan.discovery import find_projects
 from src.mpyl.project import Project, load_project
 from src.mpyl.projects import ProjectWithDependents, Protocol, Contract, Dependency
-from src.mpyl.stages.discovery import find_projects
-from src.mpyl.steps import test
+from tests.test_resources.test_data import TestStage
 
 
 def load_projects(paths: Optional[list[Path]] = None) -> set[Project]:
@@ -36,7 +36,7 @@ def find_dependencies(
     ):
         dependent_projects = {}
         for dep in (
-            proj.project.dependencies.set_for_stage(test.STAGE_NAME)
+            proj.project.dependencies.set_for_stage(TestStage.test().name)
             if proj.project.dependencies
             else set()
         ):

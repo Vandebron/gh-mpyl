@@ -29,7 +29,7 @@ from ..projects.versioning import (
     upgrade_file,
     PROJECT_UPGRADERS,
 )
-from ..stages.discovery import find_projects
+from ..plan.discovery import find_projects
 from ..utilities.pyaml_env import parse_config
 
 
