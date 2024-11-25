@@ -1,12 +1,9 @@
 ---
-name: Run a MPyL stage
-description: Run a MPyL stage inside a Docker container
+name: Generate kubernetes manifests
+description: Run MPyL to generate Kubernetes manifests
 inputs:
   project:
-    description: The project to run
-    required: true
-  stage:
-    description: The stage to run
+    description: The project to process
     required: true
   environment:
     description: The environment this Action runs in
@@ -32,14 +29,12 @@ inputs:
     required: false
 runs:
   using: docker
-  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.9.0
+  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.10.0
   args:
     - build
     - --environment
     - ${{ inputs.environment }}
     - run
-    - --stage
-    - ${{ inputs.stage }}
     - --projects
     - ${{ inputs.project }}
     - --image

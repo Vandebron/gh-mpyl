@@ -5,13 +5,12 @@ import shutil
 from pathlib import Path
 
 from src.mpyl.constants import RUN_ARTIFACTS_FOLDER
-from src.mpyl.project import load_project, Stage
-from src.mpyl.stages.discovery import (
+from src.mpyl.plan.discovery import (
     find_projects_to_execute,
     is_project_cached_for_stage,
     is_file_a_dependency,
 )
-from src.mpyl.steps import build, test, deploy
+from src.mpyl.project import load_project
 from src.mpyl.steps.output import Output
 from src.mpyl.utilities.repo import Changeset
 from tests.projects.find import load_projects
@@ -24,20 +23,16 @@ HASHED_CHANGES_OF_JOB = (
 
 
 @contextlib.contextmanager
-def _caching_for(
-    project: str,
-    stage: Stage = TestStage.build(),
-    hashed_contents: str = HASHED_CHANGES_OF_JOB,
-):
-    path = f"tests/projects/{project}/deployment/{RUN_ARTIFACTS_FOLDER}"
+def _cache_build_job():
+    path = f"tests/projects/job/deployment/{RUN_ARTIFACTS_FOLDER}"
 
     if not os.path.isdir(path):
         os.makedirs(path)
 
     try:
-        Output(success=True, message="a test output", hash=hashed_contents).write(
+        Output(success=True, message="a test output", hash=HASHED_CHANGES_OF_JOB).write(
             target_path=Path(path),
-            stage=stage.name,
+            stage=TestStage.build().name,
         )
         yield path
     finally:
@@ -56,12 +51,12 @@ class TestDiscovery:
     def _helper_find_projects_to_execute(
         self,
         files_touched: dict[str, str],
-        stage: Stage = TestStage.build(),
+        stage_name: str = TestStage.build().name,
     ):
         return find_projects_to_execute(
             logger=self.logger,
             all_projects=self.projects,
-            stage=stage.name,
+            stage=stage_name,
             changeset=Changeset(
                 sha="a git SHA",
                 _files_touched=files_touched,
@@ -108,7 +103,7 @@ class TestDiscovery:
                 find_projects_to_execute(
                     self.logger,
                     projects,
-                    build.STAGE_NAME,
+                    TestStage.build().name,
                     changeset,
                 )
             )
@@ -119,7 +114,7 @@ class TestDiscovery:
                 find_projects_to_execute(
                     self.logger,
                     projects,
-                    test.STAGE_NAME,
+                    TestStage.test().name,
                     changeset,
                 )
             )
@@ -130,11 +125,22 @@ class TestDiscovery:
                 find_projects_to_execute(
                     self.logger,
                     projects,
-                    deploy.STAGE_NAME,
+                    TestStage.deploy().name,
                     changeset,
                 )
             )
             == 1
+        )
+        assert (
+            len(
+                find_projects_to_execute(
+                    self.logger,
+                    projects,
+                    TestStage.post_deploy().name,
+                    changeset,
+                )
+            )
+            == 0
         )
 
     def test_stage_with_files_changed(self):
@@ -149,7 +155,7 @@ class TestDiscovery:
         assert job_execution.hashed_changes == HASHED_CHANGES_OF_JOB
 
     def test_stage_with_files_changed_and_existing_cache(self):
-        with _caching_for(project="job"):
+        with _cache_build_job():
             project_executions = self._helper_find_projects_to_execute(
                 files_touched={
                     "tests/projects/job/deployment/project.yml": "M",
@@ -163,7 +169,7 @@ class TestDiscovery:
             assert job_execution.hashed_changes == HASHED_CHANGES_OF_JOB
 
     def test_stage_with_files_changed_but_filtered(self):
-        with _caching_for(project="job"):
+        with _cache_build_job():
             project_executions = self._helper_find_projects_to_execute(
                 files_touched={
                     "tests/projects/job/deployment/project.yml": "D",
@@ -178,7 +184,7 @@ class TestDiscovery:
             assert not job_execution.hashed_changes
 
     def test_stage_with_build_dependency_changed(self):
-        with _caching_for(project="job"):
+        with _cache_build_job():
             project_executions = self._helper_find_projects_to_execute(
                 files_touched={
                     "tests/projects/sbt-service/src/main/scala/vandebron/mpyl/Main.scala": "M"
@@ -207,7 +213,7 @@ class TestDiscovery:
         assert not {p for p in project_executions if p.project.name == "job"}
 
     def test_stage_with_files_changed_and_dependency_changed(self):
-        with _caching_for(project="job"):
+        with _cache_build_job():
             project_executions = self._helper_find_projects_to_execute(
                 files_touched={
                     "tests/projects/job/deployment/project.yml": "M",
@@ -233,7 +239,7 @@ class TestDiscovery:
                 Path("tests/projects/sbt-service/deployment/project.yml"),
                 validate_project_yaml=True,
             ),
-            stage="build",
+            stage=TestStage.build().name,
             path="tests/projects/sbt-service-other/file.py",
         )
 
@@ -308,19 +314,19 @@ class TestDiscovery:
         projects_for_build = find_projects_to_execute(
             self.logger,
             projects,
-            build.STAGE_NAME,
+            TestStage.build().name,
             Changeset("revision", touched_files),
         )
         projects_for_test = find_projects_to_execute(
             self.logger,
             projects,
-            test.STAGE_NAME,
+            TestStage.test().name,
             Changeset("revision", touched_files),
         )
         projects_for_deploy = find_projects_to_execute(
             self.logger,
             projects,
-            deploy.STAGE_NAME,
+            TestStage.deploy().name,
             Changeset("revision", touched_files),
         )
         assert len(projects_for_build) == 1

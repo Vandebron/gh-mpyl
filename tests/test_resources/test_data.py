@@ -58,6 +58,10 @@ class TestStage:
     def deploy():
         return Stage(name="deploy", icon="🚀")
 
+    @staticmethod
+    def post_deploy():
+        return Stage(name="postdeploy", icon="🧪")
+
 
 def get_config_values() -> dict:
     return config_values

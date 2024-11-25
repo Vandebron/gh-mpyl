@@ -15,7 +15,7 @@ from rich.markdown import Markdown
 from .constants import RUN_ARTIFACTS_FOLDER
 from .project import Project, Stage, load_project
 from .project_execution import ProjectExecution
-from .stages.discovery import find_projects_to_execute, find_projects
+from .plan.discovery import find_projects_to_execute, find_projects
 from .utilities.repo import Changeset
 
 RUN_PLAN_PICKLE_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.pickle"
