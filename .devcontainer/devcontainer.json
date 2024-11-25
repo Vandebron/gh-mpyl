@@ -8,11 +8,16 @@
     "target": "dev"
   },
 
+  "mounts": [
+    "source=${localEnv:HOME}/.gitconfig,target=/root/.gitconfig/.ivy2,type=bind,consistency=cached"
+  ],
+
   // More info: https://containers.dev/features.
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
       "configureZshAsDefaultShell": true,
-      "upgradePackages": false
+      "upgradePackages": false,
+      "username": "none"
     },
     "ghcr.io/devcontainers/features/git:1": {}
   },
