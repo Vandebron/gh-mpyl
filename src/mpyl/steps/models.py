@@ -146,10 +146,3 @@ class RunProperties:
 
     def selected_stage(self, selected_stage_name: Optional[str]):
         return self.to_stage(selected_stage_name) if selected_stage_name else None
-
-    def selected_projects(self, selected_project_names: Optional[str]):
-        return (
-            {p for p in self.stages if p.name in selected_project_names.split(",")}
-            if selected_project_names
-            else set()
-        )

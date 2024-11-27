@@ -35,12 +35,12 @@ runs:
     - --environment
     - ${{ inputs.environment }}
     - run
-    - --projects
+    - --project
     - ${{ inputs.project }}
     - --image
     - ${{ inputs.deploy-image }}
   env:
     MPYL_CONFIG_PATH: ${{ inputs.config-path }}
-    TAG_NAME: ${{ inputs.environment != 'pull-request' && inputs.version || '' }} # run_properties.versioning.tag
-    GIT_COMMIT: ${{ inputs.commit }} # run_properties.versioning.revision
-    CHANGE_ID: ${{ inputs.pr-number }} # run_properties.versioning.pr_number
+    TAG_NAME: ${{ inputs.environment != 'pull-request' && inputs.version || '' }}  # run_properties.versioning.tag
+    GIT_COMMIT: ${{ inputs.commit }}  # run_properties.versioning.revision
+    CHANGE_ID: ${{ inputs.pr-number }}  # run_properties.versioning.pr_number

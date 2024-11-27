@@ -8,7 +8,7 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
-from ..project import Project
+from ..project import Project, load_project
 from ..project_execution import ProjectExecution
 from ..steps import deploy
 from ..steps.output import Output
@@ -37,6 +37,17 @@ def find_projects() -> list[Path]:
         command.split(" "), capture_output=True, text=True, check=True, shell=False
     ).stdout.splitlines()
     return list(map(Path, sorted(files)))
+
+
+def load_all_projects() -> set[Project]:
+    return set(
+        map(
+            lambda p: load_project(
+                project_path=p, validate_project_yaml=False, log=True
+            ),
+            find_projects(),
+        )
+    )
 
 
 def file_belongs_to_project(project: Project, path: str) -> bool:

@@ -13,9 +13,9 @@ from rich.console import Console
 from rich.markdown import Markdown
 
 from .constants import RUN_ARTIFACTS_FOLDER
-from .project import Project, Stage, load_project
+from .project import Project, Stage
 from .project_execution import ProjectExecution
-from .plan.discovery import find_projects_to_execute, find_projects
+from .plan.discovery import find_projects_to_execute, load_all_projects
 from .utilities.repo import Changeset
 
 RUN_PLAN_PICKLE_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.pickle"
@@ -26,6 +26,7 @@ RUN_PLAN_JSON_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.json"
 class RunPlan:
     all_known_projects: set[Project]
     full_plan: dict[Stage, set[ProjectExecution]]
+    # i'm almost certain this can be transformed into dict[Stage, ProjectExecution]
     selected_plan: dict[Stage, set[ProjectExecution]]
 
     @classmethod
@@ -47,11 +48,11 @@ class RunPlan:
             selected_plan={stage: self.get_projects_for_stage(stage)},
         )
 
-    def select_projects(self, projects: set[Project]) -> "RunPlan":
+    def select_project(self, project: Project) -> "RunPlan":
         selected_plan = {}
 
         for stage, executions in self.selected_plan.items():
-            selected_plan[stage] = {e for e in executions if e.project in projects}
+            selected_plan[stage] = {e for e in executions if e.project == project}
 
         return RunPlan(
             all_known_projects=self.all_known_projects,
@@ -138,7 +139,7 @@ class RunPlan:
 
     @staticmethod
     def load_from_pickle_file(
-        selected_projects: Optional[set[Project]],
+        selected_project: Optional[Project],
         selected_stage: Optional[Stage],
     ):
         logger = logging.getLogger("mpyl")
@@ -152,11 +153,9 @@ class RunPlan:
                     run_plan = run_plan.select_stage(selected_stage)
                     logger.info(f"Selected stage: {selected_stage.name}")
                     logger.debug(f"Run plan: {run_plan}")
-                if selected_projects:
-                    run_plan = run_plan.select_projects(selected_projects)
-                    logger.info(
-                        f"Selected projects: {set(p.name for p in selected_projects)}"
-                    )
+                if selected_project:
+                    run_plan = run_plan.select_project(selected_project)
+                    logger.info(f"Selected project: {selected_project.name}")
                     logger.debug(f"Run plan: {run_plan}")
                 return run_plan
 
@@ -198,14 +197,7 @@ def discover_run_plan(
     logger = logging.getLogger("mpyl")
     logger.info("Discovering run plan...")
 
-    all_projects = set(
-        map(
-            lambda p: load_project(
-                project_path=p, validate_project_yaml=False, log=True
-            ),
-            find_projects(),
-        )
-    )
+    all_projects = load_all_projects()
 
     changeset = Changeset.from_files(
         logger=logger, sha=revision, changed_files_path=changed_files_path
