@@ -93,5 +93,5 @@ def print_plan(ctx: Context):
     all_stages = [
         Stage(stage["name"], stage["icon"]) for stage in ctx.run_properties["stages"]
     ]
-    run_plan = RunPlan.load_from_pickle_file(selected_project=None, selected_stage=None)
+    run_plan = RunPlan.load_from_pickle_file()
     run_plan.print_markdown(ctx.console, all_stages)

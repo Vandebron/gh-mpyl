@@ -19,7 +19,7 @@ from ..constants import (
 )
 from ..project import load_project, Target
 from ..run_plan import RunPlan
-from ..plan.discovery import find_projects, load_all_projects
+from ..plan.discovery import find_projects
 from ..steps import deploy
 from ..steps.models import ConsoleProperties, RunProperties
 from ..utilities.pyaml_env import parse_config
@@ -121,18 +121,7 @@ def run(
         deploy_image=image,
     )
 
-    selected_project = None
-    for p in load_all_projects():
-        if p.name == project:
-            selected_project = p
-
-    if not selected_project:
-        raise ValueError(f"Unknown project: '{project}'")
-
-    run_plan = RunPlan.load_from_pickle_file(
-        selected_stage=run_properties.selected_stage(deploy.STAGE_NAME),
-        selected_project=selected_project,
-    )
+    run_plan = RunPlan.load_from_pickle_file().select_stage().select_project(project)
 
     run_result = run_mpyl(
         console_properties=ConsoleProperties.from_configuration(obj.run_properties),
