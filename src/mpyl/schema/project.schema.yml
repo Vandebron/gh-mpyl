@@ -286,6 +286,50 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/traefikHost'
+      ingressRoutes:
+        type: object
+        additionalProperties: false
+        oneOf:
+          - required:
+              - pr
+              - test
+              - acceptance
+              - production
+          - required:
+              - all
+        properties:
+          pr:
+            $ref: traefik_v2.schema.yml#/definitions/ingressRoute
+          test:
+            $ref: traefik_v2.schema.yml#/definitions/ingressRoute
+          acceptance:
+            $ref: traefik_v2.schema.yml#/definitions/ingressRoute
+          production:
+            $ref: traefik_v2.schema.yml#/definitions/ingressRoute
+          all:
+            $ref: traefik_v2.schema.yml#/definitions/ingressRoute
+      middlewares:
+        type: object
+        additionalProperties: false
+        oneOf:
+          - required:
+              - pr
+              - test
+              - acceptance
+              - production
+          - required:
+              - all
+        properties:
+          pr:
+            $ref: traefik_v2.schema.yml#/definitions/middleware
+          test:
+            $ref: traefik_v2.schema.yml#/definitions/middleware
+          acceptance:
+            $ref: traefik_v2.schema.yml#/definitions/middleware
+          production:
+            $ref: traefik_v2.schema.yml#/definitions/middleware
+          all:
+            $ref: traefik_v2.schema.yml#/definitions/middleware
   dtapValue:
     type: object
     additionalProperties: false

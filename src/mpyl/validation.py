@@ -29,7 +29,12 @@ def load_schema(schema_string: str) -> Validator:
     schema = yaml.load(schema_string)
 
     local_schema_dictionary = __load_schemas_from_local(
-        ["project.schema.yml", "mpyl_stages.schema.yml", "k8s_api_core.schema.yml"]
+        [
+            "project.schema.yml",
+            "mpyl_stages.schema.yml",
+            "k8s_api_core.schema.yml",
+            "traefik_v2.schema.yml",
+        ]
     )
 
     def load_schema_from_local(uri):
