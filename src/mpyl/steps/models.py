@@ -143,6 +143,3 @@ class RunProperties:
         if stage_by_name:
             return stage_by_name
         raise ValueError(f"Stage {stage_name} not found")
-
-    def selected_stage(self, selected_stage_name: Optional[str]):
-        return self.to_stage(selected_stage_name) if selected_stage_name else None

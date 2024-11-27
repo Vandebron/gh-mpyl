@@ -41,7 +41,17 @@ class RunPlan:
             all_known_projects=all_known_projects, full_plan=plan, selected_plan=plan
         )
 
-    def select_stage(self, stage: Stage) -> "RunPlan":
+    def select_stage(self, stage_name: str) -> "RunPlan":
+        stage = None
+        for s in self.get_all_stages(use_full_plan=True):
+            if s.name == stage_name:
+                stage = s
+                break
+        if not stage:
+            raise ValueError(
+                f"Unable to select stage outside of the run plan: '{stage_name}'"
+            )
+
         return RunPlan(
             all_known_projects=self.all_known_projects,
             full_plan=self.full_plan,
@@ -53,6 +63,7 @@ class RunPlan:
         for p in self.get_all_projects(use_full_plan=True):
             if p.name == project_name:
                 project = p
+                break
         if not project:
             raise ValueError(
                 f"Unable to select project outside of the run plan: '{project_name}'"
@@ -76,6 +87,11 @@ class RunPlan:
             include_cached_projects or not project_execution.cached
             for project_execution in self.get_all_projects(use_full_plan)
         )
+
+    def get_all_stages(self, use_full_plan: bool = False) -> set[Stage]:
+        if use_full_plan:
+            return set(self.full_plan.keys())
+        return set(self.selected_plan.keys())
 
     def get_all_projects(self, use_full_plan: bool = False) -> set[ProjectExecution]:
         def flatten(plan: dict[Stage, set[ProjectExecution]]):
