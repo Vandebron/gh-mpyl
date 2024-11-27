@@ -149,7 +149,7 @@ jobs:
 
       - uses: ./actions/run-plan
         with:
-          changed-files-path: tests/test_resources/changed-files
+          changed-files-path: tests/test_resources/changed-files-actions
           config-path: mpyl_config.example.yml
 
   generate-manifests:
@@ -172,7 +172,7 @@ jobs:
 
       - uses: ./actions/run-plan
         with:
-          changed-files-path: tests/test_resources/changed-files
+          changed-files-path: tests/test_resources/changed-files-actions
           config-path: mpyl_config.example.yml
 
       - uses: ./actions/generate-kubernetes-manifests
