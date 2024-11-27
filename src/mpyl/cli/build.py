@@ -121,7 +121,11 @@ def run(
         deploy_image=image,
     )
 
-    run_plan = RunPlan.load_from_pickle_file().select_stage().select_project(project)
+    run_plan = (
+        RunPlan.load_from_pickle_file()
+        .select_stage(run_properties.selected_stage(deploy.STAGE_NAME))
+        .select_project(project)
+    )
 
     run_result = run_mpyl(
         console_properties=ConsoleProperties.from_configuration(obj.run_properties),
