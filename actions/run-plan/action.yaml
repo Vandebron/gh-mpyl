@@ -10,7 +10,7 @@ inputs:
     required: true
 runs:
   using: docker
-  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.11.0
+  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.12.0
   args:
     - plan
     - create
