@@ -13,11 +13,10 @@ RUN set -eux ; \
     rm -rf /var/lib/apt/lists/*
 
 # install pipenv for dependency management
-ENV LANG="en_US.UTF-8"
-ENV LC_ALL="en_US.UTF-8"
-ENV LC_CTYPE="en_US.UTF-8"
 # TODO fix the base python image so that it creates a home directory for the vdnonroot user
 # USER vdbnonroot
+ENV LANG="en_US.UTF-8"
+ENV LC_ALL="en_US.UTF-8"
 RUN pip install pipenv
 
 # Switch to mpyl source code directory
