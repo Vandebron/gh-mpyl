@@ -72,7 +72,9 @@ class RunPlan:
         selected_plan = {}
 
         for stage, executions in self.selected_plan.items():
-            selected_plan[stage] = {e for e in executions if e.project == project}
+            selected_plan[stage] = {
+                e for e in executions if e.project.name == project.name
+            }
 
         return RunPlan(
             all_known_projects=self.all_known_projects,
