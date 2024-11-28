@@ -24,20 +24,22 @@ RUN_PLAN_JSON_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.json"
 class RunPlan:
     all_known_projects: set[Project]
     _full_plan: dict[Stage, set[ProjectExecution]]
-    selected_plan: dict[Stage, set[ProjectExecution]]
+    # unused but temporarily kept here on purpose, see https://github.com/Vandebron/gh-mpyl/pull/105
+    _selected_plan: dict[Stage, set[ProjectExecution]]
 
     @classmethod
     def empty(cls) -> "RunPlan":
-        return cls(all_known_projects=set(), _full_plan={}, selected_plan={})
+        return cls(all_known_projects=set(), _full_plan={}, _selected_plan={})
 
     @classmethod
     def create(
         cls, all_known_projects: set[Project], plan: dict[Stage, set[ProjectExecution]]
     ) -> "RunPlan":
         return cls(
-            all_known_projects=all_known_projects, _full_plan=plan, selected_plan=plan
+            all_known_projects=all_known_projects, _full_plan=plan, _selected_plan=plan
         )
 
+    # unused but temporarily kept here on purpose, see https://github.com/Vandebron/gh-mpyl/pull/105
     def select_stage(self, stage_name: str) -> "RunPlan":
         selected_stage = None
         for stage in self._get_all_stages():
@@ -52,11 +54,12 @@ class RunPlan:
         return RunPlan(
             all_known_projects=self.all_known_projects,
             _full_plan=self._full_plan,
-            selected_plan={
-                selected_stage: self.get_executions_for_stage(selected_stage)
+            _selected_plan={
+                selected_stage: self._get_executions_for_stage(selected_stage)
             },
         )
 
+    # unused but temporarily kept here on purpose, see https://github.com/Vandebron/gh-mpyl/pull/105
     def select_project(self, project_name: str) -> "RunPlan":
         selected_project = None
         for project in self._get_all_executions():
@@ -72,7 +75,7 @@ class RunPlan:
         for stage in self._get_all_stages():
             filtered = {
                 project
-                for project in self.get_executions_for_stage(stage)
+                for project in self._get_executions_for_stage(stage)
                 if project.name == project_name
             }
             if filtered:
@@ -81,10 +84,10 @@ class RunPlan:
         return RunPlan(
             all_known_projects=self.all_known_projects,
             _full_plan=self._full_plan,
-            selected_plan=selected_plan,
+            _selected_plan=selected_plan,
         )
 
-    def has_projects_to_run(self, include_cached_projects: bool) -> bool:
+    def _has_projects_to_run(self, include_cached_projects: bool) -> bool:
         return any(
             include_cached_projects or not project_execution.cached
             for project_execution in self._get_all_executions()
@@ -93,7 +96,7 @@ class RunPlan:
     def _get_all_stages(self, use_full_plan: bool = False) -> list[Stage]:
         if use_full_plan:
             return list(self._full_plan.keys())
-        return list(self.selected_plan.keys())
+        return list(self._selected_plan.keys())
 
     def _get_all_executions(self, use_full_plan: bool = False) -> set[ProjectExecution]:
         def flatten(plan: dict[Stage, set[ProjectExecution]]):
@@ -105,14 +108,14 @@ class RunPlan:
 
         if use_full_plan:
             return flatten(self._full_plan)
-        return flatten(self.selected_plan)
+        return flatten(self._selected_plan)
 
-    def get_executions_for_stage(
+    def _get_executions_for_stage(
         self, stage: Stage, use_full_plan: bool = False
     ) -> set[ProjectExecution]:
         if use_full_plan:
             return self._full_plan.get(stage, set())
-        return self.selected_plan.get(stage, set())
+        return self._selected_plan.get(stage, set())
 
     def get_executions_for_stage_name(
         self, stage_name: str, use_full_plan: bool = False
@@ -127,7 +130,7 @@ class RunPlan:
 
         if use_full_plan:
             return find_stage(self._full_plan)
-        return find_stage(self.selected_plan)
+        return find_stage(self._selected_plan)
 
     def get_project_to_execute(
         self, stage_name: str, project_name: str
@@ -137,7 +140,7 @@ class RunPlan:
         for stage in self._get_all_stages():
             if stage.name == stage_name:
                 selected_stage = stage
-                for project in self.get_executions_for_stage(stage):
+                for project in self._get_executions_for_stage(stage):
                     if project.name == project_name:
                         selected_project = project
                         break
@@ -204,12 +207,12 @@ class RunPlan:
             )
 
     def to_markdown(self, execution_result: Optional[ExecutionResult] = None) -> str:
-        if self.has_projects_to_run(include_cached_projects=True):
+        if self._has_projects_to_run(include_cached_projects=True):
             result = ""
 
             for stage in self._get_all_stages():
-                result += f"{stage.display_string()}:  \n"
-                executions = self.get_executions_for_stage(stage)
+                result += f"{stage.to_markdown()}:  \n"
+                executions = self._get_executions_for_stage(stage)
                 if executions:
                     project_names = [
                         execution.to_markdown(

@@ -68,7 +68,7 @@ class Stage:
     name: str
     icon: str
 
-    def display_string(self) -> str:
+    def to_markdown(self) -> str:
         return f"{self.icon} {self.name.capitalize()}"
 
 

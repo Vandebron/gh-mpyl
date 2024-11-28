@@ -82,7 +82,7 @@ def _run_deploy_stage(
         logger.info("Run plan:")
         console.print(
             Markdown(
-                f"{stage.display_string()}:\n"
+                f"{stage.to_markdown()}:\n"
                 f"_{project_execution.name}{' (cached)' if project_execution.cached else ''}_\n"
             )
         )
