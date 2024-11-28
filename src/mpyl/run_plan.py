@@ -26,7 +26,6 @@ RUN_PLAN_JSON_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.json"
 class RunPlan:
     all_known_projects: set[Project]
     full_plan: dict[Stage, set[ProjectExecution]]
-    # i'm almost certain this can be transformed into dict[Stage, ProjectExecution]
     selected_plan: dict[Stage, set[ProjectExecution]]
 
     @classmethod
@@ -43,7 +42,7 @@ class RunPlan:
 
     def select_stage(self, stage_name: str) -> "RunPlan":
         stage = None
-        for s in self.get_all_stages(use_full_plan=True):
+        for s in self._get_all_stages(use_full_plan=False):
             if s.name == stage_name:
                 stage = s
                 break
@@ -60,7 +59,7 @@ class RunPlan:
 
     def select_project(self, project_name: str) -> "RunPlan":
         project = None
-        for p in self.get_all_projects(use_full_plan=True):
+        for p in self._get_all_projects(use_full_plan=False):
             if p.name == project_name:
                 project = p
                 break
@@ -70,11 +69,14 @@ class RunPlan:
             )
 
         selected_plan = {}
-
-        for stage, executions in self.selected_plan.items():
-            selected_plan[stage] = {
-                e for e in executions if e.project.name == project.name
+        for stage in self._get_all_stages(use_full_plan=False):
+            filtered = {
+                e
+                for e in self.get_projects_for_stage(stage, use_full_plan=False)
+                if e.name == project_name
             }
+            if filtered:
+                selected_plan[stage] = filtered
 
         return RunPlan(
             all_known_projects=self.all_known_projects,
@@ -82,20 +84,18 @@ class RunPlan:
             selected_plan=selected_plan,
         )
 
-    def has_projects_to_run(
-        self, include_cached_projects: bool, use_full_plan: bool = False
-    ) -> bool:
+    def has_projects_to_run(self, include_cached_projects: bool) -> bool:
         return any(
             include_cached_projects or not project_execution.cached
-            for project_execution in self.get_all_projects(use_full_plan)
+            for project_execution in self._get_all_projects(use_full_plan=False)
         )
 
-    def get_all_stages(self, use_full_plan: bool = False) -> set[Stage]:
+    def _get_all_stages(self, use_full_plan: bool = False) -> set[Stage]:
         if use_full_plan:
             return set(self.full_plan.keys())
         return set(self.selected_plan.keys())
 
-    def get_all_projects(self, use_full_plan: bool = False) -> set[ProjectExecution]:
+    def _get_all_projects(self, use_full_plan: bool = False) -> set[ProjectExecution]:
         def flatten(plan: dict[Stage, set[ProjectExecution]]):
             return {
                 project_execution
