@@ -106,6 +106,12 @@ class TestEmptyPlan:
             include_cached_projects=include_cached_projects,
         )
 
+    def test_get_project_to_execute(self):
+        with pytest.raises(ValueError):
+            self.run_plan.get_project_to_execute(
+                stage_name="any stage", project_name="any project"
+            )
+
 
 class TestFullRunPlan:
     full_plan = {build_stage: {execution_1, execution_2}, deploy_stage: {execution_2}}
@@ -192,6 +198,27 @@ class TestFullRunPlan:
         assert not run_plan_with_only_cached_projects._has_projects_to_run(
             include_cached_projects=False
         )
+
+    def test_get_project_to_execute(self):
+        assert (
+            self.run_plan.get_project_to_execute(
+                stage_name=deploy_stage.name, project_name=execution_2.name
+            )
+            == execution_2
+        )
+
+        with pytest.raises(ValueError):
+            self.run_plan.get_project_to_execute(
+                stage_name="unknown stage", project_name=execution_1.name
+            )
+        with pytest.raises(ValueError):
+            self.run_plan.get_project_to_execute(
+                stage_name=build_stage.name, project_name="unknown project"
+            )
+        with pytest.raises(ValueError):
+            self.run_plan.get_project_to_execute(
+                stage_name=deploy_stage.name, project_name=execution_1.name
+            )
 
 
 class TestRunPlanWithSelectedStage:
@@ -280,6 +307,22 @@ class TestRunPlanWithSelectedStage:
             include_cached_projects=False
         )
 
+    def test_get_project_to_execute(self):
+        assert (
+            self.run_plan.get_project_to_execute(
+                stage_name=deploy_stage.name, project_name=execution_2.name
+            )
+            == execution_2
+        )
+        with pytest.raises(ValueError):
+            self.run_plan.get_project_to_execute(
+                stage_name=build_stage.name, project_name=execution_1.name
+            )
+        with pytest.raises(ValueError):
+            self.run_plan.get_project_to_execute(
+                stage_name=build_stage.name, project_name=execution_2.name
+            )
+
 
 class TestRunPlanWithSelectedProjectInASingleStage:
     full_plan = {build_stage: {execution_1, execution_2}, deploy_stage: {execution_2}}
@@ -366,6 +409,19 @@ class TestRunPlanWithSelectedProjectInASingleStage:
         assert not run_plan_with_selected_project._has_projects_to_run(
             include_cached_projects=False
         )
+
+    def test_get_project_to_execute(self):
+        assert (
+            self.run_plan.get_project_to_execute(
+                stage_name=build_stage.name, project_name=execution_1.name
+            )
+            == execution_1
+        )
+
+        with pytest.raises(ValueError):
+            self.run_plan.get_project_to_execute(
+                stage_name=deploy_stage.name, project_name=execution_1.name
+            )
 
 
 class TestRunPlanWithSelectedProjectInMultipleStages:
@@ -455,3 +511,21 @@ class TestRunPlanWithSelectedProjectInMultipleStages:
         assert not run_plan_with_selected_project._has_projects_to_run(
             include_cached_projects=False
         )
+
+    def test_get_project_to_execute(self):
+        assert (
+            self.run_plan.get_project_to_execute(
+                stage_name=build_stage.name, project_name=execution_1.name
+            )
+            == execution_1
+        )
+        assert (
+            self.run_plan.get_project_to_execute(
+                stage_name=deploy_stage.name, project_name=execution_1.name
+            )
+            == execution_1
+        )
+        with pytest.raises(ValueError):
+            self.run_plan.get_project_to_execute(
+                stage_name=build_stage.name, project_name=execution_2.name
+            )
