@@ -1,5 +1,5 @@
 name: 'minimalService'
-description: 'This is a test container. For testing the MPL pipelines, not to be deployed anywhere.'
+description: 'This is a test container. For testing the MPyL pipelines, not to be deployed anywhere.'
 stages:
   build: Echo Build
   test: Echo Test

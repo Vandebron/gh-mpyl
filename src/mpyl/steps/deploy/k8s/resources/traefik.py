@@ -29,8 +29,9 @@ class HostWrapper:
 
 
 class V1AlphaIngressRoute(CustomResourceDefinition):
-    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
-        self,
+    @classmethod
+    def from_hosts(  # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
+        cls,
         metadata: V1ObjectMeta,
         host: HostWrapper,
         target: Target,
@@ -93,7 +94,7 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
             else entrypoints_override
         )
 
-        super().__init__(
+        return cls(
             api_version="traefik.io/v1alpha1",
             kind="IngressRoute",
             metadata=metadata,
@@ -105,13 +106,34 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
             schema="traefik.ingress.schema.yml",
         )
 
+    @classmethod
+    def from_spec(cls, metadata: V1ObjectMeta, spec: dict):
+        return cls(
+            api_version="traefik.io/v1alpha1",
+            kind="IngressRoute",
+            metadata=metadata,
+            spec=spec,
+            schema="traefik.ingress.schema.yml",
+        )
+
 
 class V1AlphaMiddleware(CustomResourceDefinition):
-    def __init__(self, metadata: V1ObjectMeta, source_ranges: list[str]):
-        super().__init__(
+    @classmethod
+    def from_source_ranges(cls, metadata: V1ObjectMeta, source_ranges: list[str]):
+        return cls(
             api_version="traefik.io/v1alpha1",
             kind="Middleware",
             metadata=metadata,
             spec={"ipAllowList": {"sourceRange": source_ranges}},
+            schema="traefik.middleware.schema.yml",
+        )
+
+    @classmethod
+    def from_spec(cls, metadata: V1ObjectMeta, spec: dict):
+        return cls(
+            api_version="traefik.io/v1alpha1",
+            kind="Middleware",
+            metadata=metadata,
+            spec=spec,
             schema="traefik.middleware.schema.yml",
         )

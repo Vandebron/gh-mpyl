@@ -71,6 +71,10 @@ def get_project() -> Project:
     return safe_load_project(f"{resource_path}/test_projects/test_project.yml")
 
 
+def get_project_traefik() -> Project:
+    return safe_load_project(f"{resource_path}/test_projects/test_project_traefik.yml")
+
+
 def get_project_execution() -> ProjectExecution:
     return ProjectExecution.run(get_project())
 
