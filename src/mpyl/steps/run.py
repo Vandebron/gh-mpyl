@@ -17,9 +17,9 @@ from ..run_plan import RunPlan
 
 @dataclass(frozen=True)
 class RunResult:
+    _run_plan: RunPlan
     _result: Optional[ExecutionResult]
     _exception: Optional[ExecutionException]
-    _run_plan: RunPlan
 
     @staticmethod
     def with_result(run_plan: RunPlan, execution_result: ExecutionResult):

@@ -40,7 +40,7 @@ class RunPlan:
 
     def select_stage(self, stage_name: str) -> "RunPlan":
         selected_stage = None
-        for stage in self._get_stages():
+        for stage in self._get_all_stages():
             if stage.name == stage_name:
                 selected_stage = stage
                 break
@@ -59,7 +59,7 @@ class RunPlan:
 
     def select_project(self, project_name: str) -> "RunPlan":
         selected_project = None
-        for project in self._get_executions():
+        for project in self._get_all_executions():
             if project.name == project_name:
                 selected_project = project
                 break
@@ -69,7 +69,7 @@ class RunPlan:
             )
 
         selected_plan = {}
-        for stage in self._get_stages():
+        for stage in self._get_all_stages():
             filtered = {
                 project
                 for project in self.get_executions_for_stage(stage)
@@ -87,15 +87,15 @@ class RunPlan:
     def has_projects_to_run(self, include_cached_projects: bool) -> bool:
         return any(
             include_cached_projects or not project_execution.cached
-            for project_execution in self._get_executions()
+            for project_execution in self._get_all_executions()
         )
 
-    def _get_stages(self, use_full_plan: bool = False) -> list[Stage]:
+    def _get_all_stages(self, use_full_plan: bool = False) -> list[Stage]:
         if use_full_plan:
             return list(self._full_plan.keys())
         return list(self.selected_plan.keys())
 
-    def _get_executions(self, use_full_plan: bool = False) -> set[ProjectExecution]:
+    def _get_all_executions(self, use_full_plan: bool = False) -> set[ProjectExecution]:
         def flatten(plan: dict[Stage, set[ProjectExecution]]):
             return {
                 project_execution
@@ -134,7 +134,7 @@ class RunPlan:
     ) -> ProjectExecution:
         selected_stage = None
         selected_project = None
-        for stage in self._get_stages():
+        for stage in self._get_all_stages():
             if stage.name == stage_name:
                 selected_stage = stage
                 for project in self.get_executions_for_stage(stage):
@@ -207,7 +207,7 @@ class RunPlan:
         if self.has_projects_to_run(include_cached_projects=True):
             result = ""
 
-            for stage in self._get_stages():
+            for stage in self._get_all_stages():
                 result += f"{stage.display_string()}:  \n"
                 executions = self.get_executions_for_stage(stage)
                 if executions:
