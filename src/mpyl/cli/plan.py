@@ -23,7 +23,7 @@ from ..utilities.pyaml_env import parse_config
 class Context:
     run_properties: dict
     config: dict
-    console: Console = create_console_logger(show_path=False)
+    console: Console = create_console_logger()
 
 
 @click.group("plan")

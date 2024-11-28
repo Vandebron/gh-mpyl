@@ -9,5 +9,5 @@ from .commands.health.checks import perform_health_checks
 @click.command("health")
 def health():
     """Health check"""
-    console = create_console_logger(show_path=False)
+    console = create_console_logger()
     perform_health_checks(console)
