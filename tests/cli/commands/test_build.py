@@ -2,7 +2,7 @@ import logging
 
 import pytest
 
-from src.mpyl.build import _run_deploy_stage
+from src.mpyl.build import run_deploy_stage
 from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps.executor import ExecutionException
@@ -43,7 +43,7 @@ class TestBuildCli:
 
     def test_run_without_project_in_plan_should_fail(self):
         with pytest.raises(ValueError):
-            _run_deploy_stage(
+            run_deploy_stage(
                 logger=self.logger,
                 console=self.console,
                 run_properties=RUN_PROPERTIES,
@@ -59,7 +59,7 @@ class TestBuildCli:
                 TestStage.deploy(): {(ProjectExecution.run(project))},
             },
         )
-        result = _run_deploy_stage(
+        result = run_deploy_stage(
             logger=self.logger,
             console=self.console,
             run_properties=stub_run_properties(),
@@ -78,7 +78,7 @@ class TestBuildCli:
             plan={TestStage.deploy(): {ProjectExecution.run(project)}},
         )
 
-        result = _run_deploy_stage(
+        result = run_deploy_stage(
             logger=self.logger,
             console=self.console,
             run_properties=stub_run_properties(),
