@@ -47,6 +47,9 @@ def run_deploy_stage(
     start_time = time.time()
     try:
         run_plan = RunPlan.load_from_pickle_file()
+        console.print(Markdown("**Execution plan:**  \n"))
+        console.print(Markdown(run_plan.to_markdown()))
+
         run_result = _run_deploy_stage(
             logger=logger,
             console=console,
@@ -77,14 +80,6 @@ def _run_deploy_stage(
         stage = run_properties.to_stage(deploy.STAGE_NAME)
         project_execution = run_plan.get_project_to_execute(
             stage_name=deploy.STAGE_NAME, project_name=project_name_to_run
-        )
-
-        logger.info("Run plan:")
-        console.print(
-            Markdown(
-                f"{stage.to_markdown()}:\n"
-                f"_{project_execution.name}{' (cached)' if project_execution.cached else ''}_\n"
-            )
         )
 
         executor = Executor(
