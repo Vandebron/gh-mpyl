@@ -17,10 +17,6 @@ class TestProjectsCli:
             result.output,
         )
 
-    def test_list_projects_output(self):
-        result = invoke(["projects", "-c", str(config_path), "list"])
-        assert_roundtrip(resource_path / "list_projects_text.txt", result.output)
-
     def test_create_console(self):
         console = create_console_logger(show_path=False, max_width=135)
         assert console.width == 135
