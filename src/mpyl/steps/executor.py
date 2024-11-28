@@ -155,7 +155,7 @@ class Executor:
 
         try:
             self._logger.info(
-                f"Executing {stage.name} {stage.icon} for {project_execution.name}"
+                f"Executing {stage.display_string()} for {project_execution.name}"
             )
             if step.before:
                 before_result = self._execute(

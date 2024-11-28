@@ -129,6 +129,29 @@ class RunPlan:
             return find_stage(self._full_plan)
         return find_stage(self.selected_plan)
 
+    def get_project_to_execute(
+        self, stage_name: str, project_name: str
+    ) -> ProjectExecution:
+        stage = None
+        project = None
+        for s in self._get_all_stages(use_full_plan=False):
+            if s.name == stage_name:
+                stage = s
+                for p in self.get_projects_for_stage(s, use_full_plan=False):
+                    if p.name == project_name:
+                        project = p
+                        break
+                break
+        if not stage:
+            raise ValueError(
+                f"Unable to select stage outside of the run plan: '{stage_name}'"
+            )
+        if not project:
+            raise ValueError(
+                f"Unable to select project outside of the run plan: '{project_name}'"
+            )
+        return project
+
     def write_to_pickle_file(self):
         logger = logging.getLogger("mpyl")
         os.makedirs(os.path.dirname(RUN_PLAN_PICKLE_FILE), exist_ok=True)
@@ -194,7 +217,9 @@ class RunPlan:
                         )
                     ]
 
-                    result += f'{stage.icon} {stage.name.capitalize()}:  \n{", ".join(project_names)}  \n'
+                    result += (
+                        f'{stage.display_string()}:  \n{", ".join(project_names)}  \n'
+                    )
                 else:
                     result += "🤷 Nothing to do  \n"
 

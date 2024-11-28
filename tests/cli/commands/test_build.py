@@ -1,15 +1,17 @@
 import logging
 
-from src.mpyl.build import run_build
+import pytest
+
+from src.mpyl.build import _run_deploy_stage
 from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.run_plan import RunPlan
-from src.mpyl.steps.executor import Executor, StepsCollection, ExecutionException
+from src.mpyl.steps.executor import ExecutionException
 from src.mpyl.steps.input import Input
 from src.mpyl.steps.output import Output
-from src.mpyl.steps.run import RunResult
 from src.mpyl.steps.step import Meta, Step
 from tests import root_test_path
 from tests.cli.commands import invoke, config_path, run_properties_path
+from tests.cli.commands.health.test_health import TestConsole
 from tests.test_resources.test_data import (
     get_minimal_project,
     RUN_PROPERTIES,
@@ -37,68 +39,56 @@ class ThrowingStep(Step):
 
 class TestBuildCli:
     logger = logging.getLogger()
+    console = TestConsole()
 
-    def test_run_build_without_plan_should_be_successful(self):
-        run_properties = RUN_PROPERTIES
-        run_plan = RunPlan.empty()
+    def test_run_without_project_in_plan_should_fail(self):
+        with pytest.raises(ValueError):
+            _run_deploy_stage(
+                logger=self.logger,
+                console=self.console,
+                run_properties=RUN_PROPERTIES,
+                run_plan=RunPlan.empty(),
+                project_name_to_run="a project not in the run plan",
+            )
 
-        accumulator = RunResult(run_properties=run_properties, run_plan=run_plan)
-        executor = Executor(
-            logging.getLogger(),
-            run_properties=run_properties,
-            run_plan=run_plan,
-            steps_collection=StepsCollection(logging.getLogger()),
-        )
-        result = run_build(self.logger, accumulator, executor)
-        assert not result.has_results
-        assert result.is_success
-        assert result.status_line == "🦥 Nothing to do"
-
-    def test_run_build_with_plan_should_execute_successfully(self):
+    def test_run_with_project_in_plan_should_execute_successfully(self):
         project = get_minimal_project()
-        project_executions = {ProjectExecution.run(project)}
         run_plan = RunPlan.create(
             all_known_projects={project},
             plan={
-                TestStage.deploy(): project_executions,
+                TestStage.deploy(): {(ProjectExecution.run(project))},
             },
         )
-        run_properties = stub_run_properties()
-        accumulator = RunResult(run_properties=run_properties, run_plan=run_plan)
-        collection = StepsCollection(logging.getLogger())
-        executor = Executor(
-            logging.getLogger(),
-            run_properties=run_properties,
+        result = _run_deploy_stage(
+            logger=self.logger,
+            console=self.console,
+            run_properties=stub_run_properties(),
             run_plan=run_plan,
-            steps_collection=collection,
+            project_name_to_run=project.name,
         )
-        result = run_build(self.logger, accumulator, executor)
         assert result.exception is None
         assert result.status_line == "✅ Successful"
         assert result.is_success
         assert result.exception is None
 
-    def test_run_build_throwing_step_should_be_handled(self):
-        projects = {get_project_with_stages({"deploy": "Throwing Deploy"})}
+    def test_run_with_failing_project_should_be_handled(self):
+        project = get_project_with_stages({"deploy": "Throwing Deploy"})
         run_plan = RunPlan.create(
-            all_known_projects=projects,
-            plan={TestStage.deploy(): {ProjectExecution.run(p) for p in projects}},
-        )
-        run_properties = stub_run_properties()
-        accumulator = RunResult(run_properties=run_properties, run_plan=run_plan)
-        logger = logging.getLogger()
-        collection = StepsCollection(logger)
-        executor = Executor(
-            logger,
-            run_properties=run_properties,
-            run_plan=run_plan,
-            steps_collection=collection,
+            all_known_projects={project},
+            plan={TestStage.deploy(): {ProjectExecution.run(project)}},
         )
 
-        result = run_build(self.logger, accumulator, executor)
+        result = _run_deploy_stage(
+            logger=self.logger,
+            console=self.console,
+            run_properties=stub_run_properties(),
+            run_plan=run_plan,
+            project_name_to_run=project.name,
+        )
+
         assert not result.has_results
         assert result.status_line == "❗ Failed with exception"
-
+        assert result.exception
         assert result.exception.message == "this is not good"
         assert result.exception.stage == TestStage.deploy().name
         assert result.exception.project_name == "test"
