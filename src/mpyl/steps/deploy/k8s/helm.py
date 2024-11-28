@@ -25,29 +25,24 @@ def update_repo(logger: Logger) -> Output:
 
 
 def write_chart(
-    chart: dict[str, CustomResourceDefinition],
+    release_name: str,
+    chart_name: str,
+    chart_version: str,
+    namespace: str,
+    logger: Logger,
     chart_path: Path,
     values: dict[str, str],
-) -> None:
+) -> Output:
     shutil.rmtree(chart_path, ignore_errors=True)
     template_path = chart_path / Path("templates")
+    values_path = chart_path / Path("values.yaml")
     template_path.mkdir(parents=True, exist_ok=True)
 
-    with open(chart_path / Path("values.yaml"), mode="w+", encoding="utf-8") as file:
-        if values == {}:
-            file.write(
-                "# This file is intentionally left empty. All values in /templates have been pre-interpolated"
-            )
-        else:
-            file.write(yaml.dump(values))
+    with open(values_path, mode="w+", encoding="utf-8") as file:
+        file.write(yaml.dump(values))
 
-    my_dictionary: dict[str, str] = dict(
-        map(lambda item: (item[0], to_yaml(item[1])), chart.items())
-    )
-
-    for name, template_content in my_dictionary.items():
-        with open(template_path / name, mode="w+", encoding="utf-8") as file:
-            file.write(f"{GENERATED_WARNING}\n{template_content}")
+    cmd = f"helm template {release_name} {chart_name} -n {namespace} --version {chart_version} -f {values_path} --output-dir ./templates"
+    return custom_check_output(logger, cmd)
 
 
 def write_helm_chart(
