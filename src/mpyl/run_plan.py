@@ -25,19 +25,19 @@ RUN_PLAN_JSON_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.json"
 @dataclass(frozen=True)
 class RunPlan:
     all_known_projects: set[Project]
-    full_plan: dict[Stage, set[ProjectExecution]]
+    _full_plan: dict[Stage, set[ProjectExecution]]
     selected_plan: dict[Stage, set[ProjectExecution]]
 
     @classmethod
     def empty(cls) -> "RunPlan":
-        return cls(all_known_projects=set(), full_plan={}, selected_plan={})
+        return cls(all_known_projects=set(), _full_plan={}, selected_plan={})
 
     @classmethod
     def create(
         cls, all_known_projects: set[Project], plan: dict[Stage, set[ProjectExecution]]
     ) -> "RunPlan":
         return cls(
-            all_known_projects=all_known_projects, full_plan=plan, selected_plan=plan
+            all_known_projects=all_known_projects, _full_plan=plan, selected_plan=plan
         )
 
     def select_stage(self, stage_name: str) -> "RunPlan":
@@ -53,7 +53,7 @@ class RunPlan:
 
         return RunPlan(
             all_known_projects=self.all_known_projects,
-            full_plan=self.full_plan,
+            _full_plan=self._full_plan,
             selected_plan={stage: self.get_projects_for_stage(stage)},
         )
 
@@ -80,7 +80,7 @@ class RunPlan:
 
         return RunPlan(
             all_known_projects=self.all_known_projects,
-            full_plan=self.full_plan,
+            _full_plan=self._full_plan,
             selected_plan=selected_plan,
         )
 
@@ -92,7 +92,7 @@ class RunPlan:
 
     def _get_all_stages(self, use_full_plan: bool = False) -> set[Stage]:
         if use_full_plan:
-            return set(self.full_plan.keys())
+            return set(self._full_plan.keys())
         return set(self.selected_plan.keys())
 
     def _get_all_projects(self, use_full_plan: bool = False) -> set[ProjectExecution]:
@@ -104,14 +104,14 @@ class RunPlan:
             }
 
         if use_full_plan:
-            return flatten(self.full_plan)
+            return flatten(self._full_plan)
         return flatten(self.selected_plan)
 
     def get_projects_for_stage(
         self, stage: Stage, use_full_plan: bool = False
     ) -> set[ProjectExecution]:
         if use_full_plan:
-            return self.full_plan.get(stage, set())
+            return self._full_plan.get(stage, set())
         return self.selected_plan.get(stage, set())
 
     def get_projects_for_stage_name(
@@ -126,7 +126,7 @@ class RunPlan:
             return next(iterator, set())
 
         if use_full_plan:
-            return find_stage(self.full_plan)
+            return find_stage(self._full_plan)
         return find_stage(self.selected_plan)
 
     def write_to_pickle_file(self):
@@ -139,7 +139,7 @@ class RunPlan:
     def write_to_json_file(self):
         run_plan: dict = {}
 
-        for stage, executions in self.full_plan.items():
+        for stage, executions in self._full_plan.items():
             for execution in executions:
                 stages: list[dict[str, Union[str, bool]]] = run_plan.get(
                     execution.project.name, {}

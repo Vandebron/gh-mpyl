@@ -38,7 +38,7 @@ class TestEmptyPlan:
 
     def test_empty(self):
         assert self.run_plan.all_known_projects == set()
-        assert not self.run_plan.full_plan
+        assert not self.run_plan._full_plan
         assert not self.run_plan.selected_plan
 
     @pytest.mark.parametrize(
@@ -118,7 +118,7 @@ class TestFullRunPlan:
             execution_1.project,
             execution_2.project,
         }
-        assert self.run_plan.full_plan == self.full_plan
+        assert self.run_plan._full_plan == self.full_plan
         assert self.run_plan.selected_plan == self.full_plan
 
     @pytest.mark.parametrize(
@@ -206,7 +206,7 @@ class TestRunPlanWithSelectedStage:
             execution_1.project,
             execution_2.project,
         }
-        assert self.run_plan.full_plan == self.full_plan
+        assert self.run_plan._full_plan == self.full_plan
         assert self.run_plan.selected_plan == {deploy_stage: {execution_2}}
 
     def test_select_invalid_stage(self):
@@ -287,7 +287,7 @@ class TestRunPlanWithSelectedProjectInASingleStage:
             execution_1.project,
             execution_2.project,
         }
-        assert self.run_plan.full_plan == self.full_plan
+        assert self.run_plan._full_plan == self.full_plan
         assert self.run_plan.selected_plan == {build_stage: {execution_1}}
 
     def test_select_invalid_project(self):
@@ -372,7 +372,7 @@ class TestRunPlanWithSelectedProjectInMultipleStages:
             execution_1.project,
             execution_2.project,
         }
-        assert self.run_plan.full_plan == self.full_plan
+        assert self.run_plan._full_plan == self.full_plan
         assert self.run_plan.selected_plan == {
             build_stage: {execution_1},
             deploy_stage: {execution_1},
