@@ -14,12 +14,12 @@ def create_console_logger(show_path: bool) -> Console:
         no_color=False,
         log_path=False,
         log_time=False,
+        color_system="256",
+        width=999,
     )
     verbose = os.environ.get("RUNNER_DEBUG", "0") == "1"
-    log_level = "DEBUG" if verbose else "INFO"
-    print(f"Log level is set to {log_level}")
     logging.basicConfig(
-        level=log_level,
+        level="DEBUG" if verbose else "INFO",
         format="%(message)s",
         datefmt="[%X]",
         handlers=[RichHandler(markup=False, console=console, show_path=show_path)],
