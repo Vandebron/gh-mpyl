@@ -9,7 +9,7 @@ import yaml as dict_to_yaml_str
 from kubernetes import client
 from kubernetes.client import V1ConfigMap, ApiException, V1Deployment
 
-from .helm import write_helm_chart, GENERATED_WARNING
+from .helm import write_helm_chart
 from ...deploy.k8s.resources import CustomResourceDefinition
 from ...input import Input
 from ...models import RunProperties
