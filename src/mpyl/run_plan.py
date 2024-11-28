@@ -7,15 +7,13 @@ import os
 import pickle
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Union
-
-from rich.console import Console
-from rich.markdown import Markdown
+from typing import Union, Optional
 
 from .constants import RUN_ARTIFACTS_FOLDER
 from .project import Project, Stage, load_project
 from .project_execution import ProjectExecution
 from .plan.discovery import find_projects_to_execute, find_projects
+from .steps.execution_result import ExecutionResult
 from .utilities.repo import Changeset
 
 RUN_PLAN_PICKLE_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.pickle"
@@ -42,7 +40,7 @@ class RunPlan:
 
     def select_stage(self, stage_name: str) -> "RunPlan":
         selected_stage = None
-        for stage in self._get_all_stages(use_full_plan=False):
+        for stage in self._get_stages():
             if stage.name == stage_name:
                 selected_stage = stage
                 break
@@ -61,7 +59,7 @@ class RunPlan:
 
     def select_project(self, project_name: str) -> "RunPlan":
         selected_project = None
-        for project in self._get_all_executions(use_full_plan=False):
+        for project in self._get_executions():
             if project.name == project_name:
                 selected_project = project
                 break
@@ -71,10 +69,10 @@ class RunPlan:
             )
 
         selected_plan = {}
-        for stage in self._get_all_stages(use_full_plan=False):
+        for stage in self._get_stages():
             filtered = {
                 project
-                for project in self.get_executions_for_stage(stage, use_full_plan=False)
+                for project in self.get_executions_for_stage(stage)
                 if project.name == project_name
             }
             if filtered:
@@ -89,15 +87,15 @@ class RunPlan:
     def has_projects_to_run(self, include_cached_projects: bool) -> bool:
         return any(
             include_cached_projects or not project_execution.cached
-            for project_execution in self._get_all_executions(use_full_plan=False)
+            for project_execution in self._get_executions()
         )
 
-    def _get_all_stages(self, use_full_plan: bool = False) -> set[Stage]:
+    def _get_stages(self, use_full_plan: bool = False) -> list[Stage]:
         if use_full_plan:
-            return set(self._full_plan.keys())
-        return set(self.selected_plan.keys())
+            return list(self._full_plan.keys())
+        return list(self.selected_plan.keys())
 
-    def _get_all_executions(self, use_full_plan: bool = False) -> set[ProjectExecution]:
+    def _get_executions(self, use_full_plan: bool = False) -> set[ProjectExecution]:
         def flatten(plan: dict[Stage, set[ProjectExecution]]):
             return {
                 project_execution
@@ -136,10 +134,10 @@ class RunPlan:
     ) -> ProjectExecution:
         selected_stage = None
         selected_project = None
-        for stage in self._get_all_stages(use_full_plan=False):
+        for stage in self._get_stages():
             if stage.name == stage_name:
                 selected_stage = stage
-                for project in self.get_executions_for_stage(stage, use_full_plan=False):
+                for project in self.get_executions_for_stage(stage):
                     if project.name == project_name:
                         selected_project = project
                         break
@@ -205,31 +203,36 @@ class RunPlan:
                 f"Unable to find existing run plan at path {RUN_PLAN_PICKLE_FILE}"
             )
 
-    def print_markdown(self, console: Console, stages: list[Stage]):
+    def to_markdown(self, execution_result: Optional[ExecutionResult] = None) -> str:
         if self.has_projects_to_run(include_cached_projects=True):
             result = ""
 
-            for stage in stages:
+            for stage in self._get_stages():
+                result += f"{stage.display_string()}:  \n"
                 executions = self.get_executions_for_stage(stage)
                 if executions:
                     project_names = [
-                        f"_{execution.name}{' (cached)' if execution.cached else ''}_"
+                        execution.to_markdown(
+                            output=(
+                                execution_result.output
+                                if execution_result
+                                and execution_result.stage == stage
+                                and execution_result.project == execution
+                                else None
+                            )
+                        )
                         for execution in sorted(
                             executions, key=operator.attrgetter("name")
                         )
                     ]
 
-                    result += (
-                        f'{stage.display_string()}:  \n{", ".join(project_names)}  \n'
-                    )
+                    result += f'{", ".join(project_names)}  \n'
                 else:
-                    result += "🤷 Nothing to do  \n"
+                    result += "  \n"
 
-            console.print(Markdown("**Execution plan:**  \n" + result))
+            return result
 
-        else:
-            logger = logging.getLogger("mpyl")
-            logger.info("No changes detected, nothing to do.")
+        return "No changes detected, nothing to do."
 
 
 def discover_run_plan(

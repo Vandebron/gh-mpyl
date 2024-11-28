@@ -3,12 +3,11 @@ Project and Stage.
 """
 
 import pkgutil
-from dataclasses import dataclass
-from datetime import datetime
 from logging import Logger
 from typing import Optional
 
 from .collection import StepsCollection
+from .execution_result import ExecutionResult
 from .input import Input
 from .models import RunProperties
 from .output import Output
@@ -37,14 +36,6 @@ class ExecutionException(Exception):
             self.stage,
             self.message,
         )
-
-
-@dataclass(frozen=True)
-class ExecutionResult:
-    stage: Stage
-    project: Project
-    output: Output
-    timestamp: datetime = datetime.now()
 
 
 class Executor:
@@ -201,5 +192,5 @@ class Executor:
             stage=stage, project_execution=project_execution
         )
         return ExecutionResult(
-            stage=stage, project=project_execution.project, output=step_output
+            stage=stage, project=project_execution, output=step_output
         )

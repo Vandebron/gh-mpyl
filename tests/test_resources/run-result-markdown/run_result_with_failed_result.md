@@ -1,5 +1,5 @@
 ❌ Failed  
-For _dockertest_ at stage _build_ 
+For _test_ at stage _deploy_ 
 
 
 Build failed
@@ -9,4 +9,4 @@ _dockertest_, _test_
 📋 Test:  
 _test_  
 🚀 Deploy:  
-_test_  
+~~test~~  

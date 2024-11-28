@@ -13,8 +13,8 @@ from src.mpyl.plan.discovery import (
 from src.mpyl.project import load_project
 from src.mpyl.steps.output import Output
 from src.mpyl.utilities.repo import Changeset
+from tests import test_resource_path
 from tests.projects.find import load_projects
-from tests.reporting import test_resource_path
 from tests.test_resources.test_data import TestStage
 
 HASHED_CHANGES_OF_JOB = (

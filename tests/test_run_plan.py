@@ -49,7 +49,7 @@ class TestEmptyPlan:
         ],
     )
     def test_get_all_projects(self, use_full_plan):
-        assert self.run_plan._get_all_executions(use_full_plan=use_full_plan) == set()
+        assert self.run_plan._get_executions(use_full_plan=use_full_plan) == set()
 
     @pytest.mark.parametrize(
         argnames="stage,use_full_plan",
@@ -92,7 +92,7 @@ class TestEmptyPlan:
         ],
     )
     def test_get_all_stages(self, use_full_plan):
-        assert self.run_plan._get_all_stages(use_full_plan=use_full_plan) == set()
+        assert not self.run_plan._get_stages(use_full_plan=use_full_plan)
 
     @pytest.mark.parametrize(
         argnames="include_cached_projects",
@@ -129,7 +129,7 @@ class TestFullRunPlan:
         ],
     )
     def test_get_all_projects(self, use_full_plan):
-        assert self.run_plan._get_all_executions(use_full_plan=use_full_plan) == {
+        assert self.run_plan._get_executions(use_full_plan=use_full_plan) == {
             execution_1,
             execution_2,
         }
@@ -163,10 +163,10 @@ class TestFullRunPlan:
         ],
     )
     def test_get_all_stages(self, use_full_plan):
-        assert self.run_plan._get_all_stages(use_full_plan=use_full_plan) == {
+        assert self.run_plan._get_stages(use_full_plan=use_full_plan) == [
             build_stage,
             deploy_stage,
-        }
+        ]
 
     def test_has_projects_to_run_with_some_cached_projects(self):
         run_plan_with_some_cached_projects = RunPlan.create(
@@ -216,11 +216,11 @@ class TestRunPlanWithSelectedStage:
             )
 
     def test_get_all_projects(self):
-        assert self.run_plan._get_all_executions(use_full_plan=True) == {
+        assert self.run_plan._get_executions(use_full_plan=True) == {
             execution_1,
             execution_2,
         }
-        assert self.run_plan._get_all_executions(use_full_plan=False) == {execution_2}
+        assert self.run_plan._get_executions(use_full_plan=False) == {execution_2}
 
     def test_get_projects_for_stage(self):
         assert self.run_plan.get_executions_for_stage(
@@ -250,11 +250,11 @@ class TestRunPlanWithSelectedStage:
         ) == {execution_2}
 
     def test_get_all_stages(self):
-        assert self.run_plan._get_all_stages(use_full_plan=True) == {
+        assert self.run_plan._get_stages(use_full_plan=True) == [
             build_stage,
             deploy_stage,
-        }
-        assert self.run_plan._get_all_stages(use_full_plan=False) == {deploy_stage}
+        ]
+        assert self.run_plan._get_stages(use_full_plan=False) == [deploy_stage]
 
     def test_has_projects_to_run_with_non_cached_project_in_selected_stage(self):
         assert self.run_plan.has_projects_to_run(include_cached_projects=True)
@@ -301,11 +301,11 @@ class TestRunPlanWithSelectedProjectInASingleStage:
             ).select_project("a project that does not belong to the run plan")
 
     def test_get_all_projects(self):
-        assert self.run_plan._get_all_executions(use_full_plan=True) == {
+        assert self.run_plan._get_executions(use_full_plan=True) == {
             execution_1,
             execution_2,
         }
-        assert self.run_plan._get_all_executions(use_full_plan=False) == {execution_1}
+        assert self.run_plan._get_executions(use_full_plan=False) == {execution_1}
 
     def test_get_projects_for_stage(self):
         assert self.run_plan.get_executions_for_stage(
@@ -335,13 +335,11 @@ class TestRunPlanWithSelectedProjectInASingleStage:
         )
 
     def test_get_all_stages(self):
-        assert self.run_plan._get_all_stages(use_full_plan=True) == {
+        assert self.run_plan._get_stages(use_full_plan=True) == [
             build_stage,
             deploy_stage,
-        }
-        assert self.run_plan._get_all_stages(use_full_plan=False) == {
-            build_stage,
-        }
+        ]
+        assert self.run_plan._get_stages(use_full_plan=False) == [build_stage]
 
     def test_has_projects_to_run_with_selected_non_cached_project(self):
         assert self.run_plan.has_projects_to_run(include_cached_projects=True)
@@ -391,11 +389,11 @@ class TestRunPlanWithSelectedProjectInMultipleStages:
             ).select_project("a project that does not belong to the run plan")
 
     def test_get_all_projects(self):
-        assert self.run_plan._get_all_executions(use_full_plan=True) == {
+        assert self.run_plan._get_executions(use_full_plan=True) == {
             execution_1,
             execution_2,
         }
-        assert self.run_plan._get_all_executions(use_full_plan=False) == {execution_1}
+        assert self.run_plan._get_executions(use_full_plan=False) == {execution_1}
 
     def test_get_projects_for_stage(self):
         assert self.run_plan.get_executions_for_stage(
@@ -422,14 +420,14 @@ class TestRunPlanWithSelectedProjectInMultipleStages:
         ) == {execution_1}
 
     def test_get_all_stages(self):
-        assert self.run_plan._get_all_stages(use_full_plan=True) == {
+        assert self.run_plan._get_stages(use_full_plan=True) == [
             build_stage,
             deploy_stage,
-        }
-        assert self.run_plan._get_all_stages(use_full_plan=False) == {
+        ]
+        assert self.run_plan._get_stages(use_full_plan=False) == [
             build_stage,
             deploy_stage,
-        }
+        ]
 
     def test_has_projects_to_run_with_selected_non_cached_project(self):
         assert self.run_plan.has_projects_to_run(include_cached_projects=True)

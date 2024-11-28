@@ -12,7 +12,8 @@ from rich.markdown import Markdown
 from .run_plan import RunPlan
 from .steps import deploy
 from .steps.collection import StepsCollection
-from .steps.executor import ExecutionException, ExecutionResult, Executor
+from .steps.executor import ExecutionException, Executor
+from .steps.execution_result import ExecutionResult
 from .steps.models import RunProperties, ConsoleProperties
 from .steps.output import Output
 from .steps.run import RunResult
@@ -54,14 +55,15 @@ def run_deploy_stage(
             project_name_to_run=project_name_to_run,
         )
 
-        console.log(f"Completed in {datetime.timedelta(seconds=time.time() - start_time)}")
-        console.print(Markdown(run_result.to_markdown(run_properties, run_plan)))
+        console.log(
+            f"Completed in {datetime.timedelta(seconds=time.time() - start_time)}"
+        )
+        console.print(Markdown(run_result.to_markdown()))
         return run_result
     except Exception as exc:
         console.log(f"Unexpected exception: {exc}")
         console.print_exception()
         raise exc
-
 
 
 def _run_deploy_stage(
@@ -78,7 +80,6 @@ def _run_deploy_stage(
         )
 
         logger.info("Run plan:")
-        console.print(Markdown("\n\n🛠️ Building  \n"))
         console.print(
             Markdown(
                 f"{stage.display_string()}:\n"
@@ -99,7 +100,7 @@ def _run_deploy_stage(
             )
             execution_result = ExecutionResult(
                 stage=stage,
-                project=project_execution.project,
+                project=project_execution,
                 output=Output(success=True, message="This step was cached"),
             )
         else:
@@ -108,7 +109,7 @@ def _run_deploy_stage(
         if not execution_result.output.success:
             logger.warning(f"{stage} failed for {project_execution.name}")
 
-        return RunResult(execution_result)
+        return RunResult.with_result(run_plan, execution_result)
 
     except ValidationError as exc:
         console.log(
@@ -117,4 +118,4 @@ def _run_deploy_stage(
         raise exc
 
     except ExecutionException as exc:
-        return RunResult(exc)
+        return RunResult.with_exception(run_plan, exc)

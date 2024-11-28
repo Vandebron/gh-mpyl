@@ -5,6 +5,7 @@ from pathlib import Path
 
 import click
 from rich.console import Console
+from rich.markdown import Markdown
 
 from . import CONFIG_PATH_HELP
 from . import create_console_logger
@@ -72,26 +73,24 @@ def create_plan(ctx: Context):
             f"Unable to calculate run plan because {changed_files_path} is not a directory"
         )
 
-    all_stages = [
-        Stage(stage["name"], stage["icon"]) for stage in ctx.run_properties["stages"]
-    ]
-
     run_plan = discover_run_plan(
         revision=ctx.run_properties["build"]["versioning"]["revision"],
-        all_stages=all_stages,
+        all_stages=[
+            Stage(stage["name"], stage["icon"])
+            for stage in ctx.run_properties["stages"]
+        ],
         changed_files_path=changed_files_path,
     )
 
     run_plan.write_to_pickle_file()
     run_plan.write_to_json_file()
-    run_plan.print_markdown(ctx.console, all_stages)
+    ctx.console.print(Markdown("**Execution plan:**  \n"))
+    ctx.console.print(Markdown(run_plan.to_markdown()))
 
 
 @plan.command("print")
 @click.pass_obj
 def print_plan(ctx: Context):
-    all_stages = [
-        Stage(stage["name"], stage["icon"]) for stage in ctx.run_properties["stages"]
-    ]
     run_plan = RunPlan.load_from_pickle_file()
-    run_plan.print_markdown(ctx.console, all_stages)
+    ctx.console.print(Markdown("**Execution plan:**  \n"))
+    ctx.console.print(Markdown(run_plan.to_markdown()))

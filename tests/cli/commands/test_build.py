@@ -66,10 +66,10 @@ class TestBuildCli:
             run_plan=run_plan,
             project_name_to_run=project.name,
         )
-        assert result.exception is None
+        assert result._exception is None
         assert result.status_line == "✅ Successful"
         assert result.is_success
-        assert result.exception is None
+        assert result._exception is None
 
     def test_run_with_failing_project_should_be_handled(self):
         project = get_project_with_stages({"deploy": "Throwing Deploy"})
@@ -88,11 +88,11 @@ class TestBuildCli:
 
         assert not result.has_results
         assert result.status_line == "❗ Failed with exception"
-        assert result.exception
-        assert result.exception.message == "this is not good"
-        assert result.exception.stage == TestStage.deploy().name
-        assert result.exception.project_name == "test"
-        assert result.exception.step == "Throwing Deploy"
+        assert result._exception
+        assert result._exception.message == "this is not good"
+        assert result._exception.stage == TestStage.deploy().name
+        assert result._exception.project_name == "test"
+        assert result._exception.step == "Throwing Deploy"
 
     def test_build_clean_output(self):
         result = invoke(
