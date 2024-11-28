@@ -1,6 +1,7 @@
 """
 Step to deploy a dagster user code repository to k8s
 """
+
 from functools import reduce
 from logging import Logger
 from pathlib import Path
@@ -23,7 +24,9 @@ from .k8s.chart import ChartBuilder
 from .k8s.cluster import get_cluster_config_for_project
 from .k8s.helm import write_chart
 from .k8s.resources.dagster import to_user_code_values, to_grpc_server_entry, Constants
-from .. import Step, Meta, ArtifactType, Input, Output
+from ..input import Input
+from ..output import Output
+from ..step import Step, Meta
 from ..models import RunProperties
 from ...utilities.dagster import DagsterConfig
 from ...utilities.docker import DockerConfig
@@ -76,7 +79,6 @@ class DagsterBase:
         write_chart(
             chart={},
             chart_path=values_path,
-            chart_metadata="",
             values=user_code_deployment,
         )
         return user_code_deployment, values_path
@@ -122,7 +124,6 @@ class DagsterBase:
         return Output(
             success=True,
             message="Server name already exists in list, no addition needed",
-            produced_artifact=None,
         )
 
     @staticmethod
@@ -165,8 +166,6 @@ class HelmTemplateDagster(Step, DagsterBase):
                 version="0.0.1",
                 stage=STAGE_NAME,
             ),
-            produced_artifact=ArtifactType.NONE,
-            required_artifact=ArtifactType.DOCKER_IMAGE,
         )
 
     # pylint: disable=R0914
@@ -193,7 +192,6 @@ class HelmTemplateDagster(Step, DagsterBase):
         return Output(
             True,
             f"Successfully written helm chart manifest to {values_path}",
-            produced_artifact=step_input.required_artifact,
         )
 
 
@@ -212,8 +210,6 @@ class TemplateDagster(Step, DagsterBase):
                 version="0.0.1",
                 stage=STAGE_NAME,
             ),
-            produced_artifact=ArtifactType.NONE,
-            required_artifact=ArtifactType.DOCKER_IMAGE,
         )
 
     # pylint: disable=R0914
@@ -234,14 +230,6 @@ class TemplateDagster(Step, DagsterBase):
             f"Written user code manifest with values: {user_code_deployment}"
         )
         self._logger.info(f"Writing Helm values to {values_path}")
-
-        # early exit
-        if step_input.dry_run:
-            return Output(
-                success=True,
-                message="Successfully written Helm Chart in dry-run, not deploying.",
-                produced_artifact=step_input.required_artifact,
-            )
 
         dagster_template_results = []
 
@@ -271,8 +259,6 @@ class DeployDagster(Step, DagsterBase):
                 version="0.0.1",
                 stage=STAGE_NAME,
             ),
-            produced_artifact=ArtifactType.NONE,
-            required_artifact=ArtifactType.DOCKER_IMAGE,
         )
 
     # pylint: disable=R0914
@@ -321,7 +307,6 @@ class DeployDagster(Step, DagsterBase):
 
         helm_install_result = helm.install_chart_with_values(
             logger=self._logger,
-            dry_run=step_input.dry_run,
             values_path=values_path / Path("values.yaml"),
             release_name=convert_to_helm_release_name(
                 step_input.project_execution.name, get_name_suffix(properties)
@@ -333,7 +318,7 @@ class DeployDagster(Step, DagsterBase):
         )
 
         dagster_deploy_results.append(helm_install_result)
-        if helm_install_result.success and not step_input.dry_run:
+        if helm_install_result.success:
             add_to_server_list_output = self.add_server_to_server_list(
                 core_api, user_code_deployment, dagster_config
             )
