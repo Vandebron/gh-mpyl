@@ -7,11 +7,12 @@ from .steps import deploy
 from .steps.collection import StepsCollection
 from .steps.executor import ExecutionException, Executor
 from .steps.execution_result import ExecutionResult
-from .steps.models import RunProperties, ConsoleProperties
+from .steps.models import RunProperties
 from .steps.output import Output
 from .steps.run import RunResult
 
 FORMAT = "%(name)s  %(message)s"
+
 
 def run_deploy_stage(
     logger: logging.Logger,

@@ -11,7 +11,6 @@ from src.mpyl.steps.output import Output
 from src.mpyl.steps.step import Meta, Step
 from tests import root_test_path
 from tests.cli.commands import invoke, config_path, run_properties_path
-from tests.cli.commands.health.test_health import TestConsole
 from tests.test_resources.test_data import (
     get_minimal_project,
     RUN_PROPERTIES,
@@ -39,13 +38,11 @@ class ThrowingStep(Step):
 
 class TestBuildCli:
     logger = logging.getLogger()
-    console = TestConsole()
 
     def test_run_without_project_in_plan_should_fail(self):
         with pytest.raises(ValueError):
             run_deploy_stage(
                 logger=self.logger,
-                console=self.console,
                 run_properties=RUN_PROPERTIES,
                 run_plan=RunPlan.empty(),
                 project_name_to_run="a project not in the run plan",
@@ -61,7 +58,6 @@ class TestBuildCli:
         )
         result = run_deploy_stage(
             logger=self.logger,
-            console=self.console,
             run_properties=stub_run_properties(),
             run_plan=run_plan,
             project_name_to_run=project.name,
@@ -80,7 +76,6 @@ class TestBuildCli:
 
         result = run_deploy_stage(
             logger=self.logger,
-            console=self.console,
             run_properties=stub_run_properties(),
             run_plan=run_plan,
             project_name_to_run=project.name,
