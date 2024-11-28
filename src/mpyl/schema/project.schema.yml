@@ -280,8 +280,6 @@ definitions:
     additionalProperties: false
     type: object
     properties:
-      enabled:
-        type: boolean
       hosts:
         type: array
         items:
@@ -321,15 +319,25 @@ definitions:
               - all
         properties:
           pr:
-            $ref: traefik_v2.schema.yml#/definitions/middleware
+            type: array
+            items:
+              $ref: traefik_v2.schema.yml#/definitions/middleware
           test:
-            $ref: traefik_v2.schema.yml#/definitions/middleware
+            type: array
+            items:
+              $ref: traefik_v2.schema.yml#/definitions/middleware
           acceptance:
-            $ref: traefik_v2.schema.yml#/definitions/middleware
+            type: array
+            items:
+              $ref: traefik_v2.schema.yml#/definitions/middleware
           production:
-            $ref: traefik_v2.schema.yml#/definitions/middleware
+            type: array
+            items:
+              $ref: traefik_v2.schema.yml#/definitions/middleware
           all:
-            $ref: traefik_v2.schema.yml#/definitions/middleware
+            type: array
+            items:
+              $ref: traefik_v2.schema.yml#/definitions/middleware
   dtapValue:
     type: object
     additionalProperties: false

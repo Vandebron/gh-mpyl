@@ -67,3 +67,26 @@ deployment:
         servicePort: 4091
         priority:
           all: 1000
+    ingressRoutes:
+      all:
+        entryPoints:
+          - web
+        routes:
+          - kind: Rule
+            match: something
+            middlewares:
+              - name: "stripPrefix"
+    middlewares:
+      all:
+        - metadata:
+            name: "stripPrefix"
+          spec:
+            stripPrefix:
+              prefixes:
+                - "/service"
+        - metadata:
+            name: "service2"
+          spec:
+            stripPrefix:
+              prefixes:
+                - "/service2"

@@ -420,12 +420,20 @@ class Dagster:
 @dataclass(frozen=True)
 class Traefik:
     hosts: list[TraefikHost]
+    ingress_routes: Optional[
+        TargetProperty[dict]
+    ]  # Optional since it's never present in defaults (mpyl_config)
+    middlewares: Optional[
+        TargetProperty[list[dict]]
+    ]  # Optional since it's never present in defaults (mpyl_config)
 
     @staticmethod
     def from_config(values: dict):
         hosts = values.get("hosts")
         return Traefik(
             hosts=(list(map(TraefikHost.from_config, hosts) if hosts else [])),
+            ingress_routes=TargetProperty.from_config(values.get("ingressRoutes", {})),
+            middlewares=TargetProperty.from_config(values.get("middlewares", {})),
         )
 
 
