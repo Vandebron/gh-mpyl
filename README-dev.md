@@ -1,5 +1,53 @@
 # Developer instructions
 
+You can work on MPyL using two ways:
+
+# Using Devcontainers _(🧪 experimental)_
+
+1. install [DevPod](https://devpod.sh/)
+   ```
+   brew install --cask devpod
+   ```
+2. start a new workspace
+   ```
+   devpod up git@github.com:Vandebron/gh-mpyl.git --id mpyl --ide openvscode
+   ```
+
+A new browser window will open with the workspace ready to be worked on 🚀
+
+
+### IntelliJ configuration
+If you prefer to use a JetBrains IDE, first install [JetBrains Gateway](https://www.jetbrains.com/remote-development/gateway/) and then run:
+```
+devpod up mpyl --ide intellij
+```
+You might have to install the [IntelliJ Python plugin](https://plugins.jetbrains.com/plugin/631-python) before being able to work on Python code. If you do, then you'll also need to link to the pre-installed Python interpreter by:
+1. open the _Project Structure_ menu
+2. in _Platform Settings_ → _SDKs_ add a new SDK using _Add Python SDK from disk…_
+3. select _Virtualenv Environment_
+4. Choose _Existing environment_ and use `/root/.local/share/virtualenvs/gh-mpyl/bin/python3.13` as the path to the interpreter
+
+Yes, Python is a PITA 😩. We're hoping to further pre-configure this as soon as IntelliJ supports it.
+
+If you have a PyCharm license this is all probably pre-configured for you. You can use it with:
+```
+devpod up mpyl --ide pycharm
+```
+
+
+### SSH into the container
+If you're more comfortable in a black and white terminal, then you can also just ssh into the container by running:
+```
+devpod ssh mpyl
+```
+or just simply:
+```
+ssh mpyl.devpod
+```
+
+
+# Local installation _(stable)_
+
 ## ..install mpyl for development
 
 1. Clone the mpyl repo

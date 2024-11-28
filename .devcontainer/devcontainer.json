@@ -1,0 +1,54 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/docker-existing-dockerfile
+{
+  "name": "MPyL",
+  "build": {
+    "context": "..",
+    "dockerfile": "Dockerfile",
+  },
+
+  "mounts": [
+    "source=${localEnv:HOME}/.gitconfig,target=/root/.gitconfig,type=bind,consistency=cached"
+  ],
+
+  // More info: https://containers.dev/features.
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "configureZshAsDefaultShell": true,
+      "upgradePackages": false,
+      "username": "none"
+    },
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+
+  "containerEnv": {
+    "PIPENV_CUSTOM_VENV_NAME": "gh-mpyl"  // helps IntelliJ keep a stable .idea/misc.xml file
+  },
+
+  // 👇 IntelliJ settings
+  "postCreateCommand": {
+    "install-project-dependencies": "pipenv sync --dev",  // install Python dependencies
+    "pre-commit": "pre-commit install --install-hooks"    // install pre-commit and all configured hooks
+  },
+
+  "customizations": {
+    // 👇 IntelliJ settings
+    "jetbrains": {
+      "backend": "IntelliJ",
+      "plugins": [
+        "Pythonid",
+        "com.leinardi.pycharm.pylint",
+        "ru.adelf.idea.dotenv"
+      ]
+    },
+
+    // 👇 VSCode settings
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.pylint",
+        "mikoz.black-py"
+      ]
+    }
+  }
+}
