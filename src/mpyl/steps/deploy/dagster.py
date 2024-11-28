@@ -100,7 +100,7 @@ class DagsterBase:
             w["grpc_server"]["location_name"] for w in dagster_workspace["load_from"]
         ]
 
-        # If the server new (not in existing workspace.yml), we append it
+        # If the server is new (not in existing workspace.yml), we append it
         user_code_name_to_deploy = user_code_deployment["deployments"][0]["name"]
         if user_code_name_to_deploy not in server_names:
             dagster_workspace["load_from"].append(
