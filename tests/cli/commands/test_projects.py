@@ -1,6 +1,5 @@
 import re
 
-from src.mpyl.cli import create_console_logger
 from tests.cli.commands import invoke, config_path
 
 
@@ -15,7 +14,3 @@ class TestProjectsCli:
             r"(.|\n)*Validated .* projects\. .* valid, .* invalid\n\nChecking for duplicate project names: \n.*No duplicate project names found",  # pylint: disable=line-too-long
             result.output,
         )
-
-    def test_create_console(self):
-        console = create_console_logger(show_path=False, max_width=135)
-        assert console.width == 135

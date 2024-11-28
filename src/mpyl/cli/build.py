@@ -11,10 +11,9 @@ from pathlib import Path
 import click
 from jsonschema import ValidationError
 from rich.console import Console
-from rich.logging import RichHandler
 from rich.markdown import Markdown
 
-from . import CONFIG_PATH_HELP, FORMAT
+from . import CONFIG_PATH_HELP
 from . import create_console_logger
 from ..build import run_deploy_stage
 from ..constants import (
@@ -73,10 +72,7 @@ def build(ctx, environment, config, properties):
     RunProperties.validate(parsed_properties)
 
     console_config = ConsoleProperties.from_configuration(parsed_properties)
-    console = create_console_logger(
-        show_path=console_config.show_paths,
-        max_width=console_config.width,
-    )
+    console = create_console_logger(console_config.show_paths)
 
     ctx.obj = Context(
         target=Target.from_environment(environment),
@@ -128,7 +124,7 @@ def run(
     )
 
     run_result = _run_stage(
-        console_properties=ConsoleProperties.from_configuration(obj.run_properties),
+        console=obj.console,
         run_properties=run_properties,
         project_name_to_run=project,
     )
@@ -160,27 +156,10 @@ def clean(obj: Context):
 
 
 def _run_stage(
-    console_properties: ConsoleProperties,
+    console: Console,
     run_properties: RunProperties,
     project_name_to_run: str,
 ) -> RunResult:
-    # why does this create another Console when we already have one available ?
-    console = Console(
-        markup=False,
-        width=console_properties.width,
-        no_color=False,
-        log_path=False,
-        color_system="256",
-    )
-    logging.raiseExceptions = False
-    log_level = console_properties.log_level
-    logging.basicConfig(
-        level=log_level,
-        format=FORMAT,
-        datefmt="[%X]",
-        handlers=[RichHandler(markup=False, console=console, show_path=False)],
-    )
-    print(f"Log level is set to {log_level}")
     logger = logging.getLogger("mpyl")
     start_time = time.time()
     try:
