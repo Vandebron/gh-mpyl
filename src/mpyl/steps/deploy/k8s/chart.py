@@ -897,7 +897,8 @@ def _to_service_components_chart(builder):
         f"{builder.project.name}-ingress-{i}-http": route
         for i, route in enumerate(builder.to_ingress_routes(https=False))
     }
-    ingress = {"ingress-routes": builder.to_ingress()}
+    ingress = builder.to_ingress()
+    ingress_routes = {"ingress-routes": ingress} if ingress else {}
     additional_routes = {
         route.metadata.name: route
         for i, route in enumerate(builder.to_additional_routes())
@@ -906,7 +907,7 @@ def _to_service_components_chart(builder):
         common_chart
         | ingress_https
         | ingress_http
-        | ingress
+        | ingress_routes
         | additional_routes
         | service_monitor
     )
