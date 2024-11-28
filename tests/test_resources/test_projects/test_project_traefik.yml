@@ -118,6 +118,29 @@ deployment:
     command:
       all: "script.sh --opt"
   traefik:
+    ingressRoutes:
+      all:
+        entryPoints:
+          - web
+        routes:
+          - kind: Rule
+            match: something
+            middlewares:
+              - name: "strip-prefix"
+    middlewares:
+      all:
+        - metadata:
+            name: "strip-prefix"
+          spec:
+            stripPrefix:
+              prefixes:
+                - "/service"
+        - metadata:
+            name: "strip-prefix2"
+          spec:
+            stripPrefix:
+              prefixes:
+                - "/service2"
     hosts:
       - host:
           pr: "Host(`payments-{PR-NUMBER}.{CLUSTER-ENV}.nl`)"

@@ -280,12 +280,64 @@ definitions:
     additionalProperties: false
     type: object
     properties:
-      enabled:
-        type: boolean
       hosts:
         type: array
         items:
           $ref: '#/definitions/traefikHost'
+      ingressRoutes:
+        type: object
+        additionalProperties: false
+        oneOf:
+          - required:
+              - pr
+              - test
+              - acceptance
+              - production
+          - required:
+              - all
+        properties:
+          pr:
+            $ref: traefik_v2.schema.yml#/definitions/ingressRoute
+          test:
+            $ref: traefik_v2.schema.yml#/definitions/ingressRoute
+          acceptance:
+            $ref: traefik_v2.schema.yml#/definitions/ingressRoute
+          production:
+            $ref: traefik_v2.schema.yml#/definitions/ingressRoute
+          all:
+            $ref: traefik_v2.schema.yml#/definitions/ingressRoute
+      middlewares:
+        type: object
+        additionalProperties: false
+        oneOf:
+          - required:
+              - pr
+              - test
+              - acceptance
+              - production
+          - required:
+              - all
+        properties:
+          pr:
+            type: array
+            items:
+              $ref: traefik_v2.schema.yml#/definitions/middleware
+          test:
+            type: array
+            items:
+              $ref: traefik_v2.schema.yml#/definitions/middleware
+          acceptance:
+            type: array
+            items:
+              $ref: traefik_v2.schema.yml#/definitions/middleware
+          production:
+            type: array
+            items:
+              $ref: traefik_v2.schema.yml#/definitions/middleware
+          all:
+            type: array
+            items:
+              $ref: traefik_v2.schema.yml#/definitions/middleware
   dtapValue:
     type: object
     additionalProperties: false

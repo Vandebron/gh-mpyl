@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/gh-mpyl.iml" filepath="$PROJECT_DIR$/gh-mpyl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/gh-mpyl.iml" filepath="$PROJECT_DIR$/.idea/gh-mpyl.iml" />
     </modules>
   </component>
 </project>
