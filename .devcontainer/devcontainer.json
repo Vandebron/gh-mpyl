@@ -4,8 +4,7 @@
   "name": "MPyL",
   "build": {
     "context": "..",
-    "dockerfile": "../Dockerfile",
-    "target": "dev"
+    "dockerfile": "Dockerfile",
   },
 
   "mounts": [
