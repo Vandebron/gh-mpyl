@@ -1,8 +1,7 @@
 import re
 
 from src.mpyl.cli import create_console_logger
-from tests.cli.commands import invoke, config_path, resource_path
-from tests.test_resources.test_data import assert_roundtrip
+from tests.cli.commands import invoke, config_path
 
 
 class TestProjectsCli:

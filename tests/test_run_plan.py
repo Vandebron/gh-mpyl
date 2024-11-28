@@ -49,7 +49,7 @@ class TestEmptyPlan:
         ],
     )
     def test_get_all_projects(self, use_full_plan):
-        assert self.run_plan._get_all_projects(use_full_plan=use_full_plan) == set()
+        assert self.run_plan._get_all_executions(use_full_plan=use_full_plan) == set()
 
     @pytest.mark.parametrize(
         argnames="stage,use_full_plan",
@@ -78,7 +78,7 @@ class TestEmptyPlan:
     )
     def test_get_projects_for_stage(self, stage, use_full_plan):
         assert (
-            self.run_plan.get_projects_for_stage(
+            self.run_plan.get_executions_for_stage(
                 stage=stage, use_full_plan=use_full_plan
             )
             == set()
@@ -129,7 +129,7 @@ class TestFullRunPlan:
         ],
     )
     def test_get_all_projects(self, use_full_plan):
-        assert self.run_plan._get_all_projects(use_full_plan=use_full_plan) == {
+        assert self.run_plan._get_all_executions(use_full_plan=use_full_plan) == {
             execution_1,
             execution_2,
         }
@@ -142,16 +142,16 @@ class TestFullRunPlan:
         ],
     )
     def test_get_projects_for_stage(self, use_full_plan):
-        assert self.run_plan.get_projects_for_stage(
+        assert self.run_plan.get_executions_for_stage(
             stage=build_stage, use_full_plan=use_full_plan
         ) == {execution_1, execution_2}
         assert (
-            self.run_plan.get_projects_for_stage(
+            self.run_plan.get_executions_for_stage(
                 stage=test_stage, use_full_plan=use_full_plan
             )
             == set()
         )
-        assert self.run_plan.get_projects_for_stage(
+        assert self.run_plan.get_executions_for_stage(
             stage=deploy_stage, use_full_plan=use_full_plan
         ) == {execution_2}
 
@@ -216,32 +216,36 @@ class TestRunPlanWithSelectedStage:
             )
 
     def test_get_all_projects(self):
-        assert self.run_plan._get_all_projects(use_full_plan=True) == {
+        assert self.run_plan._get_all_executions(use_full_plan=True) == {
             execution_1,
             execution_2,
         }
-        assert self.run_plan._get_all_projects(use_full_plan=False) == {execution_2}
+        assert self.run_plan._get_all_executions(use_full_plan=False) == {execution_2}
 
     def test_get_projects_for_stage(self):
-        assert self.run_plan.get_projects_for_stage(
+        assert self.run_plan.get_executions_for_stage(
             stage=build_stage, use_full_plan=True
         ) == {execution_1, execution_2}
         assert (
-            self.run_plan.get_projects_for_stage(stage=build_stage, use_full_plan=False)
+            self.run_plan.get_executions_for_stage(
+                stage=build_stage, use_full_plan=False
+            )
             == set()
         )
         assert (
-            self.run_plan.get_projects_for_stage(stage=test_stage, use_full_plan=True)
+            self.run_plan.get_executions_for_stage(stage=test_stage, use_full_plan=True)
             == set()
         )
         assert (
-            self.run_plan.get_projects_for_stage(stage=test_stage, use_full_plan=False)
+            self.run_plan.get_executions_for_stage(
+                stage=test_stage, use_full_plan=False
+            )
             == set()
         )
-        assert self.run_plan.get_projects_for_stage(
+        assert self.run_plan.get_executions_for_stage(
             stage=deploy_stage, use_full_plan=True
         ) == {execution_2}
-        assert self.run_plan.get_projects_for_stage(
+        assert self.run_plan.get_executions_for_stage(
             stage=deploy_stage, use_full_plan=False
         ) == {execution_2}
 
@@ -297,32 +301,34 @@ class TestRunPlanWithSelectedProjectInASingleStage:
             ).select_project("a project that does not belong to the run plan")
 
     def test_get_all_projects(self):
-        assert self.run_plan._get_all_projects(use_full_plan=True) == {
+        assert self.run_plan._get_all_executions(use_full_plan=True) == {
             execution_1,
             execution_2,
         }
-        assert self.run_plan._get_all_projects(use_full_plan=False) == {execution_1}
+        assert self.run_plan._get_all_executions(use_full_plan=False) == {execution_1}
 
     def test_get_projects_for_stage(self):
-        assert self.run_plan.get_projects_for_stage(
+        assert self.run_plan.get_executions_for_stage(
             stage=build_stage, use_full_plan=True
         ) == {execution_1, execution_2}
-        assert self.run_plan.get_projects_for_stage(
+        assert self.run_plan.get_executions_for_stage(
             stage=build_stage, use_full_plan=False
         ) == {execution_1}
         assert (
-            self.run_plan.get_projects_for_stage(stage=test_stage, use_full_plan=True)
+            self.run_plan.get_executions_for_stage(stage=test_stage, use_full_plan=True)
             == set()
         )
         assert (
-            self.run_plan.get_projects_for_stage(stage=test_stage, use_full_plan=False)
+            self.run_plan.get_executions_for_stage(
+                stage=test_stage, use_full_plan=False
+            )
             == set()
         )
-        assert self.run_plan.get_projects_for_stage(
+        assert self.run_plan.get_executions_for_stage(
             stage=deploy_stage, use_full_plan=True
         ) == {execution_2}
         assert (
-            self.run_plan.get_projects_for_stage(
+            self.run_plan.get_executions_for_stage(
                 stage=deploy_stage, use_full_plan=False
             )
             == set()
@@ -385,31 +391,33 @@ class TestRunPlanWithSelectedProjectInMultipleStages:
             ).select_project("a project that does not belong to the run plan")
 
     def test_get_all_projects(self):
-        assert self.run_plan._get_all_projects(use_full_plan=True) == {
+        assert self.run_plan._get_all_executions(use_full_plan=True) == {
             execution_1,
             execution_2,
         }
-        assert self.run_plan._get_all_projects(use_full_plan=False) == {execution_1}
+        assert self.run_plan._get_all_executions(use_full_plan=False) == {execution_1}
 
     def test_get_projects_for_stage(self):
-        assert self.run_plan.get_projects_for_stage(
+        assert self.run_plan.get_executions_for_stage(
             stage=build_stage, use_full_plan=True
         ) == {execution_1, execution_2}
-        assert self.run_plan.get_projects_for_stage(
+        assert self.run_plan.get_executions_for_stage(
             stage=build_stage, use_full_plan=False
         ) == {execution_1}
         assert (
-            self.run_plan.get_projects_for_stage(stage=test_stage, use_full_plan=True)
+            self.run_plan.get_executions_for_stage(stage=test_stage, use_full_plan=True)
             == set()
         )
         assert (
-            self.run_plan.get_projects_for_stage(stage=test_stage, use_full_plan=False)
+            self.run_plan.get_executions_for_stage(
+                stage=test_stage, use_full_plan=False
+            )
             == set()
         )
-        assert self.run_plan.get_projects_for_stage(
+        assert self.run_plan.get_executions_for_stage(
             stage=deploy_stage, use_full_plan=True
         ) == {execution_1}
-        assert self.run_plan.get_projects_for_stage(
+        assert self.run_plan.get_executions_for_stage(
             stage=deploy_stage, use_full_plan=False
         ) == {execution_1}
 

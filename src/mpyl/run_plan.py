@@ -41,12 +41,12 @@ class RunPlan:
         )
 
     def select_stage(self, stage_name: str) -> "RunPlan":
-        stage = None
-        for s in self._get_all_stages(use_full_plan=False):
-            if s.name == stage_name:
-                stage = s
+        selected_stage = None
+        for stage in self._get_all_stages(use_full_plan=False):
+            if stage.name == stage_name:
+                selected_stage = stage
                 break
-        if not stage:
+        if not selected_stage:
             raise ValueError(
                 f"Unable to select stage outside of the run plan: '{stage_name}'"
             )
@@ -54,16 +54,18 @@ class RunPlan:
         return RunPlan(
             all_known_projects=self.all_known_projects,
             _full_plan=self._full_plan,
-            selected_plan={stage: self.get_projects_for_stage(stage)},
+            selected_plan={
+                selected_stage: self.get_executions_for_stage(selected_stage)
+            },
         )
 
     def select_project(self, project_name: str) -> "RunPlan":
-        project = None
-        for p in self._get_all_projects(use_full_plan=False):
-            if p.name == project_name:
-                project = p
+        selected_project = None
+        for project in self._get_all_executions(use_full_plan=False):
+            if project.name == project_name:
+                selected_project = project
                 break
-        if not project:
+        if not selected_project:
             raise ValueError(
                 f"Unable to select project outside of the run plan: '{project_name}'"
             )
@@ -71,9 +73,9 @@ class RunPlan:
         selected_plan = {}
         for stage in self._get_all_stages(use_full_plan=False):
             filtered = {
-                e
-                for e in self.get_projects_for_stage(stage, use_full_plan=False)
-                if e.name == project_name
+                project
+                for project in self.get_executions_for_stage(stage, use_full_plan=False)
+                if project.name == project_name
             }
             if filtered:
                 selected_plan[stage] = filtered
@@ -87,7 +89,7 @@ class RunPlan:
     def has_projects_to_run(self, include_cached_projects: bool) -> bool:
         return any(
             include_cached_projects or not project_execution.cached
-            for project_execution in self._get_all_projects(use_full_plan=False)
+            for project_execution in self._get_all_executions(use_full_plan=False)
         )
 
     def _get_all_stages(self, use_full_plan: bool = False) -> set[Stage]:
@@ -95,7 +97,7 @@ class RunPlan:
             return set(self._full_plan.keys())
         return set(self.selected_plan.keys())
 
-    def _get_all_projects(self, use_full_plan: bool = False) -> set[ProjectExecution]:
+    def _get_all_executions(self, use_full_plan: bool = False) -> set[ProjectExecution]:
         def flatten(plan: dict[Stage, set[ProjectExecution]]):
             return {
                 project_execution
@@ -107,14 +109,14 @@ class RunPlan:
             return flatten(self._full_plan)
         return flatten(self.selected_plan)
 
-    def get_projects_for_stage(
+    def get_executions_for_stage(
         self, stage: Stage, use_full_plan: bool = False
     ) -> set[ProjectExecution]:
         if use_full_plan:
             return self._full_plan.get(stage, set())
         return self.selected_plan.get(stage, set())
 
-    def get_projects_for_stage_name(
+    def get_executions_for_stage_name(
         self, stage_name: str, use_full_plan: bool = False
     ) -> set[ProjectExecution]:
         def find_stage(plan: dict[Stage, set[ProjectExecution]]):
@@ -185,7 +187,7 @@ class RunPlan:
             result = ""
 
             for stage in stages:
-                executions = self.get_projects_for_stage(stage)
+                executions = self.get_executions_for_stage(stage)
                 if executions:
                     project_names = [
                         f"_{execution.name}{' (cached)' if execution.cached else ''}_"
