@@ -13,9 +13,7 @@ def create_console_logger(show_path: bool) -> Console:
         markup=False,
         log_path=False,
         log_time=False,
-        no_color=False,
-        color_system="truecolor",
-        width=999,
+        force_terminal=True,
     )
     verbose = os.environ.get("RUNNER_DEBUG", "0") == "1"
     logging.basicConfig(
