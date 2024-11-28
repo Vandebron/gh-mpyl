@@ -126,17 +126,17 @@ deployment:
           - kind: Rule
             match: something
             middlewares:
-              - name: "stripPrefix"
+              - name: "strip-prefix"
     middlewares:
       all:
         - metadata:
-            name: "stripPrefix"
+            name: "strip-prefix"
           spec:
             stripPrefix:
               prefixes:
                 - "/service"
         - metadata:
-            name: "stripPrefix2"
+            name: "strip-prefix2"
           spec:
             stripPrefix:
               prefixes:

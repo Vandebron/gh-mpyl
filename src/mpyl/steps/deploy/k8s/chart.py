@@ -589,7 +589,7 @@ class ChartBuilder:
             for host in hosts
         } | (
             {
-                middleware["metadata"]["name"]: V1AlphaMiddleware.from_spec(
+                f'middleware-{middleware["metadata"]["name"]}': V1AlphaMiddleware.from_spec(
                     metadata=self._to_object_meta(name=middleware["metadata"]["name"]),
                     spec=middleware["spec"],
                 )
