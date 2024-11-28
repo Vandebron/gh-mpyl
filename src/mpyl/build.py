@@ -104,7 +104,7 @@ def run_build(logger: logging.Logger, accumulator: RunResult, executor: Executor
                         output=Output(success=True, message="This step was cached"),
                     )
                 else:
-                    result = executor.execute(stage.name, project_execution)
+                    result = executor.execute(stage, project_execution)
                 accumulator.append(result)
 
                 if not result.output.success and stage.name == deploy.STAGE_NAME:

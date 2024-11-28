@@ -137,19 +137,3 @@ class RunProperties:
         schema = pkgutil.get_data(__name__, "../schema/run_properties.schema.yml")
         if schema:
             validate(properties, schema.decode("utf-8"))
-
-    def to_stage(self, stage_name: str) -> Stage:
-        stage_by_name = next(stage for stage in self.stages if stage.name == stage_name)
-        if stage_by_name:
-            return stage_by_name
-        raise ValueError(f"Stage {stage_name} not found")
-
-    def selected_stage(self, selected_stage_name: Optional[str]):
-        return self.to_stage(selected_stage_name) if selected_stage_name else None
-
-    def selected_projects(self, selected_project_names: Optional[str]):
-        return (
-            {p for p in self.stages if p.name in selected_project_names.split(",")}
-            if selected_project_names
-            else set()
-        )

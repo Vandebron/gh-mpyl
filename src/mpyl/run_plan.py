@@ -7,7 +7,7 @@ import os
 import pickle
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 
 from rich.console import Console
 from rich.markdown import Markdown
@@ -25,49 +25,79 @@ RUN_PLAN_JSON_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.json"
 @dataclass(frozen=True)
 class RunPlan:
     all_known_projects: set[Project]
-    full_plan: dict[Stage, set[ProjectExecution]]
+    _full_plan: dict[Stage, set[ProjectExecution]]
     selected_plan: dict[Stage, set[ProjectExecution]]
 
     @classmethod
     def empty(cls) -> "RunPlan":
-        return cls(all_known_projects=set(), full_plan={}, selected_plan={})
+        return cls(all_known_projects=set(), _full_plan={}, selected_plan={})
 
     @classmethod
     def create(
         cls, all_known_projects: set[Project], plan: dict[Stage, set[ProjectExecution]]
     ) -> "RunPlan":
         return cls(
-            all_known_projects=all_known_projects, full_plan=plan, selected_plan=plan
+            all_known_projects=all_known_projects, _full_plan=plan, selected_plan=plan
         )
 
-    def select_stage(self, stage: Stage) -> "RunPlan":
+    def select_stage(self, stage_name: str) -> "RunPlan":
+        selected_stage = None
+        for stage in self._get_all_stages(use_full_plan=False):
+            if stage.name == stage_name:
+                selected_stage = stage
+                break
+        if not selected_stage:
+            raise ValueError(
+                f"Unable to select stage outside of the run plan: '{stage_name}'"
+            )
+
         return RunPlan(
             all_known_projects=self.all_known_projects,
-            full_plan=self.full_plan,
-            selected_plan={stage: self.get_projects_for_stage(stage)},
+            _full_plan=self._full_plan,
+            selected_plan={
+                selected_stage: self.get_executions_for_stage(selected_stage)
+            },
         )
 
-    def select_projects(self, projects: set[Project]) -> "RunPlan":
+    def select_project(self, project_name: str) -> "RunPlan":
+        selected_project = None
+        for project in self._get_all_executions(use_full_plan=False):
+            if project.name == project_name:
+                selected_project = project
+                break
+        if not selected_project:
+            raise ValueError(
+                f"Unable to select project outside of the run plan: '{project_name}'"
+            )
+
         selected_plan = {}
-
-        for stage, executions in self.selected_plan.items():
-            selected_plan[stage] = {e for e in executions if e.project in projects}
+        for stage in self._get_all_stages(use_full_plan=False):
+            filtered = {
+                project
+                for project in self.get_executions_for_stage(stage, use_full_plan=False)
+                if project.name == project_name
+            }
+            if filtered:
+                selected_plan[stage] = filtered
 
         return RunPlan(
             all_known_projects=self.all_known_projects,
-            full_plan=self.full_plan,
+            _full_plan=self._full_plan,
             selected_plan=selected_plan,
         )
 
-    def has_projects_to_run(
-        self, include_cached_projects: bool, use_full_plan: bool = False
-    ) -> bool:
+    def has_projects_to_run(self, include_cached_projects: bool) -> bool:
         return any(
             include_cached_projects or not project_execution.cached
-            for project_execution in self.get_all_projects(use_full_plan)
+            for project_execution in self._get_all_executions(use_full_plan=False)
         )
 
-    def get_all_projects(self, use_full_plan: bool = False) -> set[ProjectExecution]:
+    def _get_all_stages(self, use_full_plan: bool = False) -> set[Stage]:
+        if use_full_plan:
+            return set(self._full_plan.keys())
+        return set(self.selected_plan.keys())
+
+    def _get_all_executions(self, use_full_plan: bool = False) -> set[ProjectExecution]:
         def flatten(plan: dict[Stage, set[ProjectExecution]]):
             return {
                 project_execution
@@ -76,17 +106,17 @@ class RunPlan:
             }
 
         if use_full_plan:
-            return flatten(self.full_plan)
+            return flatten(self._full_plan)
         return flatten(self.selected_plan)
 
-    def get_projects_for_stage(
+    def get_executions_for_stage(
         self, stage: Stage, use_full_plan: bool = False
     ) -> set[ProjectExecution]:
         if use_full_plan:
-            return self.full_plan.get(stage, set())
+            return self._full_plan.get(stage, set())
         return self.selected_plan.get(stage, set())
 
-    def get_projects_for_stage_name(
+    def get_executions_for_stage_name(
         self, stage_name: str, use_full_plan: bool = False
     ) -> set[ProjectExecution]:
         def find_stage(plan: dict[Stage, set[ProjectExecution]]):
@@ -98,7 +128,7 @@ class RunPlan:
             return next(iterator, set())
 
         if use_full_plan:
-            return find_stage(self.full_plan)
+            return find_stage(self._full_plan)
         return find_stage(self.selected_plan)
 
     def write_to_pickle_file(self):
@@ -111,7 +141,7 @@ class RunPlan:
     def write_to_json_file(self):
         run_plan: dict = {}
 
-        for stage, executions in self.full_plan.items():
+        for stage, executions in self._full_plan.items():
             for execution in executions:
                 stages: list[dict[str, Union[str, bool]]] = run_plan.get(
                     execution.project.name, {}
@@ -137,10 +167,7 @@ class RunPlan:
             json.dump(list(run_plan.values()), file)
 
     @staticmethod
-    def load_from_pickle_file(
-        selected_projects: Optional[set[Project]],
-        selected_stage: Optional[Stage],
-    ):
+    def load_from_pickle_file():
         logger = logging.getLogger("mpyl")
 
         if RUN_PLAN_PICKLE_FILE.is_file():
@@ -148,16 +175,6 @@ class RunPlan:
             with open(RUN_PLAN_PICKLE_FILE, "rb") as file:
                 run_plan: RunPlan = pickle.load(file)
                 logger.debug(f"Run plan: {run_plan}")
-                if selected_stage:
-                    run_plan = run_plan.select_stage(selected_stage)
-                    logger.info(f"Selected stage: {selected_stage.name}")
-                    logger.debug(f"Run plan: {run_plan}")
-                if selected_projects:
-                    run_plan = run_plan.select_projects(selected_projects)
-                    logger.info(
-                        f"Selected projects: {set(p.name for p in selected_projects)}"
-                    )
-                    logger.debug(f"Run plan: {run_plan}")
                 return run_plan
 
         else:
@@ -170,7 +187,7 @@ class RunPlan:
             result = ""
 
             for stage in stages:
-                executions = self.get_projects_for_stage(stage)
+                executions = self.get_executions_for_stage(stage)
                 if executions:
                     project_names = [
                         f"_{execution.name}{' (cached)' if execution.cached else ''}_"

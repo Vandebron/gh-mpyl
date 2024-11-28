@@ -189,7 +189,7 @@ class Executor:
             ) from exc
 
     def execute(
-        self, stage: str, project_execution: ProjectExecution
+        self, stage: Stage, project_execution: ProjectExecution
     ) -> ExecutionResult:
         """
         :param stage: the stage to execute
@@ -197,10 +197,9 @@ class Executor:
         :return: StepResult
         :raise ExecutionException
         """
-        stage_object = self._run_properties.to_stage(stage)
         step_output = self._execute_stage(
-            stage=stage_object, project_execution=project_execution
+            stage=stage, project_execution=project_execution
         )
         return ExecutionResult(
-            stage=stage_object, project=project_execution.project, output=step_output
+            stage=stage, project=project_execution.project, output=step_output
         )

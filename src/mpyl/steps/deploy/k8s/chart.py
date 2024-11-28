@@ -770,7 +770,7 @@ class ChartBuilder:
             },
             projects_to_deploy={
                 project_execution.project.to_name
-                for project_execution in self.step_input.run_plan.get_projects_for_stage_name(
+                for project_execution in self.step_input.run_plan.get_executions_for_stage_name(
                     deploy.STAGE_NAME, use_full_plan=True
                 )
             },

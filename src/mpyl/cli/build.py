@@ -95,11 +95,11 @@ class CustomValidation(click.Command):
 
 @build.command(help="Run an MPyL build", cls=CustomValidation)
 @click.option(
-    "--projects",
+    "--project",
     "-p",
     type=click.STRING,
     required=True,
-    help="Comma separated list of the projects to build",
+    help="The project to run",
 )
 @click.option(
     "--image", type=click.STRING, required=False, help="Docker image to deploy"
@@ -107,17 +107,12 @@ class CustomValidation(click.Command):
 @click.pass_obj
 def run(
     obj: Context,
-    projects,
+    project,
     image,
 ):
     run_result_files = list(Path(RUN_ARTIFACTS_FOLDER).glob(RUN_RESULT_FILE_GLOB))
     for run_result_file in run_result_files:
         run_result_file.unlink()
-
-    if image and len(projects.split(",")) != 1:
-        raise click.ClickException(
-            message="Need to pass exactly one project to deploy when passing an image"
-        )
 
     run_properties = RunProperties.from_configuration(
         target=obj.target,
@@ -126,9 +121,10 @@ def run(
         deploy_image=image,
     )
 
-    run_plan = RunPlan.load_from_pickle_file(
-        selected_stage=run_properties.selected_stage(deploy.STAGE_NAME),
-        selected_projects=run_properties.selected_projects(projects),
+    run_plan = (
+        RunPlan.load_from_pickle_file()
+        .select_stage(deploy.STAGE_NAME)
+        .select_project(project)
     )
 
     run_result = run_mpyl(

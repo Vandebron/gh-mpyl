@@ -85,7 +85,7 @@ class TestSteps:
             "test", "Test project", "", None, stages, [], None, None, None, None
         )
         output = steps.execute(
-            stage=TestStage.deploy().name,
+            stage=TestStage.deploy(),
             project_execution=ProjectExecution.run(project),
         ).output
         assert not output.success
@@ -115,7 +115,7 @@ class TestSteps:
             path=str(self.resource_path / "metapath" / "project.yml"),
         )
         result = self.executor.execute(
-            stage=TestStage.deploy().name,
+            stage=TestStage.deploy(),
             project_execution=ProjectExecution.run(project),
         )
         assert result.output.success
@@ -124,7 +124,7 @@ class TestSteps:
     def test_should_fail_if_step_is_not_known(self):
         project = test_data.get_project_with_stages({"deploy": "Unknown Deploy"})
         result = self.executor.execute(
-            stage=TestStage.deploy().name,
+            stage=TestStage.deploy(),
             project_execution=ProjectExecution.run(project),
         )
         assert not result.output.success
@@ -141,7 +141,7 @@ class TestSteps:
         )
 
         result = self.executor.execute(
-            stage=TestStage.deploy().name,
+            stage=TestStage.deploy(),
             project_execution=ProjectExecution.run(project),
         )
         assert not result.output.success
@@ -153,7 +153,7 @@ class TestSteps:
     def test_should_succeed_if_stage_is_not_known(self):
         project = test_data.get_project_with_stages(stage_config={"test": "Some Test"})
         result = self.executor.execute(
-            stage=TestStage.build().name,
+            stage=TestStage.build(),
             project_execution=ProjectExecution.run(project),
         )
         assert not result.output.success
