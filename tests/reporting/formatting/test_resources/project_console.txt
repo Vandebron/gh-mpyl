@@ -2,7 +2,7 @@
 ┌─────────────┬────────────────────────────────────────────────────────────────┐
 │ Name        │ dockertest                                                     │
 │ Path        │ test_projects/test_project.yml                                 │
-│ Description │ This is a test container. For testing the MPL pipelines, not   │
+│ Description │ This is a test container. For testing the MPyL pipelines, not   │
 │             │ to be deployed anywhere.                                       │
 │ Maintainer  │ [MPyL]                                                         │
 │ Stages      │                                                                │

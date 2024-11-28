@@ -423,12 +423,16 @@ class Dagster:
 @dataclass(frozen=True)
 class Traefik:
     hosts: list[TraefikHost]
+    ingress_routes: Optional[TargetProperty[dict]]
+    middlewares: Optional[TargetProperty[list[dict]]]
 
     @staticmethod
     def from_config(values: dict):
         hosts = values.get("hosts")
         return Traefik(
             hosts=(list(map(TraefikHost.from_config, hosts) if hosts else [])),
+            ingress_routes=TargetProperty.from_config(values.get("ingressRoutes", {})),
+            middlewares=TargetProperty.from_config(values.get("middlewares", {})),
         )
 
 

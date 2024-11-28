@@ -122,7 +122,6 @@ project:  # default values
         path: /metrics
         enabled: true
     traefik:
-      enabled: true
       hosts:
         - host:
             pr: Host(`{SERVICE-NAME}-{PR-NUMBER}.{CLUSTER-ENV}-backend.nl`)

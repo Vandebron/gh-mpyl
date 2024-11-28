@@ -35,6 +35,7 @@ from tests.test_resources.test_data import (
     stub_run_properties,
     RUN_PROPERTIES,
     TestStage,
+    get_project_traefik,
 )
 
 
@@ -144,7 +145,7 @@ class TestKubernetesChart:
         project = test_data.get_project()
         builder = self._get_builder(project)
         wrappers = builder.create_host_wrappers()
-        route = V1AlphaIngressRoute(
+        route = V1AlphaIngressRoute.from_hosts(
             metadata=V1ObjectMeta(),
             host=wrappers[0],
             target=Target.PRODUCTION,
@@ -185,6 +186,9 @@ class TestKubernetesChart:
             "dockertest-ingress-intracloud-https-0",
             "dockertest-ingress-0-whitelist",
             "dockertest-ingress-1-whitelist",
+            "ingress-routes",
+            "middleware-strip-prefix",
+            "middleware-strip-prefix2",
             "prometheus-rule",
             "service-monitor",
             "role",
@@ -192,7 +196,7 @@ class TestKubernetesChart:
         ],
     )
     def test_service_chart_roundtrip(self, template):
-        builder = self._get_builder(get_project())
+        builder = self._get_builder(get_project_traefik())
         chart = to_service_chart(builder)
         self._roundtrip(self.template_path / "service", template, chart)
         assert chart.keys() == {
@@ -207,6 +211,9 @@ class TestKubernetesChart:
             "dockertest-ingress-intracloud-https-0",
             "dockertest-ingress-0-whitelist",
             "dockertest-ingress-1-whitelist",
+            "ingress-routes",
+            "middleware-strip-prefix",
+            "middleware-strip-prefix2",
             "prometheus-rule",
             "service-monitor",
             "role",

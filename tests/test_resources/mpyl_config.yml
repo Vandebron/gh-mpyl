@@ -63,7 +63,6 @@ project: # default values
   allowedMaintainers: [ 'Team1', 'Team2', 'MPyL' ]
   deployment:
     traefik:
-      enabled: true
       hosts:
         - host:
             pr: "Host(`{SERVICE-NAME}-{PR-NUMBER}.{CLUSTER-ENV}-backend.nl`)"
