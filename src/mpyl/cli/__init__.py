@@ -10,7 +10,7 @@ CONFIG_PATH_HELP = "Path to the config.yml. Can be set via `MPYL_CONFIG_PATH` en
 
 def create_console_logger(show_path: bool) -> Console:
     console = Console(
-        markup=True,
+        markup=False,
         no_color=False,
         log_path=False,
         log_time=False,
@@ -22,6 +22,6 @@ def create_console_logger(show_path: bool) -> Console:
         level=log_level,
         format="%(message)s",
         datefmt="[%X]",
-        handlers=[RichHandler(markup=True, console=console, show_path=show_path)],
+        handlers=[RichHandler(markup=False, console=console, show_path=show_path)],
     )
     return console
