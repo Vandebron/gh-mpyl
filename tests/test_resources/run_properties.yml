@@ -10,8 +10,6 @@ build:
     revision: !ENV ${GIT_COMMIT:2ad3293a7675d08bc037ef0846ef55897f38ec8f}
     branch: !ENV ${CHANGE_BRANCH:feature/some-branch}
     pr_number: !ENV ${CHANGE_ID:1234}
-  console:
-    logLevel: INFO
 stages:
   - name: 'build'
     icon: '🏗️'

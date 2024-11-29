@@ -17,7 +17,6 @@ properties:
     required:
       - run
       - versioning
-      - console
     properties:
       run:
         description: defines the run properties
@@ -52,17 +51,6 @@ properties:
             description: Email of of the user that triggered the run
             type: [string, 'null']
             format: idn-email
-      console:
-        type: object
-        properties:
-          showPaths:
-            description: Show paths in the console
-            type: boolean
-            default: false
-          logLevel:
-            type: string
-            enum: [NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL]
-            default: INFO
       versioning:
         description: Versioning information
         type: object

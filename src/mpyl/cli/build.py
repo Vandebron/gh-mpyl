@@ -25,7 +25,7 @@ from ..constants import (
 from ..project import load_project, Target
 from ..plan.discovery import find_projects
 from ..run_plan import RunPlan
-from ..steps.models import ConsoleProperties, RunProperties
+from ..steps.models import RunProperties
 from ..steps.run import RunResult
 from ..utilities.pyaml_env import parse_config
 
@@ -71,13 +71,10 @@ def build(ctx, environment, config, properties):
     parsed_properties = parse_config(properties)
     RunProperties.validate(parsed_properties)
 
-    console_config = ConsoleProperties.from_configuration(parsed_properties)
-    console = create_console_logger(console_config.show_paths)
-
     ctx.obj = Context(
         target=Target.from_environment(environment),
         config=parse_config(config),
-        console=console,
+        console=create_console_logger(),
         run_properties=parsed_properties,
     )
 
