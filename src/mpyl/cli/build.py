@@ -185,7 +185,6 @@ def _run_stage(
     start_time = time.time()
     try:
         run_plan = RunPlan.load_from_pickle_file()
-        console.print(Markdown("**Execution plan:**  \n"))
         console.print(Markdown(run_plan.to_markdown()))
 
         run_result = run_deploy_stage(
