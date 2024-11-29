@@ -277,7 +277,7 @@ properties:
     $ref: mpyl_stages.schema.yml#/definitions/dependencies
 definitions:
   traefik:
-    additionalProperties: false
+    additionalProperties: true
     type: object
     properties:
       hosts:
