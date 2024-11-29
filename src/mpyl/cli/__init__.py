@@ -10,7 +10,6 @@ CONFIG_PATH_HELP = "Path to the config.yml. Can be set via `MPYL_CONFIG_PATH` en
 
 def create_console_logger() -> Console:
     verbose = os.environ.get("RUNNER_DEBUG", "0") == "1"
-    level = "DEBUG" if verbose else "INFO"
     console = Console(
         markup=False,
         log_path=False,
@@ -20,10 +19,9 @@ def create_console_logger() -> Console:
         width=999,
     )
     logging.basicConfig(
-        level=level,
+        level="DEBUG" if verbose else "INFO",
         format="%(message)s",
         datefmt="[%X]",
-        # handlers=[RichHandler(console=console, show_path=verbose)],
-        handlers=[RichHandler(level=level, show_path=verbose)],
+        handlers=[RichHandler(console=console, show_path=verbose)],
     )
     return console
