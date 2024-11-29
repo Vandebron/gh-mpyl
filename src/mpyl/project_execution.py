@@ -34,10 +34,5 @@ class ProjectExecution:
     def name(self):
         return self.project.name
 
-    def to_markdown(self, success: Optional[bool] = None):
-        if success is None:
-            encapsulation = "_"
-        else:
-            encapsulation = "*" if success else "~~"
-
-        return f"{encapsulation}{self.name}{' (cached)' if self.cached else ''}{encapsulation}"
+    def to_markdown(self):
+        return f"_{self.name}{' (cached)' if self.cached else ''}_"

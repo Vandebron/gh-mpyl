@@ -92,7 +92,7 @@ class TestEmptyPlan:
         ],
     )
     def test_get_all_stages(self, use_full_plan):
-        assert not self.run_plan.get_all_stages(use_full_plan=use_full_plan)
+        assert not self.run_plan._get_all_stages(use_full_plan=use_full_plan)
 
     @pytest.mark.parametrize(
         argnames="include_cached_projects",
@@ -169,7 +169,7 @@ class TestFullRunPlan:
         ],
     )
     def test_get_all_stages(self, use_full_plan):
-        assert self.run_plan.get_all_stages(use_full_plan=use_full_plan) == [
+        assert self.run_plan._get_all_stages(use_full_plan=use_full_plan) == [
             build_stage,
             deploy_stage,
         ]
@@ -279,11 +279,11 @@ class TestRunPlanWithSelectedStage:
         ) == {execution_2}
 
     def test_get_all_stages(self):
-        assert self.run_plan.get_all_stages(use_full_plan=True) == [
+        assert self.run_plan._get_all_stages(use_full_plan=True) == [
             build_stage,
             deploy_stage,
         ]
-        assert self.run_plan.get_all_stages(use_full_plan=False) == [deploy_stage]
+        assert self.run_plan._get_all_stages(use_full_plan=False) == [deploy_stage]
 
     def test_has_projects_to_run_with_non_cached_project_in_selected_stage(self):
         assert self.run_plan._has_projects_to_run(include_cached_projects=True)
@@ -382,11 +382,11 @@ class TestRunPlanWithSelectedProjectInASingleStage:
         )
 
     def test_get_all_stages(self):
-        assert self.run_plan.get_all_stages(use_full_plan=True) == [
+        assert self.run_plan._get_all_stages(use_full_plan=True) == [
             build_stage,
             deploy_stage,
         ]
-        assert self.run_plan.get_all_stages(use_full_plan=False) == [build_stage]
+        assert self.run_plan._get_all_stages(use_full_plan=False) == [build_stage]
 
     def test_has_projects_to_run_with_selected_non_cached_project(self):
         assert self.run_plan._has_projects_to_run(include_cached_projects=True)
@@ -482,11 +482,11 @@ class TestRunPlanWithSelectedProjectInMultipleStages:
         ) == {execution_1}
 
     def test_get_all_stages(self):
-        assert self.run_plan.get_all_stages(use_full_plan=True) == [
+        assert self.run_plan._get_all_stages(use_full_plan=True) == [
             build_stage,
             deploy_stage,
         ]
-        assert self.run_plan.get_all_stages(use_full_plan=False) == [
+        assert self.run_plan._get_all_stages(use_full_plan=False) == [
             build_stage,
             deploy_stage,
         ]

@@ -41,7 +41,7 @@ class RunPlan:
     # unused but temporarily kept here on purpose, see https://github.com/Vandebron/gh-mpyl/pull/105
     def select_stage(self, stage_name: str) -> "RunPlan":
         selected_stage = None
-        for stage in self.get_all_stages():
+        for stage in self._get_all_stages():
             if stage.name == stage_name:
                 selected_stage = stage
                 break
@@ -71,7 +71,7 @@ class RunPlan:
             )
 
         selected_plan = {}
-        for stage in self.get_all_stages():
+        for stage in self._get_all_stages():
             filtered = {
                 project
                 for project in self._get_executions_for_stage(stage)
@@ -92,7 +92,7 @@ class RunPlan:
             for project_execution in self._get_all_executions()
         )
 
-    def get_all_stages(self, use_full_plan: bool = False) -> list[Stage]:
+    def _get_all_stages(self, use_full_plan: bool = False) -> list[Stage]:
         if use_full_plan:
             return list(self._full_plan.keys())
         return list(self._selected_plan.keys())
@@ -136,7 +136,7 @@ class RunPlan:
     ) -> ProjectExecution:
         selected_stage = None
         selected_project = None
-        for stage in self.get_all_stages():
+        for stage in self._get_all_stages():
             if stage.name == stage_name:
                 selected_stage = stage
                 for project in self._get_executions_for_stage(stage):
@@ -206,10 +206,10 @@ class RunPlan:
             )
 
     def to_markdown(self) -> str:
-        result = "**Execution plan:**  \n"
+        lines = ["**Execution plan:**"]
         if self._has_projects_to_run(include_cached_projects=True):
-            for stage in self.get_all_stages():
-                result += f"{stage.to_markdown()}:  \n"
+            for stage in self._get_all_stages():
+                lines.append(f"{stage.to_markdown()}:")
                 executions = self._get_executions_for_stage(stage)
                 if executions:
                     project_names = [
@@ -218,11 +218,12 @@ class RunPlan:
                             executions, key=operator.attrgetter("name")
                         )
                     ]
-                    result += f'{", ".join(project_names)}  \n'
-                else:
-                    result += "  \n"
 
-            return result
+                    lines.append(", ".join(project_names))
+                else:
+                    lines.append("")
+
+            return "  \n".join(lines)
 
         return "No changes detected, nothing to do."
 
