@@ -7,13 +7,12 @@ import os
 import pickle
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Union, Optional
+from typing import Union
 
 from .constants import RUN_ARTIFACTS_FOLDER
 from .project import Project, Stage, load_project
 from .project_execution import ProjectExecution
 from .plan.discovery import find_projects_to_execute, find_projects
-from .steps.execution_result import ExecutionResult
 from .utilities.repo import Changeset
 
 RUN_PLAN_PICKLE_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.pickle"
@@ -206,34 +205,25 @@ class RunPlan:
                 f"Unable to find existing run plan at path {RUN_PLAN_PICKLE_FILE}"
             )
 
-    def to_markdown(self, execution_result: Optional[ExecutionResult] = None) -> str:
+    def to_markdown(self) -> str:
+        lines = ["**Execution plan:**"]
         if self._has_projects_to_run(include_cached_projects=True):
-            result = ""
-
             for stage in self._get_all_stages():
-                result += f"{stage.to_markdown()}:  \n"
+                lines.append(f"{stage.to_markdown()}:")
                 executions = self._get_executions_for_stage(stage)
                 if executions:
                     project_names = [
-                        execution.to_markdown(
-                            output=(
-                                execution_result.output
-                                if execution_result
-                                and execution_result.stage == stage
-                                and execution_result.project == execution
-                                else None
-                            )
-                        )
+                        execution.to_markdown()
                         for execution in sorted(
                             executions, key=operator.attrgetter("name")
                         )
                     ]
 
-                    result += f'{", ".join(project_names)}  \n'
+                    lines.append(", ".join(project_names))
                 else:
-                    result += "  \n"
+                    lines.append("")
 
-            return result
+            return "  \n".join(lines)
 
         return "No changes detected, nothing to do."
 
@@ -268,9 +258,10 @@ def discover_run_plan(
             changeset=changeset,
         )
 
-        logger.debug(
-            f"Will execute projects for stage {stage.name}: {[p.name for p in project_executions]}"
-        )
-        plan.update({stage: project_executions})
+        if project_executions:
+            logger.debug(
+                f"Will execute projects for stage {stage.name}: {[p.name for p in project_executions]}"
+            )
+            plan.update({stage: project_executions})
 
     return RunPlan.create(all_projects, plan)

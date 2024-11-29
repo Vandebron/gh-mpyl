@@ -81,7 +81,6 @@ def create_plan(ctx: Context):
 
     run_plan.write_to_pickle_file()
     run_plan.write_to_json_file()
-    ctx.console.print(Markdown("**Execution plan:**  \n"))
     ctx.console.print(Markdown(run_plan.to_markdown()))
 
 
@@ -89,5 +88,4 @@ def create_plan(ctx: Context):
 @click.pass_obj
 def print_plan(ctx: Context):
     run_plan = RunPlan.load_from_pickle_file()
-    ctx.console.print(Markdown("**Execution plan:**  \n"))
     ctx.console.print(Markdown(run_plan.to_markdown()))

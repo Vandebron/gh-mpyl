@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from typing import Optional
 
 from .project import Project
-from .steps.output import Output
 
 
 @dataclass(frozen=True)
@@ -35,10 +34,5 @@ class ProjectExecution:
     def name(self):
         return self.project.name
 
-    def to_markdown(self, output: Optional[Output]):
-        if output:
-            encapsulation = "*" if output.success else "~~"
-        else:
-            encapsulation = "_"
-
-        return f"{encapsulation}{self.name}{' (cached)' if self.cached else ''}{encapsulation}"
+    def to_markdown(self):
+        return f"_{self.name}{' (cached)' if self.cached else ''}_"

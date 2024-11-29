@@ -3,8 +3,7 @@ from datetime import datetime
 from src.mpyl.project import Project, Stages, Stage
 from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.run_plan import RunPlan
-from src.mpyl.steps.executor import ExecutionException
-from src.mpyl.steps.execution_result import ExecutionResult
+from src.mpyl.steps.executor import ExecutionException, ExecutionResult
 from src.mpyl.steps.output import Output
 from src.mpyl.steps.run import RunResult
 from tests import test_resource_path
@@ -42,8 +41,7 @@ class TestRunResult:
 
     def test_to_markdown_should_print_successful_results(self):
         run_result = RunResult.with_result(
-            run_plan=self.run_plan,
-            execution_result=stub_execution_result(
+            stub_execution_result(
                 stage=TestStage.deploy(), project=self.project_b, success=True
             ),
         )
@@ -54,8 +52,7 @@ class TestRunResult:
 
     def test_to_markdown_should_print_failed_results(self):
         run_result = RunResult.with_result(
-            run_plan=self.run_plan,
-            execution_result=stub_execution_result(
+            stub_execution_result(
                 stage=TestStage.deploy(), project=self.project_b, success=False
             ),
         )
@@ -66,9 +63,11 @@ class TestRunResult:
 
     def test_to_markdown_should_print_exceptions(self):
         run_result = RunResult.with_exception(
-            run_plan=self.run_plan,
-            exception=ExecutionException(
-                "sbtProject", "Build SBT", "Build", "Something went wrong"
+            ExecutionException(
+                project_name=self.project_b.name,
+                executor="a step",
+                stage=TestStage.deploy().name,
+                message="Something went wrong",
             ),
         )
         assert_roundtrip(

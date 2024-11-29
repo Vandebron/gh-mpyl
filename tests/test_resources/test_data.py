@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Optional
 
 from attr import dataclass
-from rich.markdown import Markdown
 
 from src.mpyl.constants import (
     DEFAULT_CONFIG_FILE_NAME,
