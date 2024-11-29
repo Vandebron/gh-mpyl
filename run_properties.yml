@@ -13,9 +13,6 @@ build:
     branch: !ENV ${CHANGE_BRANCH}
     pr_number: !ENV ${CHANGE_ID}
     tag: !ENV ${TAG_NAME}
-  console:
-    logLevel: INFO
-    width: 160
 stages:
   - name: build
     icon: 🏗️

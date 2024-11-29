@@ -1,6 +1,5 @@
 """ Model representation of run-specific configuration. """
 
-import os
 import pkgutil
 from dataclasses import dataclass
 from typing import Optional
@@ -71,27 +70,6 @@ class RunContext:
             tests_url=run_details["tests_url"],
             user=run_details["user"],
             user_email=run_details["user_email"],
-        )
-
-
-@dataclass(frozen=True)
-class ConsoleProperties:
-    log_level: str
-    show_paths: bool
-    width: Optional[int]
-
-    @staticmethod
-    def from_configuration(config: dict):
-        console_config = config["build"]["console"]
-        if os.environ.get("RUNNER_DEBUG", "0") == "1":
-            log_level = "DEBUG"
-        else:
-            log_level = console_config.get("logLevel", "INFO")
-        width = console_config.get("width", 130)
-        return ConsoleProperties(
-            log_level=log_level,
-            show_paths=console_config.get("showPaths", False),
-            width=None if width == 0 else width,
         )
 
 

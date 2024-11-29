@@ -15,7 +15,7 @@ from ..constants import (
 )
 from ..project import Stage
 from ..run_plan import discover_run_plan, RunPlan
-from ..steps.models import ConsoleProperties, RunProperties
+from ..steps.models import RunProperties
 from ..utilities.pyaml_env import parse_config
 
 
@@ -23,7 +23,7 @@ from ..utilities.pyaml_env import parse_config
 class Context:
     run_properties: dict
     config: dict
-    console: Console = create_console_logger(show_path=False, max_width=0)
+    console: Console = create_console_logger()
 
 
 @click.group("plan")
@@ -54,13 +54,10 @@ def plan(ctx, config, properties):
 
     RunProperties.validate(parsed_properties)
 
-    console_config = ConsoleProperties.from_configuration(parsed_properties)
-    console = create_console_logger(
-        show_path=console_config.show_paths,
-        max_width=console_config.width,
-    )
     ctx.obj = Context(
-        run_properties=parsed_properties, config=parsed_config, console=console
+        run_properties=parsed_properties,
+        config=parsed_config,
+        console=create_console_logger(),
     )
 
 

@@ -36,7 +36,7 @@ from ..utilities.pyaml_env import parse_config
 @dataclass(frozen=True)
 class Context:
     config: dict
-    console: Console = create_console_logger(show_path=False, max_width=0)
+    console: Console = create_console_logger()
 
 
 @click.group("projects")
