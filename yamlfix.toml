@@ -3,3 +3,4 @@
 sequence_style = "keep_style"
 whitelines = 1
 line_length = 999
+comments_min_spaces_from_content = 1
