@@ -16,7 +16,7 @@ def create_console_logger() -> Console:
         log_time=False,
         force_terminal=True,
         color_system="truecolor",
-        width=255,
+        width=999,
     )
     logging.basicConfig(
         level="DEBUG" if verbose else "INFO",
