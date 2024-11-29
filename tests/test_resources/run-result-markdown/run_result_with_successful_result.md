@@ -1,7 +1,1 @@
-✅ Successful  
-🏗️ Build:  
-_dockertest_, _test_  
-📋 Test:  
-_test_  
-🚀 Deploy:  
-*test*  
+✅ Project _test_ at stage _deploy_
