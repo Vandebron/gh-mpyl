@@ -33,3 +33,6 @@ class ProjectExecution:
     @property
     def name(self):
         return self.project.name
+
+    def to_markdown(self):
+        return f"_{self.name}{' (cached)' if self.cached else ''}_"

@@ -10,22 +10,20 @@ from rich.logging import RichHandler
 from rich.markdown import Markdown
 
 from .run_plan import RunPlan
-from .reporting.formatting.markdown import run_result_to_markdown
 from .steps import deploy
 from .steps.collection import StepsCollection
-from .steps.executor import ExecutionException, ExecutionResult, Executor
+from .steps.executor import ExecutionException, Executor, ExecutionResult
 from .steps.models import RunProperties, ConsoleProperties
 from .steps.output import Output
 from .steps.run import RunResult
 
-
 FORMAT = "%(name)s  %(message)s"
 
 
-def run_mpyl(
+def run_deploy_stage(
     console_properties: ConsoleProperties,
     run_properties: RunProperties,
-    run_plan: RunPlan,
+    project_name_to_run: str,
 ) -> RunResult:
     # why does this create another Console when we already have one created in cli/build.py ?
     console = Console(
@@ -47,74 +45,70 @@ def run_mpyl(
     logger = logging.getLogger("mpyl")
     start_time = time.time()
     try:
-        run_result = RunResult(run_properties=run_properties, run_plan=run_plan)
+        run_plan = RunPlan.load_from_pickle_file()
+        console.print(Markdown(run_plan.to_markdown()))
 
-        if not run_result.has_projects_to_run(include_cached_projects=False):
-            logger.info("Nothing to do. Exiting..")
-            return run_result
-
-        logger.info("Run plan:")
-        console.print(Markdown(f"\n\n{run_result.status_line}  \n"))
-        run_plan.print_markdown(console, run_properties.stages)
-
-        try:
-            executor = Executor(
-                logger=logger,
-                run_properties=run_properties,
-                run_plan=run_plan,
-                steps_collection=StepsCollection(logger=logger),
-            )
-
-            run_result = run_build(
-                logger=logger, accumulator=run_result, executor=executor
-            )
-        except ValidationError as exc:
-            console.log(
-                f'Schema validation failed {exc.message} at `{".".join(map(str, exc.path))}`'
-            )
-            raise exc
-        except ExecutionException as exc:
-            run_result.exception = exc
-            console.log(f"Exception during build execution: {exc}")
-            console.print_exception()
+        run_result = _run_deploy_stage(
+            logger=logger,
+            console=console,
+            run_properties=run_properties,
+            run_plan=run_plan,
+            project_name_to_run=project_name_to_run,
+        )
 
         console.log(
             f"Completed in {datetime.timedelta(seconds=time.time() - start_time)}"
         )
-        console.print(Markdown(run_result_to_markdown(run_result)))
+        console.print(Markdown(run_result.to_markdown()))
         return run_result
-
     except Exception as exc:
         console.log(f"Unexpected exception: {exc}")
         console.print_exception()
         raise exc
 
 
-def run_build(logger: logging.Logger, accumulator: RunResult, executor: Executor):
+def _run_deploy_stage(
+    logger: logging.Logger,
+    console: Console,
+    run_properties: RunProperties,
+    run_plan: RunPlan,
+    project_name_to_run: str,
+) -> RunResult:
     try:
-        for stage, project_executions in accumulator.run_plan.selected_plan.items():
-            for project_execution in project_executions:
-                if project_execution.cached:
-                    logger.info(
-                        f"Skipping {project_execution.name} for stage {stage.name} because it is cached"
-                    )
-                    result = ExecutionResult(
-                        stage=stage,
-                        project=project_execution.project,
-                        output=Output(success=True, message="This step was cached"),
-                    )
-                else:
-                    result = executor.execute(stage, project_execution)
-                accumulator.append(result)
+        stage = run_properties.to_stage(deploy.STAGE_NAME)
+        project_execution = run_plan.get_project_to_execute(
+            stage_name=deploy.STAGE_NAME, project_name=project_name_to_run
+        )
 
-                if not result.output.success and stage.name == deploy.STAGE_NAME:
-                    logger.warning(f"{stage} failed for {project_execution.name}")
-                    return accumulator
+        executor = Executor(
+            logger=logger,
+            run_properties=run_properties,
+            run_plan=run_plan,
+            steps_collection=StepsCollection(logger=logger),
+        )
 
-            if accumulator.failed_results:
-                logger.warning(f"One of the builds failed at Stage {stage.name}")
-                return accumulator
-        return accumulator
+        if project_execution.cached:
+            logger.info(
+                f"Skipping {project_execution.name} for stage {stage.name} because it is cached"
+            )
+            execution_result = ExecutionResult(
+                stage=stage,
+                project=project_execution,
+                output=Output(success=True, message="This step was cached"),
+            )
+        else:
+            execution_result = executor.execute(stage, project_execution)
+
+        if not execution_result.output.success:
+            logger.warning(f"{stage} failed for {project_execution.name}")
+
+        return RunResult.with_result(execution_result)
+
+    except ValidationError as exc:
+        console.log(
+            f'Schema validation failed {exc.message} at `{".".join(map(str, exc.path))}`'
+        )
+        raise exc
+
     except ExecutionException as exc:
-        accumulator.exception = exc
-        return accumulator
+        return RunResult.with_exception(exc)

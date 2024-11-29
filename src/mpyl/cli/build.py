@@ -10,7 +10,7 @@ from rich.console import Console
 
 from . import CONFIG_PATH_HELP
 from . import create_console_logger
-from ..build import run_mpyl
+from ..build import run_deploy_stage
 from ..constants import (
     DEFAULT_CONFIG_FILE_NAME,
     DEFAULT_RUN_PROPERTIES_FILE_NAME,
@@ -18,9 +18,7 @@ from ..constants import (
     RUN_RESULT_FILE_GLOB,
 )
 from ..project import load_project, Target
-from ..run_plan import RunPlan
 from ..plan.discovery import find_projects
-from ..steps import deploy
 from ..steps.models import ConsoleProperties, RunProperties
 from ..utilities.pyaml_env import parse_config
 
@@ -121,16 +119,10 @@ def run(
         deploy_image=image,
     )
 
-    run_plan = (
-        RunPlan.load_from_pickle_file()
-        .select_stage(deploy.STAGE_NAME)
-        .select_project(project)
-    )
-
-    run_result = run_mpyl(
+    run_result = run_deploy_stage(
         console_properties=ConsoleProperties.from_configuration(obj.run_properties),
         run_properties=run_properties,
-        run_plan=run_plan,
+        project_name_to_run=project,
     )
 
     run_result.write_to_pickle_file()

@@ -9,9 +9,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Union
 
-from rich.console import Console
-from rich.markdown import Markdown
-
 from .constants import RUN_ARTIFACTS_FOLDER
 from .project import Project, Stage, load_project
 from .project_execution import ProjectExecution
@@ -26,23 +23,25 @@ RUN_PLAN_JSON_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.json"
 class RunPlan:
     all_known_projects: set[Project]
     _full_plan: dict[Stage, set[ProjectExecution]]
-    selected_plan: dict[Stage, set[ProjectExecution]]
+    # unused but temporarily kept here on purpose, see https://github.com/Vandebron/gh-mpyl/pull/105
+    _selected_plan: dict[Stage, set[ProjectExecution]]
 
     @classmethod
     def empty(cls) -> "RunPlan":
-        return cls(all_known_projects=set(), _full_plan={}, selected_plan={})
+        return cls(all_known_projects=set(), _full_plan={}, _selected_plan={})
 
     @classmethod
     def create(
         cls, all_known_projects: set[Project], plan: dict[Stage, set[ProjectExecution]]
     ) -> "RunPlan":
         return cls(
-            all_known_projects=all_known_projects, _full_plan=plan, selected_plan=plan
+            all_known_projects=all_known_projects, _full_plan=plan, _selected_plan=plan
         )
 
+    # unused but temporarily kept here on purpose, see https://github.com/Vandebron/gh-mpyl/pull/105
     def select_stage(self, stage_name: str) -> "RunPlan":
         selected_stage = None
-        for stage in self._get_all_stages(use_full_plan=False):
+        for stage in self._get_all_stages():
             if stage.name == stage_name:
                 selected_stage = stage
                 break
@@ -54,14 +53,15 @@ class RunPlan:
         return RunPlan(
             all_known_projects=self.all_known_projects,
             _full_plan=self._full_plan,
-            selected_plan={
-                selected_stage: self.get_executions_for_stage(selected_stage)
+            _selected_plan={
+                selected_stage: self._get_executions_for_stage(selected_stage)
             },
         )
 
+    # unused but temporarily kept here on purpose, see https://github.com/Vandebron/gh-mpyl/pull/105
     def select_project(self, project_name: str) -> "RunPlan":
         selected_project = None
-        for project in self._get_all_executions(use_full_plan=False):
+        for project in self._get_all_executions():
             if project.name == project_name:
                 selected_project = project
                 break
@@ -71,10 +71,10 @@ class RunPlan:
             )
 
         selected_plan = {}
-        for stage in self._get_all_stages(use_full_plan=False):
+        for stage in self._get_all_stages():
             filtered = {
                 project
-                for project in self.get_executions_for_stage(stage, use_full_plan=False)
+                for project in self._get_executions_for_stage(stage)
                 if project.name == project_name
             }
             if filtered:
@@ -83,19 +83,19 @@ class RunPlan:
         return RunPlan(
             all_known_projects=self.all_known_projects,
             _full_plan=self._full_plan,
-            selected_plan=selected_plan,
+            _selected_plan=selected_plan,
         )
 
-    def has_projects_to_run(self, include_cached_projects: bool) -> bool:
+    def _has_projects_to_run(self, include_cached_projects: bool) -> bool:
         return any(
             include_cached_projects or not project_execution.cached
-            for project_execution in self._get_all_executions(use_full_plan=False)
+            for project_execution in self._get_all_executions()
         )
 
-    def _get_all_stages(self, use_full_plan: bool = False) -> set[Stage]:
+    def _get_all_stages(self, use_full_plan: bool = False) -> list[Stage]:
         if use_full_plan:
-            return set(self._full_plan.keys())
-        return set(self.selected_plan.keys())
+            return list(self._full_plan.keys())
+        return list(self._selected_plan.keys())
 
     def _get_all_executions(self, use_full_plan: bool = False) -> set[ProjectExecution]:
         def flatten(plan: dict[Stage, set[ProjectExecution]]):
@@ -107,14 +107,14 @@ class RunPlan:
 
         if use_full_plan:
             return flatten(self._full_plan)
-        return flatten(self.selected_plan)
+        return flatten(self._selected_plan)
 
-    def get_executions_for_stage(
+    def _get_executions_for_stage(
         self, stage: Stage, use_full_plan: bool = False
     ) -> set[ProjectExecution]:
         if use_full_plan:
             return self._full_plan.get(stage, set())
-        return self.selected_plan.get(stage, set())
+        return self._selected_plan.get(stage, set())
 
     def get_executions_for_stage_name(
         self, stage_name: str, use_full_plan: bool = False
@@ -129,7 +129,30 @@ class RunPlan:
 
         if use_full_plan:
             return find_stage(self._full_plan)
-        return find_stage(self.selected_plan)
+        return find_stage(self._selected_plan)
+
+    def get_project_to_execute(
+        self, stage_name: str, project_name: str
+    ) -> ProjectExecution:
+        selected_stage = None
+        selected_project = None
+        for stage in self._get_all_stages():
+            if stage.name == stage_name:
+                selected_stage = stage
+                for project in self._get_executions_for_stage(stage):
+                    if project.name == project_name:
+                        selected_project = project
+                        break
+                break
+        if not selected_stage:
+            raise ValueError(
+                f"Unable to select stage outside of the run plan: '{stage_name}'"
+            )
+        if not selected_project:
+            raise ValueError(
+                f"Unable to select project outside of the run plan: '{project_name}'"
+            )
+        return selected_project
 
     def write_to_pickle_file(self):
         logger = logging.getLogger("mpyl")
@@ -182,29 +205,27 @@ class RunPlan:
                 f"Unable to find existing run plan at path {RUN_PLAN_PICKLE_FILE}"
             )
 
-    def print_markdown(self, console: Console, stages: list[Stage]):
-        if self.has_projects_to_run(include_cached_projects=True):
-            result = ""
-
-            for stage in stages:
-                executions = self.get_executions_for_stage(stage)
+    def to_markdown(self) -> str:
+        lines = ["**Execution plan:**"]
+        if self._has_projects_to_run(include_cached_projects=True):
+            for stage in self._get_all_stages():
+                lines.append(f"{stage.to_markdown()}:")
+                executions = self._get_executions_for_stage(stage)
                 if executions:
                     project_names = [
-                        f"_{execution.name}{' (cached)' if execution.cached else ''}_"
+                        execution.to_markdown()
                         for execution in sorted(
                             executions, key=operator.attrgetter("name")
                         )
                     ]
 
-                    result += f'{stage.icon} {stage.name.capitalize()}:  \n{", ".join(project_names)}  \n'
+                    lines.append(", ".join(project_names))
                 else:
-                    result += "🤷 Nothing to do  \n"
+                    lines.append("")
 
-            console.print(Markdown("**Execution plan:**  \n" + result))
+            return "  \n".join(lines)
 
-        else:
-            logger = logging.getLogger("mpyl")
-            logger.info("No changes detected, nothing to do.")
+        return "No changes detected, nothing to do."
 
 
 def discover_run_plan(
@@ -237,9 +258,10 @@ def discover_run_plan(
             changeset=changeset,
         )
 
-        logger.debug(
-            f"Will execute projects for stage {stage.name}: {[p.name for p in project_executions]}"
-        )
-        plan.update({stage: project_executions})
+        if project_executions:
+            logger.debug(
+                f"Will execute projects for stage {stage.name}: {[p.name for p in project_executions]}"
+            )
+            plan.update({stage: project_executions})
 
     return RunPlan.create(all_projects, plan)

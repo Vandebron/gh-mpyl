@@ -39,7 +39,7 @@ class TestEmptyPlan:
     def test_empty(self):
         assert self.run_plan.all_known_projects == set()
         assert not self.run_plan._full_plan
-        assert not self.run_plan.selected_plan
+        assert not self.run_plan._selected_plan
 
     @pytest.mark.parametrize(
         argnames="use_full_plan",
@@ -78,7 +78,7 @@ class TestEmptyPlan:
     )
     def test_get_projects_for_stage(self, stage, use_full_plan):
         assert (
-            self.run_plan.get_executions_for_stage(
+            self.run_plan._get_executions_for_stage(
                 stage=stage, use_full_plan=use_full_plan
             )
             == set()
@@ -92,7 +92,7 @@ class TestEmptyPlan:
         ],
     )
     def test_get_all_stages(self, use_full_plan):
-        assert self.run_plan._get_all_stages(use_full_plan=use_full_plan) == set()
+        assert not self.run_plan._get_all_stages(use_full_plan=use_full_plan)
 
     @pytest.mark.parametrize(
         argnames="include_cached_projects",
@@ -102,9 +102,15 @@ class TestEmptyPlan:
         ],
     )
     def test_has_projects_to_run(self, include_cached_projects):
-        assert not self.run_plan.has_projects_to_run(
+        assert not self.run_plan._has_projects_to_run(
             include_cached_projects=include_cached_projects,
         )
+
+    def test_get_project_to_execute(self):
+        with pytest.raises(ValueError):
+            self.run_plan.get_project_to_execute(
+                stage_name="any stage", project_name="any project"
+            )
 
 
 class TestFullRunPlan:
@@ -119,7 +125,7 @@ class TestFullRunPlan:
             execution_2.project,
         }
         assert self.run_plan._full_plan == self.full_plan
-        assert self.run_plan.selected_plan == self.full_plan
+        assert self.run_plan._selected_plan == self.full_plan
 
     @pytest.mark.parametrize(
         argnames="use_full_plan",
@@ -142,16 +148,16 @@ class TestFullRunPlan:
         ],
     )
     def test_get_projects_for_stage(self, use_full_plan):
-        assert self.run_plan.get_executions_for_stage(
+        assert self.run_plan._get_executions_for_stage(
             stage=build_stage, use_full_plan=use_full_plan
         ) == {execution_1, execution_2}
         assert (
-            self.run_plan.get_executions_for_stage(
+            self.run_plan._get_executions_for_stage(
                 stage=test_stage, use_full_plan=use_full_plan
             )
             == set()
         )
-        assert self.run_plan.get_executions_for_stage(
+        assert self.run_plan._get_executions_for_stage(
             stage=deploy_stage, use_full_plan=use_full_plan
         ) == {execution_2}
 
@@ -163,10 +169,10 @@ class TestFullRunPlan:
         ],
     )
     def test_get_all_stages(self, use_full_plan):
-        assert self.run_plan._get_all_stages(use_full_plan=use_full_plan) == {
+        assert self.run_plan._get_all_stages(use_full_plan=use_full_plan) == [
             build_stage,
             deploy_stage,
-        }
+        ]
 
     def test_has_projects_to_run_with_some_cached_projects(self):
         run_plan_with_some_cached_projects = RunPlan.create(
@@ -174,10 +180,10 @@ class TestFullRunPlan:
             plan={build_stage: {execution_1, cached_execution}},
         )
 
-        assert run_plan_with_some_cached_projects.has_projects_to_run(
+        assert run_plan_with_some_cached_projects._has_projects_to_run(
             include_cached_projects=True
         )
-        assert run_plan_with_some_cached_projects.has_projects_to_run(
+        assert run_plan_with_some_cached_projects._has_projects_to_run(
             include_cached_projects=False
         )
 
@@ -186,12 +192,33 @@ class TestFullRunPlan:
             all_known_projects=set(), plan={build_stage: {cached_execution}}
         )
 
-        assert run_plan_with_only_cached_projects.has_projects_to_run(
+        assert run_plan_with_only_cached_projects._has_projects_to_run(
             include_cached_projects=True
         )
-        assert not run_plan_with_only_cached_projects.has_projects_to_run(
+        assert not run_plan_with_only_cached_projects._has_projects_to_run(
             include_cached_projects=False
         )
+
+    def test_get_project_to_execute(self):
+        assert (
+            self.run_plan.get_project_to_execute(
+                stage_name=deploy_stage.name, project_name=execution_2.name
+            )
+            == execution_2
+        )
+
+        with pytest.raises(ValueError):
+            self.run_plan.get_project_to_execute(
+                stage_name="unknown stage", project_name=execution_1.name
+            )
+        with pytest.raises(ValueError):
+            self.run_plan.get_project_to_execute(
+                stage_name=build_stage.name, project_name="unknown project"
+            )
+        with pytest.raises(ValueError):
+            self.run_plan.get_project_to_execute(
+                stage_name=deploy_stage.name, project_name=execution_1.name
+            )
 
 
 class TestRunPlanWithSelectedStage:
@@ -207,7 +234,7 @@ class TestRunPlanWithSelectedStage:
             execution_2.project,
         }
         assert self.run_plan._full_plan == self.full_plan
-        assert self.run_plan.selected_plan == {deploy_stage: {execution_2}}
+        assert self.run_plan._selected_plan == {deploy_stage: {execution_2}}
 
     def test_select_invalid_stage(self):
         with pytest.raises(ValueError):
@@ -223,42 +250,44 @@ class TestRunPlanWithSelectedStage:
         assert self.run_plan._get_all_executions(use_full_plan=False) == {execution_2}
 
     def test_get_projects_for_stage(self):
-        assert self.run_plan.get_executions_for_stage(
+        assert self.run_plan._get_executions_for_stage(
             stage=build_stage, use_full_plan=True
         ) == {execution_1, execution_2}
         assert (
-            self.run_plan.get_executions_for_stage(
+            self.run_plan._get_executions_for_stage(
                 stage=build_stage, use_full_plan=False
             )
             == set()
         )
         assert (
-            self.run_plan.get_executions_for_stage(stage=test_stage, use_full_plan=True)
+            self.run_plan._get_executions_for_stage(
+                stage=test_stage, use_full_plan=True
+            )
             == set()
         )
         assert (
-            self.run_plan.get_executions_for_stage(
+            self.run_plan._get_executions_for_stage(
                 stage=test_stage, use_full_plan=False
             )
             == set()
         )
-        assert self.run_plan.get_executions_for_stage(
+        assert self.run_plan._get_executions_for_stage(
             stage=deploy_stage, use_full_plan=True
         ) == {execution_2}
-        assert self.run_plan.get_executions_for_stage(
+        assert self.run_plan._get_executions_for_stage(
             stage=deploy_stage, use_full_plan=False
         ) == {execution_2}
 
     def test_get_all_stages(self):
-        assert self.run_plan._get_all_stages(use_full_plan=True) == {
+        assert self.run_plan._get_all_stages(use_full_plan=True) == [
             build_stage,
             deploy_stage,
-        }
-        assert self.run_plan._get_all_stages(use_full_plan=False) == {deploy_stage}
+        ]
+        assert self.run_plan._get_all_stages(use_full_plan=False) == [deploy_stage]
 
     def test_has_projects_to_run_with_non_cached_project_in_selected_stage(self):
-        assert self.run_plan.has_projects_to_run(include_cached_projects=True)
-        assert self.run_plan.has_projects_to_run(include_cached_projects=False)
+        assert self.run_plan._has_projects_to_run(include_cached_projects=True)
+        assert self.run_plan._has_projects_to_run(include_cached_projects=False)
 
     def test_has_projects_to_run_with_cached_project_in_selected_stage(self):
         run_plan_with_selected_stage = RunPlan.create(
@@ -271,12 +300,28 @@ class TestRunPlanWithSelectedStage:
             },
         ).select_stage(build_stage.name)
 
-        assert run_plan_with_selected_stage.has_projects_to_run(
+        assert run_plan_with_selected_stage._has_projects_to_run(
             include_cached_projects=True
         )
-        assert not run_plan_with_selected_stage.has_projects_to_run(
+        assert not run_plan_with_selected_stage._has_projects_to_run(
             include_cached_projects=False
         )
+
+    def test_get_project_to_execute(self):
+        assert (
+            self.run_plan.get_project_to_execute(
+                stage_name=deploy_stage.name, project_name=execution_2.name
+            )
+            == execution_2
+        )
+        with pytest.raises(ValueError):
+            self.run_plan.get_project_to_execute(
+                stage_name=build_stage.name, project_name=execution_1.name
+            )
+        with pytest.raises(ValueError):
+            self.run_plan.get_project_to_execute(
+                stage_name=build_stage.name, project_name=execution_2.name
+            )
 
 
 class TestRunPlanWithSelectedProjectInASingleStage:
@@ -292,7 +337,7 @@ class TestRunPlanWithSelectedProjectInASingleStage:
             execution_2.project,
         }
         assert self.run_plan._full_plan == self.full_plan
-        assert self.run_plan.selected_plan == {build_stage: {execution_1}}
+        assert self.run_plan._selected_plan == {build_stage: {execution_1}}
 
     def test_select_invalid_project(self):
         with pytest.raises(ValueError):
@@ -308,44 +353,44 @@ class TestRunPlanWithSelectedProjectInASingleStage:
         assert self.run_plan._get_all_executions(use_full_plan=False) == {execution_1}
 
     def test_get_projects_for_stage(self):
-        assert self.run_plan.get_executions_for_stage(
+        assert self.run_plan._get_executions_for_stage(
             stage=build_stage, use_full_plan=True
         ) == {execution_1, execution_2}
-        assert self.run_plan.get_executions_for_stage(
+        assert self.run_plan._get_executions_for_stage(
             stage=build_stage, use_full_plan=False
         ) == {execution_1}
         assert (
-            self.run_plan.get_executions_for_stage(stage=test_stage, use_full_plan=True)
+            self.run_plan._get_executions_for_stage(
+                stage=test_stage, use_full_plan=True
+            )
             == set()
         )
         assert (
-            self.run_plan.get_executions_for_stage(
+            self.run_plan._get_executions_for_stage(
                 stage=test_stage, use_full_plan=False
             )
             == set()
         )
-        assert self.run_plan.get_executions_for_stage(
+        assert self.run_plan._get_executions_for_stage(
             stage=deploy_stage, use_full_plan=True
         ) == {execution_2}
         assert (
-            self.run_plan.get_executions_for_stage(
+            self.run_plan._get_executions_for_stage(
                 stage=deploy_stage, use_full_plan=False
             )
             == set()
         )
 
     def test_get_all_stages(self):
-        assert self.run_plan._get_all_stages(use_full_plan=True) == {
+        assert self.run_plan._get_all_stages(use_full_plan=True) == [
             build_stage,
             deploy_stage,
-        }
-        assert self.run_plan._get_all_stages(use_full_plan=False) == {
-            build_stage,
-        }
+        ]
+        assert self.run_plan._get_all_stages(use_full_plan=False) == [build_stage]
 
     def test_has_projects_to_run_with_selected_non_cached_project(self):
-        assert self.run_plan.has_projects_to_run(include_cached_projects=True)
-        assert self.run_plan.has_projects_to_run(include_cached_projects=False)
+        assert self.run_plan._has_projects_to_run(include_cached_projects=True)
+        assert self.run_plan._has_projects_to_run(include_cached_projects=False)
 
     def test_has_projects_to_run_with_selected_cached_project(self):
         run_plan_with_selected_project = RunPlan.create(
@@ -358,12 +403,25 @@ class TestRunPlanWithSelectedProjectInASingleStage:
             },
         ).select_project(cached_execution.name)
 
-        assert run_plan_with_selected_project.has_projects_to_run(
+        assert run_plan_with_selected_project._has_projects_to_run(
             include_cached_projects=True
         )
-        assert not run_plan_with_selected_project.has_projects_to_run(
+        assert not run_plan_with_selected_project._has_projects_to_run(
             include_cached_projects=False
         )
+
+    def test_get_project_to_execute(self):
+        assert (
+            self.run_plan.get_project_to_execute(
+                stage_name=build_stage.name, project_name=execution_1.name
+            )
+            == execution_1
+        )
+
+        with pytest.raises(ValueError):
+            self.run_plan.get_project_to_execute(
+                stage_name=deploy_stage.name, project_name=execution_1.name
+            )
 
 
 class TestRunPlanWithSelectedProjectInMultipleStages:
@@ -379,7 +437,7 @@ class TestRunPlanWithSelectedProjectInMultipleStages:
             execution_2.project,
         }
         assert self.run_plan._full_plan == self.full_plan
-        assert self.run_plan.selected_plan == {
+        assert self.run_plan._selected_plan == {
             build_stage: {execution_1},
             deploy_stage: {execution_1},
         }
@@ -398,42 +456,44 @@ class TestRunPlanWithSelectedProjectInMultipleStages:
         assert self.run_plan._get_all_executions(use_full_plan=False) == {execution_1}
 
     def test_get_projects_for_stage(self):
-        assert self.run_plan.get_executions_for_stage(
+        assert self.run_plan._get_executions_for_stage(
             stage=build_stage, use_full_plan=True
         ) == {execution_1, execution_2}
-        assert self.run_plan.get_executions_for_stage(
+        assert self.run_plan._get_executions_for_stage(
             stage=build_stage, use_full_plan=False
         ) == {execution_1}
         assert (
-            self.run_plan.get_executions_for_stage(stage=test_stage, use_full_plan=True)
+            self.run_plan._get_executions_for_stage(
+                stage=test_stage, use_full_plan=True
+            )
             == set()
         )
         assert (
-            self.run_plan.get_executions_for_stage(
+            self.run_plan._get_executions_for_stage(
                 stage=test_stage, use_full_plan=False
             )
             == set()
         )
-        assert self.run_plan.get_executions_for_stage(
+        assert self.run_plan._get_executions_for_stage(
             stage=deploy_stage, use_full_plan=True
         ) == {execution_1}
-        assert self.run_plan.get_executions_for_stage(
+        assert self.run_plan._get_executions_for_stage(
             stage=deploy_stage, use_full_plan=False
         ) == {execution_1}
 
     def test_get_all_stages(self):
-        assert self.run_plan._get_all_stages(use_full_plan=True) == {
+        assert self.run_plan._get_all_stages(use_full_plan=True) == [
             build_stage,
             deploy_stage,
-        }
-        assert self.run_plan._get_all_stages(use_full_plan=False) == {
+        ]
+        assert self.run_plan._get_all_stages(use_full_plan=False) == [
             build_stage,
             deploy_stage,
-        }
+        ]
 
     def test_has_projects_to_run_with_selected_non_cached_project(self):
-        assert self.run_plan.has_projects_to_run(include_cached_projects=True)
-        assert self.run_plan.has_projects_to_run(include_cached_projects=False)
+        assert self.run_plan._has_projects_to_run(include_cached_projects=True)
+        assert self.run_plan._has_projects_to_run(include_cached_projects=False)
 
     def test_has_projects_to_run_with_selected_cached_project(self):
         run_plan_with_selected_project = RunPlan.create(
@@ -445,9 +505,27 @@ class TestRunPlanWithSelectedProjectInMultipleStages:
             },
         ).select_project(cached_execution.name)
 
-        assert run_plan_with_selected_project.has_projects_to_run(
+        assert run_plan_with_selected_project._has_projects_to_run(
             include_cached_projects=True
         )
-        assert not run_plan_with_selected_project.has_projects_to_run(
+        assert not run_plan_with_selected_project._has_projects_to_run(
             include_cached_projects=False
         )
+
+    def test_get_project_to_execute(self):
+        assert (
+            self.run_plan.get_project_to_execute(
+                stage_name=build_stage.name, project_name=execution_1.name
+            )
+            == execution_1
+        )
+        assert (
+            self.run_plan.get_project_to_execute(
+                stage_name=deploy_stage.name, project_name=execution_1.name
+            )
+            == execution_1
+        )
+        with pytest.raises(ValueError):
+            self.run_plan.get_project_to_execute(
+                stage_name=build_stage.name, project_name=execution_2.name
+            )

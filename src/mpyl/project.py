@@ -68,6 +68,9 @@ class Stage:
     name: str
     icon: str
 
+    def to_markdown(self) -> str:
+        return f"{self.icon} {self.name.capitalize()}"
+
 
 @dataclass(frozen=True)
 class TargetProperty(Generic[T]):
