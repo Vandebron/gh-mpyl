@@ -67,7 +67,6 @@ class TestBuildCli:
             project_name_to_run=project.name,
         )
         assert result._exception is None
-        assert result.status_line == "✅ Successful"
         assert result.is_success
         assert result._exception is None
 
@@ -87,7 +86,6 @@ class TestBuildCli:
         )
 
         assert not result.has_results
-        assert result.status_line == "❗ Failed with exception"
         assert result._exception
         assert result._exception.message == "this is not good"
         assert result._exception.stage == TestStage.deploy().name

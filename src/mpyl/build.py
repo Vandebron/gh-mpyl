@@ -12,8 +12,7 @@ from rich.markdown import Markdown
 from .run_plan import RunPlan
 from .steps import deploy
 from .steps.collection import StepsCollection
-from .steps.executor import ExecutionException, Executor
-from .steps.execution_result import ExecutionResult
+from .steps.executor import ExecutionException, Executor, ExecutionResult
 from .steps.models import RunProperties, ConsoleProperties
 from .steps.output import Output
 from .steps.run import RunResult
@@ -47,7 +46,6 @@ def run_deploy_stage(
     start_time = time.time()
     try:
         run_plan = RunPlan.load_from_pickle_file()
-        console.print(Markdown("**Execution plan:**  \n"))
         console.print(Markdown(run_plan.to_markdown()))
 
         run_result = _run_deploy_stage(
@@ -104,7 +102,7 @@ def _run_deploy_stage(
         if not execution_result.output.success:
             logger.warning(f"{stage} failed for {project_execution.name}")
 
-        return RunResult.with_result(run_plan, execution_result)
+        return RunResult.with_result(execution_result)
 
     except ValidationError as exc:
         console.log(
@@ -113,4 +111,4 @@ def _run_deploy_stage(
         raise exc
 
     except ExecutionException as exc:
-        return RunResult.with_exception(run_plan, exc)
+        return RunResult.with_exception(exc)
