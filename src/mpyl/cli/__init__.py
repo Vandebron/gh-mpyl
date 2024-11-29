@@ -22,6 +22,7 @@ def create_console_logger() -> Console:
         level="DEBUG" if verbose else "INFO",
         format="%(message)s",
         datefmt="[%X]",
-        handlers=[RichHandler(console=console, show_path=verbose)],
+        # handlers=[RichHandler(console=console, show_path=verbose)],
+        handlers=[RichHandler(show_path=verbose)],
     )
     return console
