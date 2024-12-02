@@ -8,7 +8,7 @@
   },
 
   "mounts": [
-    "source=${localEnv:HOME}/.gitconfig,target=/root/.gitconfig,type=bind,consistency=cached"
+    "source=${localEnv:HOME}/.gitconfig,target=/home/vdbnonroot/.gitconfig,type=bind,consistency=cached"
   ],
 
   // More info: https://containers.dev/features.
