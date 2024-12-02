@@ -33,7 +33,8 @@ def template_chart(
     chart_name: str,
     namespace: str,
 ) -> Output:
-    cmd = f"helm template {release_name} {chart_name} -n {namespace} --version {chart_version} -f {values_path} --output-dir {output_path}"
+    cmd = f"helm template {release_name} {chart_name} -n {namespace} --version {chart_version} -f {values_path.name} --output-dir {output_path.name}"
+    logger.debug(f"Running helm template command: {cmd}")
     return custom_check_output(logger, cmd)
 
 
