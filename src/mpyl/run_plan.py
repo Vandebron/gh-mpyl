@@ -163,7 +163,7 @@ class RunPlan:
     def write_to_json_file(self):
         run_plan: dict = {}
 
-        for stage, executions in self._full_plan.items():
+        for _stage, executions in self._full_plan.items():
             for execution in executions:
                 run_plan.update(
                     {
@@ -174,7 +174,7 @@ class RunPlan:
                             "base_path": str(execution.project.root_path),
                             "maintainers": execution.project.maintainer,
                             "pipeline": execution.project.pipeline,
-                            stage.name: execution.cached,
+                            (stage.name for stage, _executions in self._full_plan.items()): execution.cached ,
                         }
                     }
                 )
