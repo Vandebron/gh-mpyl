@@ -16,7 +16,7 @@
     "ghcr.io/devcontainers/features/common-utils:2": {
       "configureZshAsDefaultShell": true,
       "upgradePackages": false,
-      "username": "none"
+      "username": "vdbnonroot",
     },
     "ghcr.io/devcontainers/features/git:1": {}
   },
