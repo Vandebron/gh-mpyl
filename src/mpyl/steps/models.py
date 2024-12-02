@@ -1,6 +1,5 @@
 """ Model representation of run-specific configuration. """
 
-import os
 import pkgutil
 from dataclasses import dataclass
 from typing import Optional
@@ -74,27 +73,6 @@ class RunContext:
         )
 
 
-@dataclass(frozen=True)
-class ConsoleProperties:
-    log_level: str
-    show_paths: bool
-    width: Optional[int]
-
-    @staticmethod
-    def from_configuration(config: dict):
-        console_config = config["build"]["console"]
-        if os.environ.get("RUNNER_DEBUG", "0") == "1":
-            log_level = "DEBUG"
-        else:
-            log_level = console_config.get("logLevel", "INFO")
-        width = console_config.get("width", 130)
-        return ConsoleProperties(
-            log_level=log_level,
-            show_paths=console_config.get("showPaths", False),
-            width=None if width == 0 else width,
-        )
-
-
 @yaml_object(YAML())
 @dataclass(frozen=False)
 class RunProperties:
@@ -143,13 +121,3 @@ class RunProperties:
         if stage_by_name:
             return stage_by_name
         raise ValueError(f"Stage {stage_name} not found")
-
-    def selected_stage(self, selected_stage_name: Optional[str]):
-        return self.to_stage(selected_stage_name) if selected_stage_name else None
-
-    def selected_projects(self, selected_project_names: Optional[str]):
-        return (
-            {p for p in self.stages if p.name in selected_project_names.split(",")}
-            if selected_project_names
-            else set()
-        )

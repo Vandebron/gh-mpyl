@@ -172,7 +172,7 @@ class DeploymentDefaults:
     liveness_probe_defaults: dict
     startup_probe_defaults: dict
     job_defaults: dict
-    traefik_defaults: dict
+    traefik_defaults: Traefik
     white_lists: DefaultWhitelists
     image_pull_secrets: dict
     deployment_strategy: dict
@@ -194,7 +194,7 @@ class DeploymentDefaults:
             liveness_probe_defaults=kubernetes["livenessProbe"],
             startup_probe_defaults=kubernetes["startupProbe"],
             job_defaults=kubernetes.get("job", {}),
-            traefik_defaults=deployment_values.get("traefik", {}),
+            traefik_defaults=Traefik.from_config(deployment_values.get("traefik", {})),
             white_lists=DefaultWhitelists.from_config(config.get("whiteLists", {})),
             image_pull_secrets=kubernetes.get("imagePullSecrets", {}),
             deployment_strategy=config["kubernetes"]["deploymentStrategy"],
@@ -460,10 +460,7 @@ class ChartBuilder:
         raise KeyError("No default port found. Did you define a port mapping?")
 
     def create_host_wrappers(self) -> list[HostWrapper]:
-        default_hosts: list[TraefikHost] = Traefik.from_config(
-            self.config_defaults.traefik_defaults
-        ).hosts
-
+        default_hosts: list[TraefikHost] = self.config_defaults.traefik_defaults.hosts
         hosts: list[TraefikHost] = (
             self.deployment.traefik.hosts if self.deployment.traefik else []
         )
@@ -513,13 +510,23 @@ class ChartBuilder:
             for idx, host in enumerate(hosts if hosts else default_hosts)
         ]
 
+    def to_ingress(self) -> V1AlphaIngressRoute | None:
+        return (
+            V1AlphaIngressRoute.from_spec(
+                metadata=self._to_object_meta(name="ingress-routes"),
+                spec=self.deployment.traefik.ingress_routes.get_value(self.target),
+            )
+            if self.deployment.traefik and self.deployment.traefik.ingress_routes
+            else None
+        )
+
     def to_ingress_routes(self, https: bool) -> list[V1AlphaIngressRoute]:
         hosts = self.create_host_wrappers()
         cluster_env = get_cluster_config_for_project(
             self.step_input.run_properties, self.project
         ).cluster_env
         return [
-            V1AlphaIngressRoute(
+            V1AlphaIngressRoute.from_hosts(
                 metadata=self._to_object_meta(
                     name=f"{self.release_name}-ingress-{i}-http"
                     + ("s" if https else "")
@@ -544,7 +551,7 @@ class ChartBuilder:
             self.step_input.run_properties, self.project
         ).cluster_env
         return [
-            V1AlphaIngressRoute(
+            V1AlphaIngressRoute.from_hosts(
                 metadata=self._to_object_meta(
                     name=f"{self.release_name}-{host.additional_route.name}-{i}"
                 ),
@@ -565,6 +572,7 @@ class ChartBuilder:
 
     def to_middlewares(self) -> dict[str, V1AlphaMiddleware]:
         hosts: list[HostWrapper] = self.create_host_wrappers()
+        traefik = self.deployment.traefik
 
         def to_metadata(host: HostWrapper) -> V1ObjectMeta:
             metadata = self._to_object_meta(name=host.full_name)
@@ -574,12 +582,22 @@ class ChartBuilder:
             return metadata
 
         return {
-            host.full_name: V1AlphaMiddleware(
+            host.full_name: V1AlphaMiddleware.from_source_ranges(
                 metadata=to_metadata(host),
                 source_ranges=list(itertools.chain(*host.white_lists.values())),
             )
             for host in hosts
-        }
+        } | (
+            {
+                f'middleware-{middleware["metadata"]["name"]}': V1AlphaMiddleware.from_spec(
+                    metadata=self._to_object_meta(name=middleware["metadata"]["name"]),
+                    spec=middleware["spec"],
+                )
+                for middleware in traefik.middlewares.get_value(self.target)
+            }
+            if traefik and traefik.middlewares
+            else {}
+        )
 
     def to_service_account(
         self,
@@ -752,7 +770,7 @@ class ChartBuilder:
             },
             projects_to_deploy={
                 project_execution.project.to_name
-                for project_execution in self.step_input.run_plan.get_projects_for_stage_name(
+                for project_execution in self.step_input.run_plan.get_executions_for_stage_name(
                     deploy.STAGE_NAME, use_full_plan=True
                 )
             },
@@ -879,6 +897,8 @@ def _to_service_components_chart(builder):
         f"{builder.project.name}-ingress-{i}-http": route
         for i, route in enumerate(builder.to_ingress_routes(https=False))
     }
+    ingress = builder.to_ingress()
+    ingress_routes = {"ingress-routes": ingress} if ingress else {}
     additional_routes = {
         route.metadata.name: route
         for i, route in enumerate(builder.to_additional_routes())
@@ -887,6 +907,7 @@ def _to_service_components_chart(builder):
         common_chart
         | ingress_https
         | ingress_http
+        | ingress_routes
         | additional_routes
         | service_monitor
     )

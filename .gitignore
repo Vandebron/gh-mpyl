@@ -127,30 +127,11 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-#intellij
-*.iml
-.mpyl/
 Project_Default.xml
 
-#documentation
-docs/*
-!docs/schema
-
-#dagster
-tmp*/
-
-.DS_Store
-
-node_modules/
 *.pem
-.dockerignore
-
-#Scala
-.jvmopts
-.bsp/
 
 #Customized locally
+.DS_Store
+.mpyl/
 mpyl_config.yml
-
-# Gradle template
-.gradle

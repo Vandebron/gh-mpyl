@@ -1,16 +1,21 @@
 """Commands related to build"""
 
+import datetime
+import logging
 import shutil
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
 import click
+from jsonschema import ValidationError
 from rich.console import Console
+from rich.markdown import Markdown
 
 from . import CONFIG_PATH_HELP
 from . import create_console_logger
-from ..build import run_mpyl
+from ..build import run_deploy_stage
 from ..constants import (
     DEFAULT_CONFIG_FILE_NAME,
     DEFAULT_RUN_PROPERTIES_FILE_NAME,
@@ -18,10 +23,10 @@ from ..constants import (
     RUN_RESULT_FILE_GLOB,
 )
 from ..project import load_project, Target
-from ..run_plan import RunPlan
 from ..plan.discovery import find_projects
-from ..steps import deploy
-from ..steps.models import ConsoleProperties, RunProperties
+from ..run_plan import RunPlan
+from ..steps.models import RunProperties
+from ..steps.run import RunResult
 from ..utilities.pyaml_env import parse_config
 
 
@@ -66,16 +71,10 @@ def build(ctx, environment, config, properties):
     parsed_properties = parse_config(properties)
     RunProperties.validate(parsed_properties)
 
-    console_config = ConsoleProperties.from_configuration(parsed_properties)
-    console = create_console_logger(
-        show_path=console_config.show_paths,
-        max_width=console_config.width,
-    )
-
     ctx.obj = Context(
         target=Target.from_environment(environment),
         config=parse_config(config),
-        console=console,
+        console=create_console_logger(),
         run_properties=parsed_properties,
     )
 
@@ -95,11 +94,11 @@ class CustomValidation(click.Command):
 
 @build.command(help="Run an MPyL build", cls=CustomValidation)
 @click.option(
-    "--projects",
+    "--project",
     "-p",
     type=click.STRING,
     required=True,
-    help="Comma separated list of the projects to build",
+    help="The project to run",
 )
 @click.option(
     "--image", type=click.STRING, required=False, help="Docker image to deploy"
@@ -107,17 +106,12 @@ class CustomValidation(click.Command):
 @click.pass_obj
 def run(
     obj: Context,
-    projects,
+    project,
     image,
 ):
     run_result_files = list(Path(RUN_ARTIFACTS_FOLDER).glob(RUN_RESULT_FILE_GLOB))
     for run_result_file in run_result_files:
         run_result_file.unlink()
-
-    if image and len(projects.split(",")) != 1:
-        raise click.ClickException(
-            message="Need to pass exactly one project to deploy when passing an image"
-        )
 
     run_properties = RunProperties.from_configuration(
         target=obj.target,
@@ -126,15 +120,10 @@ def run(
         deploy_image=image,
     )
 
-    run_plan = RunPlan.load_from_pickle_file(
-        selected_stage=run_properties.selected_stage(deploy.STAGE_NAME),
-        selected_projects=run_properties.selected_projects(projects),
-    )
-
-    run_result = run_mpyl(
-        console_properties=ConsoleProperties.from_configuration(obj.run_properties),
+    run_result = _run_stage(
+        console=obj.console,
         run_properties=run_properties,
-        run_plan=run_plan,
+        project_name_to_run=project,
     )
 
     run_result.write_to_pickle_file()
@@ -161,3 +150,39 @@ def clean(obj: Context):
             obj.console.print(f"🧹 Cleaned up {target_path}")
     else:
         obj.console.print("Nothing to clean")
+
+
+def _run_stage(
+    console: Console,
+    run_properties: RunProperties,
+    project_name_to_run: str,
+) -> RunResult:
+    logger = logging.getLogger("mpyl")
+    start_time = time.time()
+    try:
+        run_plan = RunPlan.load_from_pickle_file()
+        console.print(Markdown(run_plan.to_markdown()))
+
+        run_result = run_deploy_stage(
+            logger=logger,
+            run_properties=run_properties,
+            run_plan=run_plan,
+            project_name_to_run=project_name_to_run,
+        )
+
+        console.log(
+            f"Completed in {datetime.timedelta(seconds=time.time() - start_time)}"
+        )
+        console.print(Markdown(run_result.to_markdown()))
+        return run_result
+
+    except ValidationError as exc:
+        console.log(
+            f'Schema validation failed {exc.message} at `{".".join(map(str, exc.path))}`'
+        )
+        raise exc
+
+    except Exception as exc:
+        console.log(f"Unexpected exception: {exc}")
+        console.print_exception()
+        raise exc

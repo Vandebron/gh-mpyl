@@ -13,8 +13,7 @@ from .input import Input
 from .models import RunProperties
 from .output import Output
 from .step import Step
-from ..project import Project
-from ..project import Stage
+from ..project import Project, Stage
 from ..project_execution import ProjectExecution
 from ..run_plan import RunPlan
 from ..validation import validate
@@ -42,7 +41,7 @@ class ExecutionException(Exception):
 @dataclass(frozen=True)
 class ExecutionResult:
     stage: Stage
-    project: Project
+    project: ProjectExecution
     output: Output
     timestamp: datetime = datetime.now()
 
@@ -155,7 +154,7 @@ class Executor:
 
         try:
             self._logger.info(
-                f"Executing {stage.name} {stage.icon} for {project_execution.name}"
+                f"Executing {stage.to_markdown()} for {project_execution.name}"
             )
             if step.before:
                 before_result = self._execute(
@@ -189,7 +188,7 @@ class Executor:
             ) from exc
 
     def execute(
-        self, stage: str, project_execution: ProjectExecution
+        self, stage: Stage, project_execution: ProjectExecution
     ) -> ExecutionResult:
         """
         :param stage: the stage to execute
@@ -197,10 +196,11 @@ class Executor:
         :return: StepResult
         :raise ExecutionException
         """
-        stage_object = self._run_properties.to_stage(stage)
         step_output = self._execute_stage(
-            stage=stage_object, project_execution=project_execution
+            stage=stage, project_execution=project_execution
         )
         return ExecutionResult(
-            stage=stage_object, project=project_execution.project, output=step_output
+            stage=stage,
+            project=project_execution,
+            output=step_output,
         )
