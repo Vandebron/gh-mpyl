@@ -165,6 +165,10 @@ class RunPlan:
 
         for _stage, executions in self._full_plan.items():
             for execution in executions:
+                stages = {
+                    stage.name: not execution.cached  # 'should it run this stage' value
+                    for stage, _executions in self._full_plan.items()
+                }
                 run_plan.update(
                     {
                         execution.project.name: {
@@ -174,8 +178,8 @@ class RunPlan:
                             "base_path": str(execution.project.root_path),
                             "maintainers": execution.project.maintainer,
                             "pipeline": execution.project.pipeline,
-                            (stage.name for stage, _executions in self._full_plan.items()): execution.cached ,
                         }
+                        | stages
                     }
                 )
 
