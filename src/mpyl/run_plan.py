@@ -7,7 +7,6 @@ import os
 import pickle
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Union
 
 from .constants import RUN_ARTIFACTS_FOLDER
 from .project import Project, Stage, load_project
@@ -166,11 +165,6 @@ class RunPlan:
 
         for stage, executions in self._full_plan.items():
             for execution in executions:
-                stages: list[dict[str, Union[str, bool]]] = run_plan.get(
-                    execution.project.name, {}
-                ).get("stages", [])
-                stages.append({"name": stage.name, "cached": execution.cached})
-
                 run_plan.update(
                     {
                         execution.project.name: {
@@ -180,7 +174,7 @@ class RunPlan:
                             "base_path": str(execution.project.root_path),
                             "maintainers": execution.project.maintainer,
                             "pipeline": execution.project.pipeline,
-                            "stages": stages,
+                            stage.name: execution.cached,
                         }
                     }
                 )
