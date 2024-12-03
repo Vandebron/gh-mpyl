@@ -19,8 +19,13 @@ RUN pip install pipenv
 # Switch to mpyl source code directory
 WORKDIR /app/mpyl
 
+# Github overrides the $HOME directory to /github/home and this causes all kinds of issues, so we're forced to create a
+# new user that has access to that directory
+# see https://github.com/actions/runner/issues/863
+RUN useradd -U github -o --uid 1000 -d /github/home
+USER github
+
 # Install the project dependencies.
-USER vdbnonroot
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 COPY Pipfile Pipfile.lock ./
@@ -39,7 +44,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # the application crashes without emitting any logs due to buffering.
 ENV PYTHONUNBUFFERED=1
 
-## Switch to the directory of the caller repo (must be mounted while running)
+# Switch to the directory of the caller repo (must be mounted while running)
 WORKDIR /repo
 
 # Run the application.
