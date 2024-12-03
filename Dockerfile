@@ -23,14 +23,12 @@ WORKDIR /app/mpyl
 # to run this image as root until they decide to fix this glaring issue.
 # See https://github.com/actions/runner/issues/863 for more details.
 # USER vdbnonroot
-ENV WORKON_HOME=/github/home
-ENV PIPENV_CUSTOM_VENV_NAME=gh-mpyl
 
 # Install the project dependencies.
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 COPY Pipfile Pipfile.lock ./
-RUN pipenv sync
+RUN pipenv sync --system
 
 # Copy the source code into the container.
 COPY --link --parents src/mpyl ./
@@ -49,5 +47,5 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /repo
 
 # Run the application.
-ENTRYPOINT ["pipenv", "run", "python", "/app/mpyl/src/mpyl/__main__.py"]
+ENTRYPOINT ["python", "/app/mpyl/src/mpyl/__main__.py"]
 CMD ["health"]
