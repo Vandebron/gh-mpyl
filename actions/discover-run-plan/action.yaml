@@ -16,7 +16,7 @@ runs:
   image: docker://public.ecr.aws/vdb-public/gh-mpyl:pr-116
   args:
     - plan
-    - create
+    - discover
     - --project
     - ${{ inputs.selected-project }}
   env:

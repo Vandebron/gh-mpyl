@@ -62,7 +62,7 @@ def plan(ctx, config, properties):
     )
 
 
-@plan.command("create")
+@plan.command("discover")
 @click.option(
     "--project",
     "-p",
@@ -71,7 +71,7 @@ def plan(ctx, config, properties):
     help="Limit the run plan to only this project",
 )
 @click.pass_obj
-def create_plan(ctx: Context, project):
+def discover_plan(ctx: Context, project):
     changed_files_path = Path(ctx.config["vcs"]["changedFilesPath"])
     if not changed_files_path.is_dir():
         raise ValueError(

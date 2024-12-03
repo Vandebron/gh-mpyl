@@ -130,8 +130,8 @@ jobs:
         with:
           config-path: mpyl_config.example.yml
 
-  create-run-plan:
-    name: ▶️ Run actions/create-run-plan
+  discover-run-plan:
+    name: ▶️ Run actions/discover-run-plan
     runs-on: ubuntu-latest
     if: ${{ !failure() && !cancelled() }}
     needs:
@@ -144,16 +144,16 @@ jobs:
         if: needs.changed-files.outputs.build-docker-image == 'true'
         env:
           IMAGE: docker://${{ needs.docker.outputs.image }}
-        run: yq -i '.runs.image = strenv(IMAGE)' actions/create-run-plan/action.yaml
+        run: yq -i '.runs.image = strenv(IMAGE)' actions/discover-run-plan/action.yaml
 
-      - name: Create run plan based on changed files
-        uses: ./actions/create-run-plan
+      - name: Discover run plan based on changed files
+        uses: ./actions/discover-run-plan
         with:
           changed-files-path: tests/test_resources/changed-files-actions
           config-path: mpyl_config.example.yml
 
-      - name: Create run plan based on changed files with manual sub-select
-        uses: ./actions/create-run-plan
+      - name: Discover run plan based on changed files with manual sub-select
+        uses: ./actions/discover-run-plan
         with:
           selected-project: job
           changed-files-path: tests/test_resources/changed-files-actions
@@ -174,10 +174,10 @@ jobs:
         env:
           IMAGE: docker://${{ needs.docker.outputs.image }}
         run: |-
-          yq -i '.runs.image = strenv(IMAGE)' actions/create-run-plan/action.yaml
+          yq -i '.runs.image = strenv(IMAGE)' actions/discover-run-plan/action.yaml
           yq -i '.runs.image = strenv(IMAGE)' actions/generate-kubernetes-manifests/action.yaml
 
-      - uses: ./actions/create-run-plan
+      - uses: ./actions/discover-run-plan
         with:
           changed-files-path: tests/test_resources/changed-files-actions
           config-path: mpyl_config.example.yml
