@@ -142,7 +142,7 @@ class RunPlan:
     def write_to_json_file(self):
         run_plan: dict = {}
 
-        for stage, executions in self._full_plan.items():
+        for stage, executions in self._selected_plan.items():
             for execution in executions:
                 stages: list[dict[str, Union[str, bool]]] = run_plan.get(
                     execution.project.name, {}
