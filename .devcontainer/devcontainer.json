@@ -8,7 +8,7 @@
   },
 
   "mounts": [
-    "source=${localEnv:HOME}/.gitconfig,target=/root/.gitconfig,type=bind,consistency=cached"
+    "source=${localEnv:HOME}/.gitconfig,target=/home/vdbnonroot/.gitconfig,type=bind,consistency=cached"
   ],
 
   // More info: https://containers.dev/features.
@@ -16,7 +16,7 @@
     "ghcr.io/devcontainers/features/common-utils:2": {
       "configureZshAsDefaultShell": true,
       "upgradePackages": false,
-      "username": "none"
+      "username": "vdbnonroot",
     },
     "ghcr.io/devcontainers/features/git:1": {}
   },
