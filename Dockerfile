@@ -19,11 +19,10 @@ RUN pip install pipenv
 # Switch to mpyl source code directory
 WORKDIR /app/mpyl
 
-# Github overrides the $HOME directory to /github/home and this causes all kinds of issues, so we're forced to create a
-# new user that has access to that directory
-# see https://github.com/actions/runner/issues/863
-RUN useradd -U github -o --uid 1000 -d /github/home
-USER github
+# Github overrides the $HOME directory to /github/home and this causes all kinds of permissions issues, so we're forced
+# to run this image as root until they decide to fix this glaring issue.
+# See https://github.com/actions/runner/issues/863 for more details.
+# USER vdbnonroot
 
 # Install the project dependencies.
 ENV LANG=C.UTF-8
