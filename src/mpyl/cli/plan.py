@@ -90,7 +90,7 @@ def create_plan(ctx: Context, project):
     )
 
     if project != "":
-        run_plan.select_project(project)
+        run_plan = run_plan.select_project(project)
         logger.info(f"Selected project: {project}")
 
     run_plan.write_to_pickle_file()

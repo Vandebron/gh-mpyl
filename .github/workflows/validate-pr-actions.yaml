@@ -146,16 +146,18 @@ jobs:
           IMAGE: docker://${{ needs.docker.outputs.image }}
         run: yq -i '.runs.image = strenv(IMAGE)' actions/create-run-plan/action.yaml
 
-      - uses: ./actions/create-run-plan
+      - name: Create run plan based on changed files
+        uses: ./actions/create-run-plan
         with:
           changed-files-path: tests/test_resources/changed-files-actions
           config-path: mpyl_config.example.yml
 
-      - uses: ./actions/create-run-plan
+      - name: Create run plan based on changed files with manual sub-select
+        uses: ./actions/create-run-plan
         with:
+          selected-project: job
           changed-files-path: tests/test_resources/changed-files-actions
           config-path: mpyl_config.example.yml
-          selected-project: job
 
   generate-kubernetes-manifests:
     name: ▶️ Run actions/generate-kubernetes-manifests
