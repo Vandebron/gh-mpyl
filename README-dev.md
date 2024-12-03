@@ -25,7 +25,7 @@ You might have to install the [IntelliJ Python plugin](https://plugins.jetbrains
 1. open the _Project Structure_ menu
 2. in _Platform Settings_ → _SDKs_ add a new SDK using _Add Python SDK from disk…_
 3. select _Virtualenv Environment_
-4. Choose _Existing environment_ and use `/home/vdbnonroot/.local/share/virtualenvs/gh-mpyl/bin/python3.13` as the path to the interpreter
+4. Choose _Existing environment_ and use `/root/.local/share/virtualenvs/gh-mpyl/bin/python3.13` as the path to the interpreter
 
 Yes, Python is a PITA 😩. We're hoping to further pre-configure this as soon as IntelliJ supports it.
 
