@@ -10,8 +10,7 @@ on:
       - Pipfile.lock
       - actions/**
       - mpyl_config.example.yml
-      - tests/projects/job/**
-      - tests/test_resources/changed-files/*
+      - tests/test_resources/changed-files-actions/*
 
 # If multiple commits are pushed simultaneously, only build the last one.
 concurrency:
@@ -131,8 +130,8 @@ jobs:
         with:
           config-path: mpyl_config.example.yml
 
-  run-plan:
-    name: ▶️ Run actions/run-plan
+  create-run-plan:
+    name: ▶️ Run actions/create-run-plan
     runs-on: ubuntu-latest
     if: ${{ !failure() && !cancelled() }}
     needs:
@@ -145,14 +144,20 @@ jobs:
         if: needs.changed-files.outputs.build-docker-image == 'true'
         env:
           IMAGE: docker://${{ needs.docker.outputs.image }}
-        run: yq -i '.runs.image = strenv(IMAGE)' actions/run-plan/action.yaml
+        run: yq -i '.runs.image = strenv(IMAGE)' actions/create-run-plan/action.yaml
 
-      - uses: ./actions/run-plan
+      - uses: ./actions/create-run-plan
         with:
           changed-files-path: tests/test_resources/changed-files-actions
           config-path: mpyl_config.example.yml
 
-  generate-manifests:
+      - uses: ./actions/create-run-plan
+        with:
+          changed-files-path: tests/test_resources/changed-files-actions
+          config-path: mpyl_config.example.yml
+          selected-project: job
+
+  generate-kubernetes-manifests:
     name: ▶️ Run actions/generate-kubernetes-manifests
     runs-on: ubuntu-latest
     if: ${{ !failure() && !cancelled() }}
@@ -167,10 +172,10 @@ jobs:
         env:
           IMAGE: docker://${{ needs.docker.outputs.image }}
         run: |-
-          yq -i '.runs.image = strenv(IMAGE)' actions/run-plan/action.yaml
+          yq -i '.runs.image = strenv(IMAGE)' actions/create-run-plan/action.yaml
           yq -i '.runs.image = strenv(IMAGE)' actions/generate-kubernetes-manifests/action.yaml
 
-      - uses: ./actions/run-plan
+      - uses: ./actions/create-run-plan
         with:
           changed-files-path: tests/test_resources/changed-files-actions
           config-path: mpyl_config.example.yml
