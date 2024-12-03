@@ -19,12 +19,16 @@ RUN pip install pipenv
 # Switch to mpyl source code directory
 WORKDIR /app/mpyl
 
+# Github overrides the $HOME directory to /github/home and this causes all kinds of permissions issues, so we're forced
+# to run this image as root until they decide to fix this glaring issue.
+# See https://github.com/actions/runner/issues/863 for more details.
+# USER vdbnonroot
+
 # Install the project dependencies.
-USER vdbnonroot
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 COPY Pipfile Pipfile.lock ./
-RUN pipenv sync
+RUN pipenv sync --system
 
 # Copy the source code into the container.
 COPY --link --parents src/mpyl ./
@@ -39,9 +43,9 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # the application crashes without emitting any logs due to buffering.
 ENV PYTHONUNBUFFERED=1
 
-## Switch to the directory of the caller repo (must be mounted while running)
+# Switch to the directory of the caller repo (must be mounted while running)
 WORKDIR /repo
 
 # Run the application.
-ENTRYPOINT ["pipenv", "run", "python", "/app/mpyl/src/mpyl/__main__.py"]
+ENTRYPOINT ["python", "/app/mpyl/src/mpyl/__main__.py"]
 CMD ["health"]
