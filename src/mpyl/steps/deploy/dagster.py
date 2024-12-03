@@ -22,7 +22,7 @@ from .k8s import (
 )
 from .k8s.chart import ChartBuilder
 from .k8s.cluster import get_cluster_config_for_project
-from .k8s.helm import template_chart, write_chart
+from .k8s.helm import write_chart
 from .k8s.resources.dagster import to_user_code_values, to_grpc_server_entry, Constants
 from ..input import Input
 from ..output import Output
@@ -178,45 +178,21 @@ class HelmTemplateDagster(Step, DagsterBase):
             step_input.run_properties, step_input.project_execution.project
         ).context
         dagster_config: DagsterConfig = DagsterConfig.from_dict(properties.config)
-        dagster_template_results = []
-        apps_api = client.AppsV1Api()
 
         config.load_kube_config(context=context)
 
         user_code_deployment, values_path = self.write_user_code_manifest(
             step_input, properties, dagster_config.global_service_account_override
         )
-
-        dagster_version = get_version_of_deployment(
-            apps_api=apps_api,
-            namespace=dagster_config.base_namespace,
-            deployment=dagster_config.webserver,
-            version_label="app.kubernetes.io/version",
-        )
-
-        template_helm_output = template_chart(
-            logger=self._logger,
-            values_path=values_path,
-            output_path=values_path / Path("templates"),
-            release_name=convert_to_helm_release_name(
-                step_input.project_execution.name, get_name_suffix(properties)
-            ),
-            chart_version=dagster_version,
-            chart_name=Constants.CHART_NAME,
-            namespace=dagster_config.base_namespace,
-        )
-
-        dagster_template_results.append(template_helm_output)
-
-        if not template_helm_output.success:
-            return self.combine_outputs(dagster_template_results)
-
         self._logger.debug(
             f"Written user code manifest with values: {user_code_deployment}"
         )
         self._logger.info(f"Writing Helm values to {values_path}")
 
-        return self.combine_outputs(dagster_template_results)
+        return Output(
+            True,
+            f"Successfully written helm chart manifest to {values_path}",
+        )
 
 
 class TemplateDagster(Step, DagsterBase):
@@ -246,44 +222,20 @@ class TemplateDagster(Step, DagsterBase):
             step_input.run_properties, step_input.project_execution.project
         ).context
         dagster_config: DagsterConfig = DagsterConfig.from_dict(properties.config)
-        dagster_template_results = []
-        apps_api = client.AppsV1Api()
 
         user_code_deployment, values_path = self.write_user_code_manifest(
             step_input, properties, dagster_config.global_service_account_override
         )
-
-        dagster_version = get_version_of_deployment(
-            apps_api=apps_api,
-            namespace=dagster_config.base_namespace,
-            deployment=dagster_config.webserver,
-            version_label="app.kubernetes.io/version",
-        )
-
-        template_helm_output = template_chart(
-            logger=self._logger,
-            values_path=values_path,
-            output_path=values_path / Path("templates"),
-            release_name=convert_to_helm_release_name(
-                step_input.project_execution.name, get_name_suffix(properties)
-            ),
-            chart_version=dagster_version,
-            chart_name=Constants.CHART_NAME,
-            namespace=dagster_config.base_namespace,
-        )
-
-        dagster_template_results.append(template_helm_output)
-
-        if not template_helm_output.success:
-            return self.combine_outputs(dagster_template_results)
-
         self._logger.debug(
             f"Written user code manifest with values: {user_code_deployment}"
         )
         self._logger.info(f"Writing Helm values to {values_path}")
 
+        dagster_template_results = []
+
         config.load_kube_config(context=context)
         core_api = client.CoreV1Api()
+        apps_api = client.AppsV1Api()
 
         add_server_list_output = self.add_server_to_server_list(
             core_api, user_code_deployment, dagster_config
