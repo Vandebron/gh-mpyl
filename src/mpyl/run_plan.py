@@ -206,7 +206,7 @@ class RunPlan:
     def write_to_json_file(self):
         run_plan: dict = {}
 
-        for executions in self._full_plan.values():
+        for executions in self._selected_plan.values():
             for execution in executions:
                 stages = {
                     stage.name: not execution.cached  # 'should it run this stage' value
