@@ -1,3 +1,8 @@
+import json
+import shutil
+from pathlib import Path
+from unittest.mock import patch
+
 import pytest
 
 from src.mpyl.project import Project, Stages
@@ -118,6 +123,41 @@ class TestFullRunPlan:
     run_plan = RunPlan.create(
         all_known_projects={execution_1.project, execution_2.project}, plan=full_plan
     )
+    test_run_json = Path("tests/.mpyl/run_plan.json")
+
+    @patch("src.mpyl.run_plan.RUN_PLAN_JSON_FILE", test_run_json)
+    def test_write_to_json(self):
+        full_plan = {
+            build_stage: {execution_1, execution_2},
+            test_stage: {execution_1},
+            deploy_stage: {execution_2, cached_execution},
+        }
+        run_plan = RunPlan.create(
+            all_known_projects={execution_1.project},
+            plan=full_plan,
+        )
+
+        run_plan.write_to_json_file()
+        with open(self.test_run_json, encoding="utf-8") as file:
+            run_plan_json = json.load(file)
+            project1 = next(
+                project
+                for project in run_plan_json
+                if project["service"] == "project 1"
+            )
+            project2 = next(
+                project
+                for project in run_plan_json
+                if project["service"] == "project 2"
+            )
+            assert project1["build"] is True
+            assert project1["test"] is True
+            assert project1["deploy"] is False
+            assert project2["build"] is True
+            assert project2["test"] is False
+            assert project2["deploy"] is True
+
+        shutil.rmtree(self.test_run_json.parent)
 
     def test_create(self):
         assert self.run_plan.all_known_projects == {
