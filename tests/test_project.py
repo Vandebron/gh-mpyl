@@ -69,18 +69,13 @@ class TestMpylSchema:
 
         assert project.deployment.traefik is not None
         host = project.deployment.traefik.hosts[0]
-        assert (
-            host.host.get_value(Target.PULL_REQUEST_BASE) == "Host(`payments.test.nl`)"
-        )
+        assert host.host.get_value(Target.TEST) == "Host(`payments.test.nl`)"
         assert (
             host.host.get_value(Target.PULL_REQUEST)
             == "Host(`payments-{PR-NUMBER}.{CLUSTER-ENV}.nl`)"
         )
         assert host.tls
-        assert (
-            host.tls.get_value(Target.PULL_REQUEST_BASE)
-            == "le-custom-prod-wildcard-cert"
-        )
+        assert host.tls.get_value(Target.TEST) == "le-custom-prod-wildcard-cert"
 
         assert (
             project.deployment.properties.env[2].all
