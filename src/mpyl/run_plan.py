@@ -165,18 +165,17 @@ class RunPlan:
         summary = "| 👷 Project | 🏗 Build | 🧪 Test | 🚀 Deploy | 🦺 Post-deploy |\n"
         summary += "| ---------- | :------: | :-----: | :-------: | :------------: |\n"
 
-        def get_icon(project_execution: ProjectExecution, stage: str):
+        def get_icon(project_execution: ProjectExecution, stage_name: str):
             if project_execution.project.pipeline == "docker":
                 return "🐳"
             if (
                 project_execution.project.pipeline == "sbt"
-                and project_execution
-                in self.get_executions_for_stage_name(stage, use_full_plan=True)
+                and project_execution in self.get_executions_for_stage_name(stage_name)
             ):
                 return "💾" if project_execution.cached else "☕️"
             return ""
 
-        all_executions = self._get_all_executions(use_full_plan=True)
+        all_executions = self._get_all_executions()
         if len(all_executions) == 0:
             summary = "Nothing to do 🤷\n"
 
@@ -185,14 +184,12 @@ class RunPlan:
             test_plan = get_icon(execution, "test")
             deploy_plan = (
                 "🚀"
-                if execution
-                in self.get_executions_for_stage_name("deploy", use_full_plan=True)
+                if execution in self.get_executions_for_stage_name("deploy")
                 else ""
             )
             postdeploy_plan = (
                 "🦺"
-                if execution
-                in self.get_executions_for_stage_name("postdeploy", use_full_plan=True)
+                if execution in self.get_executions_for_stage_name("postdeploy")
                 else ""
             )
             summary += f"| {execution.name} | {build_plan} | {test_plan} | {deploy_plan} | {postdeploy_plan} |\n"
@@ -209,7 +206,11 @@ class RunPlan:
         for executions in self._selected_plan.values():
             for execution in executions:
                 stages = {
-                    stage.name: not execution.cached  # 'should it run this stage' value
+                    stage.name: (
+                        not execution.cached
+                        if execution in self._get_executions_for_stage(stage)
+                        else False
+                    )
                     for stage in self._selected_plan.keys()
                 }
                 run_plan.update(
