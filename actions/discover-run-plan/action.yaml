@@ -8,12 +8,17 @@ inputs:
   changed-files-path:
     description: The path to the file containing the changed files
     required: true
+  selected-project:
+    description: The path to the file containing the changed files
+    required: false
 runs:
   using: docker
-  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.13.8
+  image: docker://public.ecr.aws/vdb-public/gh-mpyl:pr-116
   args:
     - plan
-    - create
+    - discover
+    - --project
+    - ${{ inputs.selected-project }}
   env:
     MPYL_CONFIG_PATH: ${{ inputs.config-path }}
     CHANGED_FILES_PATH: ${{ inputs.changed-files-path }}
