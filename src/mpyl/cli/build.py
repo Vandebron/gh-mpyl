@@ -7,6 +7,7 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 import click
 from jsonschema import ValidationError
@@ -66,7 +67,7 @@ class Context:
     show_default=True,
 )
 @click.pass_context
-def build(ctx, environment, config, properties):
+def build(ctx, environment: str, config: Path, properties: Path):
     """Pipeline build commands"""
     parsed_properties = parse_config(properties)
     RunProperties.validate(parsed_properties)
@@ -104,11 +105,7 @@ class CustomValidation(click.Command):
     "--image", type=click.STRING, required=False, help="Docker image to deploy"
 )
 @click.pass_obj
-def run(
-    obj: Context,
-    project,
-    image,
-):
+def run(obj: Context, project: str, image: Optional[str]):
     run_result_files = list(Path(RUN_ARTIFACTS_FOLDER).glob(RUN_RESULT_FILE_GLOB))
     for run_result_file in run_result_files:
         run_result_file.unlink()

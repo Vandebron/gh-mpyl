@@ -3,6 +3,7 @@
 import logging
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 import click
 from rich.console import Console
@@ -48,7 +49,7 @@ class Context:
     show_default=True,
 )
 @click.pass_context
-def plan(ctx, config, properties):
+def plan(ctx, config: Path, properties: Path):
     """Pipeline build commands"""
     parsed_properties = parse_config(properties)
     parsed_config = parse_config(config)
@@ -71,7 +72,7 @@ def plan(ctx, config, properties):
     help="Limit the run plan to only this project",
 )
 @click.pass_obj
-def discover_plan(ctx: Context, project):
+def discover_plan(ctx: Context, project: Optional[str]):
     changed_files_path = Path(ctx.config["vcs"]["changedFilesPath"])
     if not changed_files_path.is_dir():
         raise ValueError(
@@ -89,7 +90,7 @@ def discover_plan(ctx: Context, project):
         changed_files_path=changed_files_path,
     )
 
-    if project != "":
+    if project and project != "":
         run_plan = run_plan.select_project(project)
         logger.info(f"Selected project: {project}")
 
