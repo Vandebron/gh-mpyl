@@ -23,7 +23,6 @@ RUN_PLAN_SUMMARY_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan_summary.md"
 class RunPlan:
     all_known_projects: set[Project]
     _full_plan: dict[Stage, set[ProjectExecution]]
-    # unused but temporarily kept here on purpose, see https://github.com/Vandebron/gh-mpyl/pull/105
     _selected_plan: dict[Stage, set[ProjectExecution]]
 
     @classmethod
@@ -38,27 +37,6 @@ class RunPlan:
             all_known_projects=all_known_projects, _full_plan=plan, _selected_plan=plan
         )
 
-    # unused but temporarily kept here on purpose, see https://github.com/Vandebron/gh-mpyl/pull/105
-    def select_stage(self, stage_name: str) -> "RunPlan":
-        selected_stage = None
-        for stage in self._get_all_stages():
-            if stage.name == stage_name:
-                selected_stage = stage
-                break
-        if not selected_stage:
-            raise ValueError(
-                f"Unable to select stage outside of the run plan: '{stage_name}'"
-            )
-
-        return RunPlan(
-            all_known_projects=self.all_known_projects,
-            _full_plan=self._full_plan,
-            _selected_plan={
-                selected_stage: self._get_executions_for_stage(selected_stage)
-            },
-        )
-
-    # unused but temporarily kept here on purpose, see https://github.com/Vandebron/gh-mpyl/pull/105
     def select_project(self, project_name: str) -> "RunPlan":
         selected_project = None
         for project in self._get_all_executions():
@@ -271,11 +249,11 @@ class RunPlan:
 
 
 def discover_run_plan(
+    logger: logging.Logger,
     revision: str,
     all_stages: list[Stage],
     changed_files_path: Path,
 ) -> RunPlan:
-    logger = logging.getLogger("mpyl")
     logger.info("Discovering run plan...")
 
     all_projects = set(

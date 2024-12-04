@@ -2,6 +2,7 @@
 
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 
 import click
 from rich.console import Console
@@ -50,7 +51,7 @@ class Context:
     default=DEFAULT_CONFIG_FILE_NAME,
 )
 @click.pass_context
-def projects(ctx, config):
+def projects(ctx, config: Path):
     """Commands related to MPyL project configurations (project.yml)"""
     ctx.obj = Context(parse_config(config))
 

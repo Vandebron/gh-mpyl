@@ -1,3 +1,4 @@
 [
-  "tests/projects/job/src/hello-world.py"
+  "tests/projects/job/src/hello-world.py",
+  "tests/projects/sbt-service/build.sbt"
 ]

@@ -1,7 +1,9 @@
 """Commands related to plan"""
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 import click
 from rich.console import Console
@@ -47,7 +49,7 @@ class Context:
     show_default=True,
 )
 @click.pass_context
-def plan(ctx, config, properties):
+def plan(ctx, config: Path, properties: Path):
     """Pipeline build commands"""
     parsed_properties = parse_config(properties)
     parsed_config = parse_config(config)
@@ -61,16 +63,25 @@ def plan(ctx, config, properties):
     )
 
 
-@plan.command("create")
+@plan.command("discover")
+@click.option(
+    "--project",
+    "-p",
+    type=click.STRING,
+    required=False,
+    help="Limit the run plan to only this project",
+)
 @click.pass_obj
-def create_plan(ctx: Context):
+def discover_plan(ctx: Context, project: Optional[str]):
     changed_files_path = Path(ctx.config["vcs"]["changedFilesPath"])
     if not changed_files_path.is_dir():
         raise ValueError(
             f"Unable to calculate run plan because {changed_files_path} is not a directory"
         )
 
+    logger = logging.getLogger("mpyl")
     run_plan = discover_run_plan(
+        logger=logger,
         revision=ctx.run_properties["build"]["versioning"]["revision"],
         all_stages=[
             Stage(stage["name"], stage["icon"])
@@ -78,6 +89,10 @@ def create_plan(ctx: Context):
         ],
         changed_files_path=changed_files_path,
     )
+
+    if project and project != "":
+        run_plan = run_plan.select_project(project)
+        logger.info(f"Selected project: {project}")
 
     run_plan.write_to_pickle_file()
     run_plan.write_to_json_file()

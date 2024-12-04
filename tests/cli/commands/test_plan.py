@@ -2,7 +2,7 @@ from tests.cli.commands import invoke, config_path, run_properties_path
 
 
 class TestPlanCli:
-    def test_plan_create(self):
+    def test_plan_discover(self):
         result = invoke(
             [
                 "plan",
@@ -10,7 +10,7 @@ class TestPlanCli:
                 str(config_path),
                 "-p",
                 str(run_properties_path),
-                "create",
+                "discover",
                 "--help",
             ]
         )
