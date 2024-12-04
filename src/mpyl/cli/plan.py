@@ -1,7 +1,5 @@
 """Commands related to plan"""
 
-# ptab bogus change to test pipelines
-
 import logging
 from dataclasses import dataclass
 from pathlib import Path
