@@ -49,7 +49,7 @@ class Target(Enum):
         if environment == "pull-request":
             return Target.PULL_REQUEST
         if environment == "test":
-            return Target.PULL_REQUEST_BASE
+            return Target.TEST
         if environment == "acceptance":
             return Target.ACCEPTANCE
         if environment == "production":
@@ -58,7 +58,7 @@ class Target(Enum):
         raise ValueError(f"Invalid value for environment: {environment}")
 
     PULL_REQUEST = "PullRequest"
-    PULL_REQUEST_BASE = "PullRequestBase"
+    TEST = "Test"
     ACCEPTANCE = "Acceptance"
     PRODUCTION = "Production"
 
@@ -85,7 +85,7 @@ class TargetProperty(Generic[T]):
             return self.all
         if target == Target.PULL_REQUEST:
             return self.pr
-        if target == Target.PULL_REQUEST_BASE:
+        if target == Target.TEST:
             return self.test
         if target == Target.ACCEPTANCE:
             return self.acceptance
