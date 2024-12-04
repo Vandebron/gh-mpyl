@@ -1,4 +1,55 @@
 ---
+# This workflow does the following:
+#   1. compute the next version
+#   2. point all actions to the new image, commit and push
+#   3. tag and release
+#   4. build and publish a new docker image
+#
+# I already hear you ask: "wait, why are you pointing to an image before it exists, are you crazy?!".
+# Great question, I'm so glad you asked! In the beginning, we followed the more expected opposite approach:
+#   1. compute the next version
+#   2. build and publish a new docker image
+#   3. point all actions to the new image, commit and push
+#   4. tag and release
+#
+# However, since building the Docker image (step 2) takes a while, there was a huge interval between steps 2 and 4,
+# and when someone merged another PR in between then this messed the entire workflow and ended up releasing the wrong
+# thing. Here's a simple illustration (let's say the current release is v1):
+#
+#   1. PR "left" is merged
+#   2. next version is calculated to be v2
+#   3. docker image gh-mpyl:v2 starts building
+#                                                      4. PR "right" is merged
+#                                                      5. next version is calculated to be v2 again (since "left" hasn't finished)
+#                                                      6. docker image gh-mpyl:v2 starts building (with different contents than the "right" one)
+#   7. docker image gh-mpyl:v2 is published
+#   8. actions are pointed to gh-mpyl:v2
+#   9. commit is pushed
+#   10. a new broken tag and release are created:
+#      - the Docker image gh-mpyl:v2 include only the changes for PR "left"
+#      - but the diff and changelog for v2 include also the changes from PR "right"
+#
+#                                                      11. docker image gh-mpyl:v2 is published again with different contents (if the registry allows for it)
+#                                                      11. weird stuff happens trying to calculate the changelog for tag v2 (since it already exists)
+#
+#
+# Consider also that there can multiple PRs merged simultaneously, and that the order of operations will vary wildly
+# depending on which runner is busier, and it's easy to see how many different problems this introduced.
+#
+# For this reason, we decided to take a different approach and instead immediately commit and tag the release as soon as
+# the PR is merged. While this doesn't actually solve the problem, it makes the interval between "merging the PR" and
+# "creating a release" so little that the risk of this happening is now very low.
+#
+# This does introduce a small risk: if the job to publish the docker image fails, then this tag is effectively broken as
+# it points to an image that does not exist. We consider that an acceptable risk, because:
+#   - it's unlikely that the Docker image will consistently fail to build in main after passing in the PR
+#   - even if this does happen, it's better to have a tag that doesn't work at all than a tag with unknown contents and
+#     possibly backwards incompatible changes
+#   - we always have the option to make this workflow remove the new tag if the docker job fails (we'll build it if it
+#     ever happens)
+#
+# I hope this explanation helped, thanks for coming to my TED talk.
+
 name: Release new version
 
 on:
@@ -14,12 +65,20 @@ on:
       - Pipfile
       - Pipfile.lock
 
+# If multiple commits are pushed simultaneously, finish the current one and queue the last one.
+concurrency:
+  group: ${{ github.workflow }}
+
+env:
+  image-name: gh-mpyl
+
 jobs:
   release:
+    name: ✏ Compute tag version
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
-    env:
-      image-name: gh-mpyl
+    outputs:
+      tag: ${{ steps.semver.outputs.next }}
     permissions:
       contents: write
     steps:
@@ -45,45 +104,6 @@ jobs:
         with:
           registry-type: public
 
-      - name: Create repository in ECR
-        uses: int128/create-ecr-repository-action@v1.331.0
-        with:
-          repository: ${{ env.image-name }}
-          public: true
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.2.0
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3.7.1
-
-      - name: Build and push
-        id: docker-build-push
-        uses: docker/build-push-action@v6.10.0
-        with:
-          file: Dockerfile
-          context: .
-          tags: ${{ steps.login-ecr-public.outputs.registry }}/${{ vars.AWS_ECR_PUBLIC_ALIAS }}/${{ env.image-name }}:${{ steps.semver.outputs.next }}
-          platforms: |-
-            linux/amd64
-            linux/arm64
-          provenance: false
-          push: true
-
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3.7.0
-
-      - name: Sign Docker image
-        env:
-          COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
-          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-          IMAGE: ${{ steps.login-ecr-public.outputs.registry }}/${{ vars.AWS_ECR_PUBLIC_ALIAS }}/${{ env.image-name }}
-          VERSION: ${{ steps.semver.outputs.next }}
-          DIGEST: ${{ steps.docker-build-push.outputs.digest }}
-        run: |-
-          echo "$COSIGN_KEY" > cosign.key
-          cosign sign --key cosign.key "$IMAGE:$VERSION@$DIGEST" --tlog-upload=false
-
       - name: Point all action.yaml files to the new version
         env:
           IMAGE: docker://${{ steps.login-ecr-public.outputs.registry }}/vdb-public/${{ env.image-name }}:${{ steps.semver.outputs.next }}
@@ -96,7 +116,7 @@ jobs:
         uses: actions/create-github-app-token@v1.11.0
         id: commit-token
         with:
-          repositories: gh-mpyl
+          repositories: ${{ github.repository }}
           app-id: ${{ vars.AUTOMATION_APP_ID }}
           private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
 
@@ -135,7 +155,7 @@ jobs:
         with:
           draft: false
           makeLatest: true
-          tag: ${{  steps.semver.outputs.next }}
+          tag: ${{ steps.semver.outputs.next }}
           name: ${{ steps.semver.outputs.next }}
           body: ${{ steps.changelog.outputs.changes }}
           commit: ${{ steps.commit.outputs.commit-sha }}
@@ -148,3 +168,60 @@ jobs:
         run: |-
           git tag -f "${SHORT_VERSION}"
           git push origin --tags --force
+
+  docker:
+    name: 🐳 Publish Docker image
+    runs-on: ubuntu-latest
+    needs: release
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4.0.2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR Public
+        id: login-ecr-public
+        uses: aws-actions/amazon-ecr-login@v2.0.1
+        with:
+          registry-type: public
+
+      - name: Create repository in ECR
+        uses: int128/create-ecr-repository-action@v1.331.0
+        with:
+          repository: ${{ env.image-name }}
+          public: true
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3.2.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.7.1
+
+      - name: Build and push
+        id: docker-build-push
+        uses: docker/build-push-action@v6.10.0
+        with:
+          file: Dockerfile
+          context: .
+          tags: ${{ steps.login-ecr-public.outputs.registry }}/${{ vars.AWS_ECR_PUBLIC_ALIAS }}/${{ env.image-name }}:${{ needs.release.outputs.tag }}
+          platforms: |-
+            linux/amd64
+            linux/arm64
+          provenance: false
+          push: true
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.7.0
+
+      - name: Sign Docker image
+        env:
+          COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+          IMAGE: ${{ steps.login-ecr-public.outputs.registry }}/${{ vars.AWS_ECR_PUBLIC_ALIAS }}/${{ env.image-name }}
+          VERSION: ${{ needs.release.outputs.tag }}
+          DIGEST: ${{ steps.docker-build-push.outputs.digest }}
+        run: |-
+          echo "$COSIGN_KEY" > cosign.key
+          cosign sign --key cosign.key "$IMAGE:$VERSION@$DIGEST" --tlog-upload=false
