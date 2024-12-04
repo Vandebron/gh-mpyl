@@ -16,7 +16,7 @@ from .utilities.repo import Changeset
 
 RUN_PLAN_PICKLE_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.pickle"
 RUN_PLAN_JSON_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.json"
-RUN_PLAN_SUMMARY_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan_summary.txt"
+RUN_PLAN_SUMMARY_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan_summary.md"
 
 
 @dataclass(frozen=True)
