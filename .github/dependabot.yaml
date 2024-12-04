@@ -1,4 +1,3 @@
----
 version: 2
 updates:
   - package-ecosystem: pip
@@ -21,3 +20,7 @@ updates:
       interval: weekly
     commit-message:
       prefix: chore
+  - package-ecosystem: 'devcontainers'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
