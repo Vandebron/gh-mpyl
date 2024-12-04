@@ -210,7 +210,7 @@ class RunPlan:
             for execution in executions:
                 stages = {
                     stage.name: not execution.cached  # 'should it run this stage' value
-                    for stage in self._full_plan.keys()
+                    for stage in self._selected_plan.keys()
                 }
                 run_plan.update(
                     {
