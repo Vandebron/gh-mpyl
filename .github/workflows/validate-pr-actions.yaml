@@ -39,7 +39,7 @@ jobs:
     needs: changed-files
     if: needs.changed-files.outputs.build-docker-image == 'true'
     outputs:
-      image: ${{ steps.docker-image.outputs.image }}
+      image: ${{ steps.docker-image.outputs.image-with-sha }}
     steps:
       - uses: actions/checkout@v4.2.2
 
@@ -69,13 +69,16 @@ jobs:
         uses: docker/setup-buildx-action@v3.7.1
 
       - name: Compute Docker image
-        run: echo "image=$REGISTRY/$REPOSITORY/$PROJECT:$VERSION" | tee -a "$GITHUB_OUTPUT"
+        run: |-
+          echo "image=$REGISTRY/$REPOSITORY/$PROJECT:$VERSION" | tee -a "$GITHUB_OUTPUT"
+          echo "image-with-sha=$REGISTRY/$REPOSITORY/$PROJECT:$VERSION.$SHA" | tee -a "$GITHUB_OUTPUT"
         id: docker-image
         env:
           REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
           REPOSITORY: ${{ vars.AWS_ECR_PUBLIC_ALIAS }}
           PROJECT: gh-mpyl
           VERSION: pr-${{ github.event.pull_request.number }}
+          SHA: ${{ github.sha }}
 
       - name: Build and push
         id: docker-build-push
@@ -83,7 +86,9 @@ jobs:
         with:
           file: Dockerfile
           context: .
-          tags: ${{ steps.docker-image.outputs.image }}
+          tags: |-
+            ${{ steps.docker-image.outputs.image }}
+            ${{ steps.docker-image.outputs.image-with-sha }}
           platforms: |-
             linux/amd64
             linux/arm64
