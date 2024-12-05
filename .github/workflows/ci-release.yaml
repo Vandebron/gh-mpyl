@@ -107,7 +107,7 @@ jobs:
           GH_TOKEN: ${{ steps.commit-token.outputs.token }}
         with:
           files: actions/**/action.yaml
-          commit-message: Update action.yaml files to ${{ env.image-name }}:${{ steps.semver.outputs.next }}
+          commit-message: 'chore: point Docker container actions to ${{ env.image-name }}:${{ steps.semver.outputs.next }}'
 
       - name: Tag version ${{ steps.semver.outputs.next }}
         uses: actions/github-script@v7.0.1
