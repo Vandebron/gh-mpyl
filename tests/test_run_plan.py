@@ -1,5 +1,4 @@
 import json
-import shutil
 from pathlib import Path
 from unittest.mock import patch
 
@@ -140,24 +139,32 @@ class TestFullRunPlan:
         run_plan.write_to_json_file()
         with open(self.test_run_json, encoding="utf-8") as file:
             run_plan_json = json.load(file)
-            project1 = next(
-                project
-                for project in run_plan_json
-                if project["service"] == "project 1"
-            )
-            project2 = next(
-                project
-                for project in run_plan_json
-                if project["service"] == "project 2"
-            )
+
+            def get_project_json(name: str):
+                return next(
+                    (
+                        project
+                        for project in run_plan_json
+                        if project["service"] == name
+                    ),
+                    None,
+                )
+
+            project1 = get_project_json("project 1")
             assert project1["build"] is True
             assert project1["test"] is True
             assert project1["deploy"] is False
+            project2 = get_project_json("project 2")
             assert project2["build"] is True
             assert project2["test"] is False
             assert project2["deploy"] is True
+            cached_project = get_project_json("a cached project")
+            assert cached_project["build"] is False
+            assert cached_project["test"] is False
+            assert cached_project["deploy"] is False
+            assert get_project_json("an unknown project") is None
 
-        shutil.rmtree(self.test_run_json.parent)
+        self.test_run_json.unlink()  # Can't delete the entire folder since it's also used by the selected plan test
 
     def test_create(self):
         assert self.run_plan.all_known_projects == {
@@ -263,10 +270,44 @@ class TestFullRunPlan:
 
 class TestRunPlanWithSelectedProjectInASingleStage:
     full_plan = {build_stage: {execution_1, execution_2}, deploy_stage: {execution_2}}
-
     run_plan = RunPlan.create(
         all_known_projects={execution_1.project, execution_2.project}, plan=full_plan
     ).select_project(execution_1.name)
+    test_run_json = Path("tests/.mpyl/run_plan2.json")
+
+    @patch("src.mpyl.run_plan.RUN_PLAN_JSON_FILE", test_run_json)
+    def test_write_to_json(self):
+        full_plan = {
+            build_stage: {execution_1, execution_2},
+            test_stage: {execution_1},
+            deploy_stage: {execution_2},
+        }
+        run_plan = RunPlan.create(
+            all_known_projects={execution_1.project},
+            plan=full_plan,
+        ).select_project(execution_1.name)
+
+        run_plan.write_to_json_file()
+        with open(self.test_run_json, encoding="utf-8") as file:
+            run_plan_json = json.load(file)
+
+            def get_project_json(name: str):
+                return next(
+                    (
+                        project
+                        for project in run_plan_json
+                        if project["service"] == name
+                    ),
+                    None,
+                )
+
+            project1 = get_project_json("project 1")
+            assert project1["build"] is True
+            assert project1["test"] is True
+            assert "deploy" not in project1
+            assert get_project_json("project 2") is None
+
+        self.test_run_json.unlink()  # Can't delete the entire folder since it's also used by the full plan test
 
     def test_select_project(self):
         assert self.run_plan.all_known_projects == {
