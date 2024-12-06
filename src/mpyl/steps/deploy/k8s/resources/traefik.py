@@ -8,6 +8,11 @@ from typing import Optional, Union, Any
 from kubernetes.client import V1ObjectMeta
 
 from . import CustomResourceDefinition
+from .....constants import (
+    SERVICE_NAME_PLACEHOLDER,
+    NAMESPACE_PLACEHOLDER,
+    CLUSTER_ENV_PLACEHOLDER,
+)
 from .....project import TraefikHost, Target, TraefikAdditionalRoute
 from .....utilities import replace_pr_number
 
@@ -45,9 +50,9 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
         https: bool = True,
     ):
         def _interpolate_names(host: str, name: str, cluster_env: str) -> str:
-            host = host.replace("{SERVICE-NAME}", name)
-            host = host.replace("{namespace}", namespace)
-            host = host.replace("{CLUSTER-ENV}", cluster_env)
+            host = host.replace(SERVICE_NAME_PLACEHOLDER, name)
+            host = host.replace(NAMESPACE_PLACEHOLDER, namespace)
+            host = host.replace(CLUSTER_ENV_PLACEHOLDER, cluster_env)
             host = replace_pr_number(host, pr_number)
             return host
 

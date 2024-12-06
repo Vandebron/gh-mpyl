@@ -16,6 +16,6 @@ spec:
   - web
   routes:
   - kind: Rule
-    match: something
+    match: placeholder-test-other-pr-1234-1234-test
     middlewares:
-    - name: strip-prefix
+    - name: strip-prefix-dockertest
