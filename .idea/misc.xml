@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Black">
+    <option name="enabledOnReformat" value="true" />
+    <option name="enabledOnSave" value="true" />
+    <option name="pathToExecutable" value="/opt/homebrew/bin/black" />
     <option name="sdkName" value="Python 3.13 (gh-mpyl)" />
   </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_23" project-jdk-name="Python 3.13 (gh-mpyl)" project-jdk-type="Python SDK" />
