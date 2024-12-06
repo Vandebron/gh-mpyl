@@ -518,17 +518,24 @@ class ChartBuilder:
         ]
 
     def _replace_placeholders(self, traefik_object: dict | list):
-        for placeholder, replacement in {
-            PR_NUMBER_PLACEHOLDER: str(
-                self.step_input.run_properties.versioning.pr_number
-            ),
-            SERVICE_NAME_PLACEHOLDER: self.release_name,
-            NAMESPACE_PLACEHOLDER: self.namespace,
-            CLUSTER_ENV_PLACEHOLDER: get_cluster_config_for_project(
+        traefik_object = replace_item(
+            traefik_object,
+            PR_NUMBER_PLACEHOLDER,
+            str(self.step_input.run_properties.versioning.pr_number),
+        )
+        traefik_object = replace_item(
+            traefik_object, SERVICE_NAME_PLACEHOLDER, self.release_name
+        )
+        traefik_object = replace_item(
+            traefik_object, NAMESPACE_PLACEHOLDER, self.namespace
+        )
+        traefik_object = replace_item(
+            traefik_object,
+            CLUSTER_ENV_PLACEHOLDER,
+            get_cluster_config_for_project(
                 self.step_input.run_properties, self.project
             ).cluster_env,
-        }.items():
-            traefik_object = replace_item(traefik_object, placeholder, replacement)
+        )
 
         return traefik_object
 
