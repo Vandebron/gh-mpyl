@@ -13,7 +13,7 @@ inputs:
     required: false
 runs:
   using: docker
-  image: docker://public.ecr.aws/vdb-public/gh-mpyl:pr-113
+  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v0.14.1
   args:
     - plan
     - discover
