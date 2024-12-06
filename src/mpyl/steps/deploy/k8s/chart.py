@@ -535,16 +535,13 @@ class ChartBuilder:
     def to_ingress(self) -> Optional[V1AlphaIngressRoute]:
         """Converts the deployment traefik ingress routes configuration to a V1AlphaIngressRoute object."""
         ingress_route_spec = (
-            self.deployment.traefik.ingress_routes.get_value(self.target)
+            self._replace_placeholders(self.deployment.traefik.ingress_routes.get_value(self.target))
             if self.deployment.traefik and self.deployment.traefik.ingress_routes
             else None
         )
 
         if not ingress_route_spec:
             return None
-
-        if self.target == Target.PULL_REQUEST:
-            ingress_route_spec = self._replace_placeholders(ingress_route_spec)
 
         return V1AlphaIngressRoute.from_spec(
             metadata=self._to_object_meta(name="ingress-routes"),
@@ -607,11 +604,7 @@ class ChartBuilder:
         middlewares = []
 
         if traefik and traefik.middlewares:
-            middlewares = (
-                self._replace_placeholders(traefik.middlewares.get_value(self.target))
-                if self.target == Target.PULL_REQUEST
-                else traefik.middlewares.get_value(self.target)
-            )
+            middlewares = self._replace_placeholders(traefik.middlewares.get_value(self.target))
 
         adjusted_middlewares = {
             f'middleware-{middleware["metadata"]["name"]}': V1AlphaMiddleware.from_spec(
