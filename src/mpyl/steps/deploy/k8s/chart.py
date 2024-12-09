@@ -56,6 +56,12 @@ from .resources.traefik import (
 )
 from ... import deploy
 from ...input import Input
+from ....constants import (
+    PR_NUMBER_PLACEHOLDER,
+    SERVICE_NAME_PLACEHOLDER,
+    NAMESPACE_PLACEHOLDER,
+    CLUSTER_ENV_PLACEHOLDER,
+)
 from ....project import (
     Project,
     KeyValueProperty,
@@ -73,6 +79,7 @@ from ....project import (
     Metrics,
     TraefikAdditionalRoute,
 )
+from ....utilities import replace_item
 
 # Determined (unscientifically) to be sensible factors.
 # Based on actual CPU usage, pods rarely use more than 10% of the allocated CPU. 60% usage is healthy, so we
@@ -510,14 +517,44 @@ class ChartBuilder:
             for idx, host in enumerate(hosts if hosts else default_hosts)
         ]
 
-    def to_ingress(self) -> V1AlphaIngressRoute | None:
-        return (
-            V1AlphaIngressRoute.from_spec(
-                metadata=self._to_object_meta(name="ingress-routes"),
-                spec=self.deployment.traefik.ingress_routes.get_value(self.target),
+    def _replace_placeholders(self, traefik_object: dict | list):
+        traefik_object = replace_item(
+            traefik_object,
+            PR_NUMBER_PLACEHOLDER,
+            str(self.step_input.run_properties.versioning.pr_number),
+        )
+        traefik_object = replace_item(
+            traefik_object, SERVICE_NAME_PLACEHOLDER, self.release_name
+        )
+        traefik_object = replace_item(
+            traefik_object, NAMESPACE_PLACEHOLDER, self.namespace
+        )
+        traefik_object = replace_item(
+            traefik_object,
+            CLUSTER_ENV_PLACEHOLDER,
+            get_cluster_config_for_project(
+                self.step_input.run_properties, self.project
+            ).cluster_env,
+        )
+
+        return traefik_object
+
+    def to_ingress(self) -> Optional[V1AlphaIngressRoute]:
+        """Converts the deployment traefik ingress routes configuration to a V1AlphaIngressRoute object."""
+        ingress_route_spec = (
+            self._replace_placeholders(
+                self.deployment.traefik.ingress_routes.get_value(self.target)
             )
             if self.deployment.traefik and self.deployment.traefik.ingress_routes
             else None
+        )
+
+        if not ingress_route_spec:
+            return None
+
+        return V1AlphaIngressRoute.from_spec(
+            metadata=self._to_object_meta(name="ingress-routes"),
+            spec=ingress_route_spec,
         )
 
     def to_ingress_routes(self, https: bool) -> list[V1AlphaIngressRoute]:
@@ -573,6 +610,20 @@ class ChartBuilder:
     def to_middlewares(self) -> dict[str, V1AlphaMiddleware]:
         hosts: list[HostWrapper] = self.create_host_wrappers()
         traefik = self.deployment.traefik
+        middlewares = []
+
+        if traefik and traefik.middlewares:
+            middlewares = self._replace_placeholders(
+                traefik.middlewares.get_value(self.target)
+            )
+
+        adjusted_middlewares = {
+            f'middleware-{middleware["metadata"]["name"]}': V1AlphaMiddleware.from_spec(
+                metadata=self._to_object_meta(name=middleware["metadata"]["name"]),
+                spec=middleware["spec"],
+            )
+            for middleware in middlewares
+        }
 
         def to_metadata(host: HostWrapper) -> V1ObjectMeta:
             metadata = self._to_object_meta(name=host.full_name)
@@ -587,17 +638,7 @@ class ChartBuilder:
                 source_ranges=list(itertools.chain(*host.white_lists.values())),
             )
             for host in hosts
-        } | (
-            {
-                f'middleware-{middleware["metadata"]["name"]}': V1AlphaMiddleware.from_spec(
-                    metadata=self._to_object_meta(name=middleware["metadata"]["name"]),
-                    spec=middleware["spec"],
-                )
-                for middleware in traefik.middlewares.get_value(self.target)
-            }
-            if traefik and traefik.middlewares
-            else {}
-        )
+        } | adjusted_middlewares
 
     def to_service_account(
         self,

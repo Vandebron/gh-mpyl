@@ -188,7 +188,7 @@ class TestKubernetesChart:
             "dockertest-ingress-1-whitelist",
             "ingress-routes",
             "middleware-strip-prefix",
-            "middleware-strip-prefix2",
+            "middleware-strip-prefix-dockertest",
             "prometheus-rule",
             "service-monitor",
             "role",
@@ -213,12 +213,30 @@ class TestKubernetesChart:
             "dockertest-ingress-1-whitelist",
             "ingress-routes",
             "middleware-strip-prefix",
-            "middleware-strip-prefix2",
+            "middleware-strip-prefix-dockertest",
             "prometheus-rule",
             "service-monitor",
             "role",
             "rolebinding",
         }
+
+    def test_ingress_routes_placeholder_replacement(self):
+        ingress_routes = self._get_builder(get_project_traefik()).to_ingress()
+        assert (
+            ingress_routes.spec["routes"][0]["match"]
+            == "placeholder-test-other-pr-1234-1234-test"
+        )
+        assert (
+            ingress_routes.spec["routes"][0]["middlewares"][0]["name"]
+            == "strip-prefix-dockertest"
+        )
+
+    def test_middlewares_placeholder_replacement(self):
+        middlewares = self._get_builder(get_project_traefik()).to_middlewares()
+        assert "middleware-strip-prefix-dockertest" in middlewares
+        assert middlewares["middleware-strip-prefix-dockertest"].spec["stripPrefix"][
+            "prefixes"
+        ] == ["/service2/test-other/pr-1234/1234"]
 
     def test_deployment_strategy_roundtrip(self):
         project = get_deployment_strategy_project()
