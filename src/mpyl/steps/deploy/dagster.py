@@ -58,21 +58,25 @@ class DagsterBase:
         chart_version: str,
         values_path: Path,
     ) -> Output:
-        output_path = values_path / Path("templates")
         template_chart_command = template_chart(
             logger=logger,
             release_name=release_name,
             chart_name="dagster/dagster-user-deployments",
             chart_version=chart_version,
             values_path=values_path / Path("values.yaml"),
-            output_path=output_path,
         )
 
         if template_chart_command.success is not True:
             return template_chart_command
 
+        output_path = values_path / Path("dagster-user-deployments/templates")
+
         for file in output_path.iterdir():
             file.rename(file.with_suffix(""))
+            file.rename(values_path / Path("templates") / file.name)
+
+        output_path.rmdir()
+
         return template_chart_command
 
     @staticmethod
