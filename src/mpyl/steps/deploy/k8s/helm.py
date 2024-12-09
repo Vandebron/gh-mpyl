@@ -35,8 +35,7 @@ def template_chart(
         {chart_name}
         --version {chart_version}
         -f {values_path}
-        --output-dir {output_path}
-    """
+        --output-dir {output_path}"""
     return custom_check_output(logger, cmd)
 
 
