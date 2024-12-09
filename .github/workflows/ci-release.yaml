@@ -14,6 +14,12 @@ on:
       - Pipfile
       - Pipfile.lock
 
+# if multiple pull requests are merged while this workflow is still running, cancel this one and build the last one
+# to include all changes
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
 jobs:
   release:
     if: github.event.pull_request.merged == true
