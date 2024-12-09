@@ -24,21 +24,20 @@ def update_repo(logger: Logger) -> Output:
 
 def template_chart(
     logger: Logger,
-    chart_name: str,
     release_name: str,
+    chart_name: str,
+    chart_version: str,
     values_path: Path,
     output_path: Path,
 ) -> Output:
-    cmd = f"helm template {release_name} {chart_name} -f {values_path} --output-dir {output_path}"
-    run_command = custom_check_output(logger, cmd)
-
-    if run_command.success is not True:
-        return run_command
-
-    # Remove the extensions from the generated files (e.g. remove .yaml)
-    for file in output_path.iterdir():
-        file.rename(file.with_suffix(""))
-    return run_command
+    cmd = f"""
+        helm template {release_name}
+        {chart_name}
+        --version {chart_version}
+        -f {values_path}
+        --output-dir {output_path}
+    """
+    return custom_check_output(logger, cmd)
 
 
 def write_chart(

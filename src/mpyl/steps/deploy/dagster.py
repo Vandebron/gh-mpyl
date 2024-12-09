@@ -9,7 +9,6 @@ from typing import List, Tuple, Optional
 
 import yaml
 from kubernetes import config, client
-from kubernetes.client import CoreV1Api
 
 from . import STAGE_NAME
 from .k8s import (
@@ -53,13 +52,35 @@ class DagsterBase:
         )
 
     @staticmethod
-    def write_user_code_manifest(
+    def generate_kubernetes_manifests(
         logger: Logger,
+        release_name: str,
+        chart_version: str,
+        values_path: Path,
+    ) -> Output:
+        output_path = values_path / "templates"
+        template_chart_command = template_chart(
+            logger=logger,
+            release_name=release_name,
+            chart_name="dagster/dagster-user-deployments",
+            chart_version=chart_version,
+            values_path=values_path,
+            output_path=output_path,
+        )
+
+        if template_chart_command.success is not True:
+            return template_chart_command
+
+        for file in output_path.iterdir():
+            file.rename(file.with_suffix(""))
+        return template_chart_command
+
+    @staticmethod
+    def write_user_code_helm_values(
         step_input: Input,
         properties: RunProperties,
         global_service_account_override: Optional[str],
-        templated: bool,
-    ) -> Tuple[dict, Path]:
+    ) -> Tuple[str, Path, dict]:
         builder = ChartBuilder(step_input)
 
         name_suffix = get_name_suffix(properties)
@@ -84,24 +105,14 @@ class DagsterBase:
             values=user_code_deployment,
         )
 
-        if templated:
-            output_path = values_path / "templates"
-            template_chart(
-                logger=logger,
-                chart_name="dagster/dagster-user-deployments",
-                release_name=release_name,
-                values_path=values_path,
-                output_path=output_path,
-            )
-
-        return user_code_deployment, values_path
+        return release_name, values_path, user_code_deployment
 
     @staticmethod
     def add_server_to_server_list(
-        core_api: CoreV1Api, user_code_deployment: dict, dagster_config: DagsterConfig
+        user_code_deployment: dict, dagster_config: DagsterConfig
     ) -> Output:
         config_map = get_config_map(
-            core_api,
+            client.CoreV1Api(),
             dagster_config.base_namespace,
             dagster_config.workspace_config_map,
         )
@@ -129,7 +140,7 @@ class DagsterBase:
                 data=dagster_workspace,
             )
             return replace_config_map(
-                core_api,
+                client.CoreV1Api(),
                 dagster_config.base_namespace,
                 dagster_config.workspace_config_map,
                 updated_config_map,
@@ -186,6 +197,7 @@ class HelmTemplateDagster(Step, DagsterBase):
         """
         Creates the dagster user-code helm chart manifest
         """
+        results = []
         properties = step_input.run_properties
         context = get_cluster_config_for_project(
             step_input.run_properties, step_input.project_execution.project
@@ -193,23 +205,44 @@ class HelmTemplateDagster(Step, DagsterBase):
         dagster_config: DagsterConfig = DagsterConfig.from_dict(properties.config)
 
         config.load_kube_config(context=context)
+        apps_api = client.AppsV1Api()
 
-        user_code_deployment, values_path = self.write_user_code_manifest(
+        dagster_version = get_version_of_deployment(
+            apps_api=apps_api,
+            namespace=dagster_config.base_namespace,
+            deployment=dagster_config.webserver,
+            version_label="app.kubernetes.io/version",
+        )
+        self._logger.info(f"Dagster Version: {dagster_version}")
+
+        add_repo_ouput = helm.add_repo(
+            self._logger, dagster_config.base_namespace, Constants.HELM_CHART_REPO
+        )
+        results.append(add_repo_ouput)
+        if not add_repo_ouput.success:
+            return self.combine_outputs(results)
+
+        release_name, values_path, user_code_deployment = (
+            self.write_user_code_helm_values(
+                step_input,
+                properties,
+                dagster_config.global_service_account_override,
+            )
+        )
+        self._logger.debug(f"Written user code Helm values: {user_code_deployment}")
+        self._logger.info(f"Helm values written to {values_path}")
+
+        kubernetes_manifests_generation_result = self.generate_kubernetes_manifests(
             self._logger,
-            step_input,
-            properties,
-            dagster_config.global_service_account_override,
-            False,
+            release_name,
+            dagster_version,
+            values_path,
         )
-        self._logger.debug(
-            f"Written user code manifest with values: {user_code_deployment}"
-        )
-        self._logger.info(f"Writing Helm values to {values_path}")
 
-        return Output(
-            True,
-            f"Successfully written helm chart manifest to {values_path}",
-        )
+        self._logger.info("Kubernetes manifests written")
+
+        results.append(kubernetes_manifests_generation_result)
+        return self.combine_outputs(results)
 
 
 class TemplateDagster(Step, DagsterBase):
@@ -234,40 +267,63 @@ class TemplateDagster(Step, DagsterBase):
         """
         Creates the dagster user-code helm chart manifest and adds an server entry to dagster server's ConfigMap
         """
+        results = []
         properties = step_input.run_properties
         context = get_cluster_config_for_project(
             step_input.run_properties, step_input.project_execution.project
         ).context
         dagster_config: DagsterConfig = DagsterConfig.from_dict(properties.config)
 
-        user_code_deployment, values_path = self.write_user_code_manifest(
-            self._logger,
-            step_input,
-            properties,
-            dagster_config.global_service_account_override,
-            True,
-        )
-        self._logger.debug(
-            f"Written user code manifest with values: {user_code_deployment}"
-        )
-        self._logger.info(f"Writing Helm values to {values_path}")
-
-        dagster_template_results = []
-
         config.load_kube_config(context=context)
-        core_api = client.CoreV1Api()
         apps_api = client.AppsV1Api()
 
-        add_server_list_output = self.add_server_to_server_list(
-            core_api, user_code_deployment, dagster_config
+        dagster_version = get_version_of_deployment(
+            apps_api=apps_api,
+            namespace=dagster_config.base_namespace,
+            deployment=dagster_config.webserver,
+            version_label="app.kubernetes.io/version",
         )
-        dagster_template_results.append(add_server_list_output)
-        if add_server_list_output.success:
-            restart_outputs = self.restart_dagster_instances(
-                self._logger, apps_api, dagster_config
+        self._logger.info(f"Dagster Version: {dagster_version}")
+
+        add_repo_ouput = helm.add_repo(
+            self._logger, dagster_config.base_namespace, Constants.HELM_CHART_REPO
+        )
+        results.append(add_repo_ouput)
+        if not add_repo_ouput.success:
+            return self.combine_outputs(results)
+
+        release_name, values_path, user_code_deployment = (
+            self.write_user_code_helm_values(
+                step_input,
+                properties,
+                dagster_config.global_service_account_override,
             )
-            dagster_template_results.extend(restart_outputs)
-        return self.combine_outputs(dagster_template_results)
+        )
+        self._logger.debug(f"Written user code Helm values: {user_code_deployment}")
+        self._logger.info(f"Helm values written to {values_path}")
+
+        kubernetes_manifests_generation_result = self.generate_kubernetes_manifests(
+            self._logger,
+            release_name,
+            dagster_version,
+            values_path,
+        )
+
+        self._logger.info("Kubernetes manifests written")
+
+        results.append(kubernetes_manifests_generation_result)
+
+        if kubernetes_manifests_generation_result.success:
+            add_server_list_output = self.add_server_to_server_list(
+                user_code_deployment, dagster_config
+            )
+            results.append(add_server_list_output)
+            if add_server_list_output.success:
+                restart_outputs = self.restart_dagster_instances(
+                    self._logger, apps_api, dagster_config
+                )
+                results.extend(restart_outputs)
+        return self.combine_outputs(results)
 
 
 class DeployDagster(Step, DagsterBase):
@@ -287,15 +343,14 @@ class DeployDagster(Step, DagsterBase):
         """
         Deploys the docker image produced in the build stage as a Dagster user-code-deployment
         """
+        results = []
         properties = step_input.run_properties
         context = get_cluster_config_for_project(
             step_input.run_properties, step_input.project_execution.project
         ).context
         dagster_config: DagsterConfig = DagsterConfig.from_dict(properties.config)
-        dagster_deploy_results = []
 
         config.load_kube_config(context=context)
-        core_api = client.CoreV1Api()
         apps_api = client.AppsV1Api()
 
         dagster_version = get_version_of_deployment(
@@ -309,26 +364,22 @@ class DeployDagster(Step, DagsterBase):
         add_repo_ouput = helm.add_repo(
             self._logger, dagster_config.base_namespace, Constants.HELM_CHART_REPO
         )
-        dagster_deploy_results.append(add_repo_ouput)
+        results.append(add_repo_ouput)
         if not add_repo_ouput.success:
-            return self.combine_outputs(dagster_deploy_results)
+            return self.combine_outputs(results)
 
         update_repo_ouput = helm.update_repo(self._logger)
-        dagster_deploy_results.append(update_repo_ouput)
+        results.append(update_repo_ouput)
         if not update_repo_ouput.success:
-            return self.combine_outputs(dagster_deploy_results)
+            return self.combine_outputs(results)
 
-        user_code_deployment, values_path = self.write_user_code_manifest(
-            self._logger,
+        _, values_path, user_code_deployment = self.write_user_code_helm_values(
             step_input,
             properties,
             dagster_config.global_service_account_override,
-            True,
         )
-        self._logger.debug(
-            f"Written user code manifest with values: {user_code_deployment}"
-        )
-        self._logger.info(f"Writing Helm values to {values_path}")
+        self._logger.debug(f"Written user code Helm values: {user_code_deployment}")
+        self._logger.info(f"Helm values written to {values_path}")
 
         helm_install_result = helm.install_chart_with_values(
             logger=self._logger,
@@ -342,17 +393,17 @@ class DeployDagster(Step, DagsterBase):
             kube_context=context,
         )
 
-        dagster_deploy_results.append(helm_install_result)
+        results.append(helm_install_result)
         if helm_install_result.success:
             add_to_server_list_output = self.add_server_to_server_list(
-                core_api, user_code_deployment, dagster_config
+                user_code_deployment, dagster_config
             )
-            dagster_deploy_results.append(add_to_server_list_output)
+            results.append(add_to_server_list_output)
 
             if add_to_server_list_output.success:
                 restart_outputs = self.restart_dagster_instances(
                     self._logger, apps_api, dagster_config
                 )
-                dagster_deploy_results.extend(restart_outputs)
+                results.extend(restart_outputs)
 
-        return self.combine_outputs(dagster_deploy_results)
+        return self.combine_outputs(results)
