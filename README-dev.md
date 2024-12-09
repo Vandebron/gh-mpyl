@@ -1,8 +1,8 @@
 # Developer instructions
 
-You can work on MPyL using two ways:
+You can work on MPyL in one of two ways:
 
-# Using Devcontainers _(🧪 experimental)_
+# 🧪 _experimental:_ using Devcontainers
 
 1. install [DevPod](https://devpod.sh/)
    ```
@@ -46,7 +46,7 @@ ssh mpyl.devpod
 ```
 
 
-# Local installation _(stable)_
+# 🕰️ _stable_: installing everything locally
 
 ## ..install mpyl for development
 
@@ -68,50 +68,11 @@ To run linting (`pylint`), type checking (`mypy`) and testing (`pytest`) in one 
 pipenv run validate
 ```
 
-## ..create a pull request build
-
-After working on a branch in MPyL repo, you can open a PR.
-After every push, if all validations pass, a test release is pushed to https://test.pypi.org/project/mpyl/.
-The naming of the version follows a `<pr_number>.<build_number>` pattern.
-
-A pull request build can be used in `Pipfile` via
-
-```shell
-pipenv install --index https://test.pypi.org/simple/ mpyl==<PR_NUMBER>.*
-```
-
-Resulting in:
-
-```toml
-[[source]]
-url = "https://test.pypi.org/simple"
-verify_ssl = false
-name = "test"
-
-[packages]
-mpyl = { version = "==28.403", index = "test" }
-```
-
 ## ..code style
 
 We use the [black formatter](https://black.readthedocs.io/en/stable/getting_started.html) in our codebase.
 Check the instructions on how to set it up for your
 IDE [here](https://black.readthedocs.io/en/stable/integrations/editors.html).
-
-## ..create a new release
-
-1. Create a new release notes file in [releases/notes/](releases/notes/) and name it `<version>.md`
-   Noteworthy changes should be added to this file. Think: new cli commands, new features, breaking changes, upgrade
-   instructions, etc.
-   Ideally create this file already when starting to work on a new version.
-   Each PR that is to be included in that release, can add their notes to this file.
-2. Check out main and pull the latest changes
-3. Choose what release type you want to create. We use [semantic versioning](https://semver.org/). The most important distinction is between regular releases and release candidates.
-   1. A *release candidate* does not require release notes and will be published to [test pypi](https://test.pypi.org/project/mpyl/).
-   2. A *regular release* requires does require and will be published to [pypi](https://pypi.org/project/mpyl/).
-4. Run `pipenv run release create`
-5. Merge the PR created by this command
-6. Run `pipenv run release publish` on main to publish the release
 
 ## ..troubleshoot Python setup
 
@@ -129,12 +90,6 @@ IDE [here](https://black.readthedocs.io/en/stable/integrations/editors.html).
     ```
    which should now succeed.
 
-## ..installing a test release of MPyL
-Test versions of MPyL are published for every pull request to [test pypi](https://test.pypi.org/project/mpyl/).
-To install a test release, run:
-```shell
-pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple mpyl==<version>
-```
 
 ## ..running the mpyl sourcecode against another repository
 
@@ -150,3 +105,12 @@ Assign PIPENV_PIPFILE to the absolute path of your Pipfile and run the command.
 ```shell
 PYTHONPATH=/<absolute_path_to_mpyl_repo>/src
 ```
+
+
+# Commit messages and versioning
+This repository adheres to the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification.
+While you do not have to follow it for every commit, at least **the title of your pull request must follow this convention**.
+
+Once your pull request is merged, a new version of this project will be automatically released.
+
+If the changes in your pull request require upstream modifications, **its title must be marked as [breaking](https://www.conventionalcommits.org/en/v1.0.0/#commit-message-with--to-draw-attention-to-breaking-change)** to clearly indicate to other developers that it cannot be automatically upgraded in any of our repositories.
