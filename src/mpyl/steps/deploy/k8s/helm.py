@@ -30,11 +30,13 @@ def template_chart(
     values_path: Path,
     output_path: Path,
 ) -> Output:
-    cmd = f"helm template {release_name} " \
-        f"{chart_name} " \
-        f"--version {chart_version} " \
-        f"-f {values_path} " \
+    cmd = (
+        f"helm template {release_name} "
+        f"{chart_name} "
+        f"--version {chart_version} "
+        f"-f {values_path} "
         f"--output-dir {output_path}"
+    )
     return custom_check_output(logger, cmd)
 
 
