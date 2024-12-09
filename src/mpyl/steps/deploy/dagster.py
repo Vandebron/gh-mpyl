@@ -74,8 +74,9 @@ class DagsterBase:
         helm_output_path = output_path / Path("dagster-user-deployments/templates")
 
         for file in helm_output_path.iterdir():
-            file.rename(file.with_suffix(""))
-            file.rename(output_path / file.name)
+            new_file = file.with_suffix("")
+            file.rename(new_file)
+            new_file.rename(output_path / new_file.name)
 
         helm_output_path.rmdir()
 
