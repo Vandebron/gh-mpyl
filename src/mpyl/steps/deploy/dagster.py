@@ -22,7 +22,7 @@ from .k8s import (
 )
 from .k8s.chart import ChartBuilder
 from .k8s.cluster import get_cluster_config_for_project
-from .k8s.helm import write_chart
+from .k8s.helm import write_chart, template_chart
 from .k8s.resources.dagster import to_user_code_values, to_grpc_server_entry, Constants
 from ..input import Input
 from ..output import Output
@@ -54,9 +54,11 @@ class DagsterBase:
 
     @staticmethod
     def write_user_code_manifest(
+        logger: Logger,
         step_input: Input,
         properties: RunProperties,
         global_service_account_override: Optional[str],
+        templated: bool,
     ) -> Tuple[dict, Path]:
         builder = ChartBuilder(step_input)
 
@@ -81,6 +83,17 @@ class DagsterBase:
             chart_path=values_path,
             values=user_code_deployment,
         )
+
+        if templated:
+            output_path = values_path / "templates"
+            template_chart(
+                logger=logger,
+                chart_name="dagster/dagster-user-deployments",
+                release_name=release_name,
+                values_path=values_path,
+                output_path=output_path,
+            )
+
         return user_code_deployment, values_path
 
     @staticmethod
@@ -182,7 +195,11 @@ class HelmTemplateDagster(Step, DagsterBase):
         config.load_kube_config(context=context)
 
         user_code_deployment, values_path = self.write_user_code_manifest(
-            step_input, properties, dagster_config.global_service_account_override
+            self._logger,
+            step_input,
+            properties,
+            dagster_config.global_service_account_override,
+            False,
         )
         self._logger.debug(
             f"Written user code manifest with values: {user_code_deployment}"
@@ -224,7 +241,11 @@ class TemplateDagster(Step, DagsterBase):
         dagster_config: DagsterConfig = DagsterConfig.from_dict(properties.config)
 
         user_code_deployment, values_path = self.write_user_code_manifest(
-            step_input, properties, dagster_config.global_service_account_override
+            self._logger,
+            step_input,
+            properties,
+            dagster_config.global_service_account_override,
+            True,
         )
         self._logger.debug(
             f"Written user code manifest with values: {user_code_deployment}"
@@ -298,7 +319,11 @@ class DeployDagster(Step, DagsterBase):
             return self.combine_outputs(dagster_deploy_results)
 
         user_code_deployment, values_path = self.write_user_code_manifest(
-            step_input, properties, dagster_config.global_service_account_override
+            self._logger,
+            step_input,
+            properties,
+            dagster_config.global_service_account_override,
+            True,
         )
         self._logger.debug(
             f"Written user code manifest with values: {user_code_deployment}"
