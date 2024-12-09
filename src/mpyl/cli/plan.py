@@ -96,6 +96,7 @@ def discover_plan(ctx: Context, project: Optional[str]):
 
     run_plan.write_to_pickle_file()
     run_plan.write_to_json_file()
+    run_plan.write_to_summary_file()
     ctx.console.print(Markdown(run_plan.to_markdown()))
 
 

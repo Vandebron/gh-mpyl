@@ -7,7 +7,6 @@ import os
 import pickle
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Union
 
 from .constants import RUN_ARTIFACTS_FOLDER
 from .project import Project, Stage, load_project
@@ -17,6 +16,7 @@ from .utilities.repo import Changeset
 
 RUN_PLAN_PICKLE_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.pickle"
 RUN_PLAN_JSON_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan.json"
+RUN_PLAN_SUMMARY_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan_summary.md"
 
 
 @dataclass(frozen=True)
@@ -139,16 +139,58 @@ class RunPlan:
             logger.info(f"Storing run plan in: {RUN_PLAN_PICKLE_FILE}")
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
+    def write_to_summary_file(self):
+        summary = "| 👷 Project | 🏗 Build | 🧪 Test | 🚀 Deploy | 🦺 Post-deploy |\n"
+        summary += "| ---------- | :------: | :-----: | :-------: | :------------: |\n"
+
+        def get_icon(project_execution: ProjectExecution, stage_name: str):
+            if project_execution.project.pipeline == "docker":
+                return "🐳"
+            if (
+                project_execution.project.pipeline == "sbt"
+                and project_execution in self.get_executions_for_stage_name(stage_name)
+            ):
+                return "💾" if project_execution.cached else "☕️"
+            return ""
+
+        all_executions = self._get_all_executions()
+        if len(all_executions) == 0:
+            summary = "Nothing to do 🤷\n"
+
+        for execution in all_executions:
+            build_plan = get_icon(execution, "build")
+            test_plan = get_icon(execution, "test")
+            deploy_plan = (
+                "🚀"
+                if execution in self.get_executions_for_stage_name("deploy")
+                else ""
+            )
+            postdeploy_plan = (
+                "🦺"
+                if execution in self.get_executions_for_stage_name("postdeploy")
+                else ""
+            )
+            summary += f"| {execution.name} | {build_plan} | {test_plan} | {deploy_plan} | {postdeploy_plan} |\n"
+
+        logger = logging.getLogger("mpyl")
+        os.makedirs(os.path.dirname(RUN_PLAN_SUMMARY_FILE), exist_ok=True)
+        with open(RUN_PLAN_SUMMARY_FILE, "w", encoding="utf-8") as file:
+            logger.info(f"Storing run plan summary in: {RUN_PLAN_SUMMARY_FILE}")
+            file.write(summary)
+
     def write_to_json_file(self):
         run_plan: dict = {}
 
-        for stage, executions in self._selected_plan.items():
+        for executions in self._selected_plan.values():
             for execution in executions:
-                stages: list[dict[str, Union[str, bool]]] = run_plan.get(
-                    execution.project.name, {}
-                ).get("stages", [])
-                stages.append({"name": stage.name, "cached": execution.cached})
-
+                stages = {
+                    stage.name: (
+                        not execution.cached
+                        if execution in self._get_executions_for_stage(stage)
+                        else False
+                    )
+                    for stage in self._selected_plan.keys()
+                }
                 run_plan.update(
                     {
                         execution.project.name: {
@@ -158,8 +200,8 @@ class RunPlan:
                             "base_path": str(execution.project.root_path),
                             "maintainers": execution.project.maintainer,
                             "pipeline": execution.project.pipeline,
-                            "stages": stages,
                         }
+                        | stages
                     }
                 )
 
