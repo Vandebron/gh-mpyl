@@ -17,9 +17,7 @@ from tests import test_resource_path
 from tests.projects.find import load_projects
 from tests.test_resources.test_data import TestStage
 
-HASHED_CHANGES_OF_JOB = (
-    "e16e7b0fec422c931b1fbab51bf5942f057d3591c74f495d3db60e2c0ac17616"
-)
+HASHED_CHANGES_OF_JOB = "b88fd790d1180a22de5cd70b99040f96a4485c4692d9b3179deb78dfc95b4ecb"  # this has to be updated if the test project.yml changes
 
 
 @contextlib.contextmanager
