@@ -62,9 +62,11 @@ def write_chart(
     )
 
     for name, template_content in my_dictionary.items():
-        with open(template_path / name, mode="w+", encoding="utf-8") as file:
+        name_with_extension = name + ".yaml"
+        with open(
+            template_path / name_with_extension, mode="w+", encoding="utf-8"
+        ) as file:
             file.write(template_content)
-            file.rename(template_path / f"{name}.yaml")
 
 
 def write_helm_chart(
