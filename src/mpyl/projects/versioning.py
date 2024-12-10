@@ -8,7 +8,6 @@ list in this module.
 """
 
 import copy
-import numbers
 from abc import ABC
 from pathlib import Path
 from typing import Generator
@@ -19,8 +18,8 @@ from ruamel.yaml.compat import ordereddict
 
 from ..utilities.yaml import yaml_to_string, load_for_roundtrip, yaml_for_roundtrip
 
-VERSION_FIELD = "mpylVersion"
-BASE_RELEASE = "1.0.8"
+VERSION_FIELD = "projectYmlVersion"
+BASE_RELEASE = "1"
 
 
 class Upgrader(ABC):
@@ -32,98 +31,34 @@ class Upgrader(ABC):
         return previous_dict
 
 
-class ProjectUpgraderOneFour20(Upgrader):
-    target_version = "1.4.20"
+class ProjectUpgraderOne(Upgrader):
+    target_version = "1"
 
     def upgrade(self, previous_dict: ordereddict) -> ordereddict:
-        hosts = previous_dict.get("deployment", {}).get("traefik", {}).get("hosts", [])
-        for host in hosts:
-            if priority := host.get("priority", None):
-                if isinstance(priority, numbers.Number) or not any(
-                    env in priority
-                    for env in ["all", "pr", "test", "acceptance", "production"]
-                ):
-                    host["priority"] = {}
-                    host["priority"]["all"] = priority
+        if "mpylVersion" in previous_dict:
+            del previous_dict["mpylVersion"]
 
         return previous_dict
 
 
-class ProjectUpgraderOneFour18(Upgrader):
-    target_version = "1.4.18"
+class ProjectUpgraderTwo(Upgrader):
+    traefik_yml_path: Path
+
+    def __init__(self, project_yml_path: Path):
+        self.traefik_yml_path = project_yml_path.parent / "traefik.yml"
+
+    target_version = "2"
 
     def upgrade(self, previous_dict: ordereddict) -> ordereddict:
-        return previous_dict  # To account for the project id upgrade that couldn't be committed
+        traefik = previous_dict.get("deployment", {}).get("traefik", {})
+        if traefik:
+            del previous_dict["deployment"]["traefik"]
 
-
-class ProjectUpgraderOneFour15(Upgrader):
-    target_version = "1.4.15"
-
-    def upgrade(self, previous_dict: ordereddict) -> ordereddict:
-        job = previous_dict.get("deployment", {}).get("kubernetes", {}).get("job", {})
-        if cron := job.get("cron", None):
-            if not any(
-                env in cron for env in ["all", "pr", "test", "acceptance", "production"]
-            ):
-                job["cron"] = {}
-                job["cron"]["all"] = cron
+            self.traefik_yml_path.write_text(
+                yaml_to_string(traefik, yaml_for_roundtrip())
+            )
 
         return previous_dict
-
-
-class ProjectUpgraderOne31(Upgrader):
-    target_version = "1.3.1"
-
-    def upgrade(self, previous_dict: ordereddict) -> ordereddict:
-        if kubernetes := previous_dict.get("deployment", {}).get("kubernetes", {}):
-            if "cmd" in kubernetes:
-                kubernetes["command"] = kubernetes.pop("cmd")
-        return previous_dict
-
-
-class ProjectUpgraderOne11(Upgrader):
-    target_version = "1.0.11"
-
-
-class ProjectUpgraderOne10(Upgrader):
-    target_version = "1.0.10"
-
-    def upgrade(self, previous_dict: ordereddict) -> ordereddict:
-        if found_deployment := previous_dict.get("deployment", {}):
-            existing_namespace = found_deployment.get("namespace", None)
-            if not existing_namespace:
-                previous_dict["deployment"].insert(
-                    0, "namespace", previous_dict["name"]
-                )
-
-        return previous_dict
-
-
-class ProjectUpgraderOne9(Upgrader):
-    target_version = "1.0.9"
-
-    def upgrade(self, previous_dict: ordereddict) -> ordereddict:
-        previous_dict.insert(3, VERSION_FIELD, self.target_version)
-        return previous_dict
-
-
-class ProjectUpgraderOne8(Upgrader):
-    target_version = BASE_RELEASE
-
-    def upgrade(self, previous_dict: ordereddict) -> ordereddict:
-        return previous_dict
-
-
-PROJECT_UPGRADERS = [
-    ProjectUpgraderOne8(),
-    ProjectUpgraderOne9(),
-    ProjectUpgraderOne10(),
-    ProjectUpgraderOne11(),
-    ProjectUpgraderOne31(),
-    ProjectUpgraderOneFour15(),
-    ProjectUpgraderOneFour18(),
-    ProjectUpgraderOneFour20(),
-]
 
 
 def get_entry_upgrader_index(
@@ -137,12 +72,17 @@ def get_entry_upgrader_index(
 
 
 def __get_version(project: dict) -> str:
-    return project.get(VERSION_FIELD, "1.0.8")
+    return project.get(VERSION_FIELD, BASE_RELEASE)
 
 
-def upgrade_to_latest(
-    to_upgrade: ordereddict, upgraders: list[Upgrader]
-) -> ordereddict:
+def upgrade_to_latest(project_file: Path) -> ordereddict:
+    loaded, _ = load_for_roundtrip(project_file)
+    to_upgrade = copy.deepcopy(loaded)
+    upgraders = [
+        ProjectUpgraderOne(),
+        ProjectUpgraderTwo(project_file),
+    ]
+
     upgrade_index = get_entry_upgrader_index(__get_version(to_upgrade), upgraders)
     if upgrade_index is None:
         return to_upgrade
@@ -154,7 +94,7 @@ def upgrade_to_latest(
         upgraded = upgrader.upgrade(copy.deepcopy(before_upgrade))
         diff = DeepDiff(before_upgrade, upgraded, ignore_order=True, view="tree")
         if diff:
-            upgraded[VERSION_FIELD] = upgrader.target_version
+            upgraded.insert(2, VERSION_FIELD, upgrader.target_version)
     return upgraded
 
 
@@ -182,24 +122,22 @@ def pretty_print(diff: DeepDiff) -> str:
 
 
 def check_upgrades_needed(
-    file_path: list[Path], upgraders: list[Upgrader]
+    file_path: list[Path],
 ) -> Generator[tuple[Path, DeepDiff], None, None]:
     for path in file_path:
-        yield check_upgrade_needed(path, upgraders)
+        yield check_upgrade_needed(path)
 
 
-def check_upgrade_needed(
-    file_path: Path, upgraders: list[Upgrader]
-) -> tuple[Path, Optional[DeepDiff]]:
+def check_upgrade_needed(file_path: Path) -> tuple[Path, Optional[DeepDiff]]:
     loaded, _ = load_for_roundtrip(file_path)
-    upgraded = upgrade_to_latest(loaded, upgraders)
+    upgraded = upgrade_to_latest(file_path)
     diff = DeepDiff(loaded, upgraded, ignore_order=True, view="_delta")
     if diff:
         return file_path, diff
     return file_path, None
 
 
-def upgrade_file(project_file: Path, upgraders: list[Upgrader]) -> Optional[str]:
-    to_upgrade, yaml = load_for_roundtrip(project_file)
-    upgraded = upgrade_to_latest(copy.deepcopy(to_upgrade), upgraders)
+def upgrade_file(project_file: Path) -> Optional[str]:
+    _, yaml = load_for_roundtrip(project_file)
+    upgraded = upgrade_to_latest(project_file)
     return yaml_to_string(upgraded, yaml)
