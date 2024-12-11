@@ -16,6 +16,7 @@ from typing import Optional
 from deepdiff import DeepDiff
 from ruamel.yaml.compat import ordereddict
 
+from ..project import Project
 from ..utilities.yaml import yaml_to_string, load_for_roundtrip, yaml_for_roundtrip
 
 VERSION_FIELD = "projectYmlVersion"
@@ -45,7 +46,9 @@ class ProjectUpgraderTwo(Upgrader):
     traefik_yml_path: Path
 
     def __init__(self, project_yml_path: Path):
-        self.traefik_yml_path = project_yml_path.parent / "traefik.yml"
+        self.traefik_yml_path = (
+            project_yml_path.parent / Project.traefik_yaml_file_name()
+        )
 
     target_version = "2"
 

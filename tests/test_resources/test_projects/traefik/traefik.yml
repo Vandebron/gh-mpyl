@@ -1,3 +1,26 @@
+ingressRoutes:
+  all:
+    entryPoints:
+      - web
+    routes:
+      - kind: Rule
+        match: placeholder-{CLUSTER-ENV}-{namespace}-{PR-NUMBER}-test
+        middlewares:
+          - name: "strip-prefix-{SERVICE-NAME}"
+middlewares:
+  all:
+    - metadata:
+        name: "strip-prefix"
+      spec:
+        stripPrefix:
+          prefixes:
+            - "/service"
+    - metadata:
+        name: "strip-prefix-{SERVICE-NAME}"
+      spec:
+        stripPrefix:
+          prefixes:
+            - "/service2/{CLUSTER-ENV}/{namespace}/{PR-NUMBER}"
 hosts:
   - host:
       pr: "Host(`payments-{PR-NUMBER}.{CLUSTER-ENV}.nl`)"
@@ -34,4 +57,3 @@ hosts:
       all: "le-other-prod-wildcard-cert"
     syntax:
       all: v3
-
