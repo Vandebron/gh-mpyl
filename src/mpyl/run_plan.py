@@ -157,7 +157,7 @@ class RunPlan:
         if len(all_executions) == 0:
             summary = "Nothing to do 🤷\n"
 
-        for execution in all_executions:
+        for execution in sorted(all_executions, key=operator.attrgetter("name")):
             build_plan = get_icon(execution, "build")
             test_plan = get_icon(execution, "test")
             deploy_plan = (
