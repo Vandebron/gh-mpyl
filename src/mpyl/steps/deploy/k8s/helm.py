@@ -22,6 +22,24 @@ def update_repo(logger: Logger) -> Output:
     return custom_check_output(logger, "helm repo update")
 
 
+def template_chart(
+    logger: Logger,
+    release_name: str,
+    chart_name: str,
+    chart_version: str,
+    values_path: Path,
+    output_path: Path,
+) -> Output:
+    cmd = (
+        f"helm template {release_name} "
+        f"{chart_name} "
+        f"--version {chart_version} "
+        f"-f {values_path} "
+        f"--output-dir {output_path}"
+    )
+    return custom_check_output(logger, cmd)
+
+
 def write_chart(
     chart: dict[str, CustomResourceDefinition],
     chart_path: Path,
@@ -44,7 +62,10 @@ def write_chart(
     )
 
     for name, template_content in my_dictionary.items():
-        with open(template_path / name, mode="w+", encoding="utf-8") as file:
+        name_with_extension = name + ".yaml"
+        with open(
+            template_path / name_with_extension, mode="w+", encoding="utf-8"
+        ) as file:
             file.write(template_content)
 
 
