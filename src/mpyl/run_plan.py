@@ -140,36 +140,53 @@ class RunPlan:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
     def write_to_summary_file(self):
-        summary = "| 👷 Project | 🏗 Build | 🧪 Test | 🚀 Deploy | 🦺 Post-deploy |\n"
-        summary += "| ---------- | :------: | :-----: | :-------: | :------------: |\n"
-
         def get_icon(project_execution: ProjectExecution, stage_name: str):
             if project_execution.project.pipeline == "docker":
                 return "🐳"
-            if (
-                project_execution.project.pipeline == "sbt"
-                and project_execution in self.get_executions_for_stage_name(stage_name)
-            ):
-                return "💾" if project_execution.cached else "☕️"
+            if project_execution.project.pipeline == "sbt":
+                executions_for_stage = self.get_executions_for_stage_name(stage_name)
+                execution_for_stage = next(
+                    (
+                        execution_for_stage
+                        for execution_for_stage in executions_for_stage
+                        if execution_for_stage.name == project_execution.name
+                    ),
+                    None,
+                )
+                if execution_for_stage:
+                    return "💾" if execution_for_stage.cached else "☕️"
             return ""
+
+        def is_execution_in_stage(project_execution: ProjectExecution, stage_name: str):
+            return any(
+                project_execution.name == execution_for_stage.name
+                for execution_for_stage in self.get_executions_for_stage_name(
+                    stage_name
+                )
+            )
+
+        summary = "| 👷 Project | 🏗 Build | 🧪 Test | 🚀 Deploy | 🦺 Post-deploy |\n"
+        summary += "| ---------- | :------: | :-----: | :-------: | :------------: |\n"
 
         all_executions = self._get_all_executions()
         if len(all_executions) == 0:
             summary = "Nothing to do 🤷\n"
 
-        for execution in sorted(all_executions, key=operator.attrgetter("name")):
+        unique_executions = {}
+        for project_execution in all_executions:
+            if project_execution.name not in unique_executions:
+                unique_executions[project_execution.name] = project_execution
+
+        for execution in sorted(
+            unique_executions.values(), key=operator.attrgetter("name")
+        ):
             build_plan = get_icon(execution, "build")
             test_plan = get_icon(execution, "test")
-            deploy_plan = (
-                "🚀"
-                if execution in self.get_executions_for_stage_name("deploy")
-                else ""
-            )
+            deploy_plan = "🚀" if is_execution_in_stage(execution, "deploy") else ""
             postdeploy_plan = (
-                "🦺"
-                if execution in self.get_executions_for_stage_name("postdeploy")
-                else ""
+                "🦺" if is_execution_in_stage(execution, "post-deploy") else ""
             )
+
             summary += f"| {execution.name} | {build_plan} | {test_plan} | {deploy_plan} | {postdeploy_plan} |\n"
 
         logger = logging.getLogger("mpyl")
