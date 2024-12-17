@@ -53,8 +53,18 @@ class TestEmptyPlan:
             pytest.param(False, id="use_full_plan=False"),
         ],
     )
-    def test_get_all_projects(self, use_full_plan):
+    def test_get_all_executions(self, use_full_plan):
         assert self.run_plan._get_all_executions(use_full_plan=use_full_plan) == set()
+
+    @pytest.mark.parametrize(
+        argnames="use_full_plan",
+        argvalues=[
+            pytest.param(True, id="use_full_plan=True"),
+            pytest.param(False, id="use_full_plan=False"),
+        ],
+    )
+    def test_get_all_projects(self, use_full_plan):
+        assert self.run_plan._get_all_projects(use_full_plan=use_full_plan) == set()
 
     @pytest.mark.parametrize(
         argnames="stage,use_full_plan",
@@ -179,10 +189,23 @@ class TestFullRunPlan:
             pytest.param(False, id="use_full_plan=False"),
         ],
     )
-    def test_get_all_projects(self, use_full_plan):
+    def test_get_all_executions(self, use_full_plan):
         assert self.run_plan._get_all_executions(use_full_plan=use_full_plan) == {
             execution_1,
             execution_2,
+        }
+
+    @pytest.mark.parametrize(
+        argnames="use_full_plan",
+        argvalues=[
+            pytest.param(True, id="use_full_plan=True"),
+            pytest.param(False, id="use_full_plan=False"),
+        ],
+    )
+    def test_get_all_projects(self, use_full_plan):
+        assert self.run_plan._get_all_projects(use_full_plan=use_full_plan) == {
+            execution_1.project,
+            execution_2.project,
         }
 
     @pytest.mark.parametrize(
@@ -320,12 +343,21 @@ class TestRunPlanWithSelectedProjectInASingleStage:
                 all_known_projects=set(), plan=self.full_plan
             ).select_project("a project that does not belong to the run plan")
 
-    def test_get_all_projects(self):
+    def test_get_all_executions(self):
         assert self.run_plan._get_all_executions(use_full_plan=True) == {
             execution_1,
             execution_2,
         }
         assert self.run_plan._get_all_executions(use_full_plan=False) == {execution_1}
+
+    def test_get_all_projects(self):
+        assert self.run_plan._get_all_projects(use_full_plan=True) == {
+            execution_1.project,
+            execution_2.project,
+        }
+        assert self.run_plan._get_all_projects(use_full_plan=False) == {
+            execution_1.project
+        }
 
     def test_get_projects_for_stage(self):
         assert self.run_plan._get_executions_for_stage(
@@ -423,12 +455,40 @@ class TestRunPlanWithSelectedProjectInMultipleStages:
                 all_known_projects=set(), plan=self.full_plan
             ).select_project("a project that does not belong to the run plan")
 
-    def test_get_all_projects(self):
+    def test_get_all_executions(self):
         assert self.run_plan._get_all_executions(use_full_plan=True) == {
             execution_1,
             execution_2,
         }
         assert self.run_plan._get_all_executions(use_full_plan=False) == {execution_1}
+
+    def test_get_all_projects(self):
+        assert self.run_plan._get_all_projects(use_full_plan=True) == {
+            execution_1.project,
+            execution_2.project,
+        }
+        assert self.run_plan._get_all_projects(use_full_plan=False) == {
+            execution_1.project
+        }
+
+    def test_get_all_cached(self):
+        execution = stub_execution("project 1")
+        execution_cached = stub_execution("project 1", cached=True)
+        run_plan = RunPlan.create(
+            all_known_projects=set(),
+            plan={
+                build_stage: {execution},
+                test_stage: {execution},
+                deploy_stage: {execution_cached},
+            },
+        )
+        assert run_plan._get_all_executions(use_full_plan=True) == {
+            execution_cached,
+            execution,
+        }
+        assert run_plan._get_all_projects(use_full_plan=True) == {
+            execution.project,
+        }
 
     def test_get_projects_for_stage(self):
         assert self.run_plan._get_executions_for_stage(
