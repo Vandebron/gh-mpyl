@@ -87,6 +87,9 @@ class RunPlan:
             return flatten(self._full_plan)
         return flatten(self._selected_plan)
 
+    def _get_all_projects(self, use_full_plan: bool = False) -> set[Project]:
+        return {p.project for p in self._get_all_executions(use_full_plan)}
+
     def _get_executions_for_stage(
         self, stage: Stage, use_full_plan: bool = False
     ) -> set[ProjectExecution]:
@@ -140,16 +143,16 @@ class RunPlan:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
     def write_to_summary_file(self):
-        def get_icon(project_execution: ProjectExecution, stage_name: str):
-            if project_execution.project.pipeline == "docker":
+        def get_icon(project: Project, stage_name: str):
+            if project.pipeline == "docker":
                 return "🐳"
-            if project_execution.project.pipeline == "sbt":
+            if project.pipeline == "sbt":
                 executions_for_stage = self.get_executions_for_stage_name(stage_name)
                 execution_for_stage = next(
                     (
                         execution_for_stage
                         for execution_for_stage in executions_for_stage
-                        if execution_for_stage.name == project_execution.name
+                        if execution_for_stage.name == project.name
                     ),
                     None,
                 )
@@ -157,9 +160,9 @@ class RunPlan:
                     return "💾" if execution_for_stage.cached else "☕️"
             return ""
 
-        def is_execution_in_stage(project_execution: ProjectExecution, stage_name: str):
+        def is_project_in_stage(project: Project, stage_name: str):
             return any(
-                project_execution.name == execution_for_stage.name
+                project.name == execution_for_stage.name
                 for execution_for_stage in self.get_executions_for_stage_name(
                     stage_name
                 )
@@ -172,22 +175,17 @@ class RunPlan:
         if len(all_executions) == 0:
             summary = "Nothing to do 🤷\n"
 
-        unique_executions = {}
-        for project_execution in all_executions:
-            if project_execution.name not in unique_executions:
-                unique_executions[project_execution.name] = project_execution
-
-        for execution in sorted(
-            unique_executions.values(), key=operator.attrgetter("name")
+        for project in sorted(
+            self._get_all_projects(), key=operator.attrgetter("name")
         ):
-            build_plan = get_icon(execution, "build")
-            test_plan = get_icon(execution, "test")
-            deploy_plan = "🚀" if is_execution_in_stage(execution, "deploy") else ""
+            build_plan = get_icon(project, "build")
+            test_plan = get_icon(project, "test")
+            deploy_plan = "🚀" if is_project_in_stage(project, "deploy") else ""
             postdeploy_plan = (
-                "🦺" if is_execution_in_stage(execution, "post-deploy") else ""
+                "🦺" if is_project_in_stage(project, "post-deploy") else ""
             )
 
-            summary += f"| {execution.name} | {build_plan} | {test_plan} | {deploy_plan} | {postdeploy_plan} |\n"
+            summary += f"| {project.name} | {build_plan} | {test_plan} | {deploy_plan} | {postdeploy_plan} |\n"
 
         logger = logging.getLogger("mpyl")
         os.makedirs(os.path.dirname(RUN_PLAN_SUMMARY_FILE), exist_ok=True)
