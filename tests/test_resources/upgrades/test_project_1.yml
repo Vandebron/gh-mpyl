@@ -1,11 +1,11 @@
 name: 'dockertest'
 description: 'This is a test container. For testing the MPyL pipelines, not to be deployed anywhere.'
+projectYmlVersion: '1'
 stages:
   build: Docker Build
   test: Docker Test
   deploy: Kubernetes Deploy
   postdeploy: Skip Postdeploy
-mpylVersion: 1.4.20
 maintainer: ['MPyL']
 build:
   args:
@@ -154,4 +154,3 @@ deployment:
           all: "le-other-prod-wildcard-cert"
         syntax:
           all: v3
-

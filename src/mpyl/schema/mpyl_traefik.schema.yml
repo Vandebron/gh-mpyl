@@ -1,0 +1,7 @@
+$schema: https://json-schema.org/draft/2020-12/schema#
+$id: schema/mpyl_traefik.schema.yml
+description: Description of a buildable artifact
+
+properties:
+  traefik:
+    $ref: project.schema.yml#/definitions/traefik
