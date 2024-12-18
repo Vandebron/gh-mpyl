@@ -82,9 +82,12 @@ def to_user_code_values(
                         "repository": f"{docker_registry.host_name}/{project.name}",
                     },
                     "labels": {
-                        k: v
-                        for k, v in builder.to_labels().items()
-                        if not k.startswith("app.")
+                        **{
+                            k: v
+                            for k, v in builder.to_labels().items()
+                            if not k.startswith("app.")
+                        },
+                        "vandebron.nl/dagster": "user-code-deployment",
                     },
                     "includeConfigInLaunchedRuns": {"enabled": True},
                     "name": release_name,
