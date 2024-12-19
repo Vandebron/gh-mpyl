@@ -33,6 +33,7 @@ from ...utilities.helm import convert_to_helm_release_name, get_name_suffix
 
 
 class DagsterBase:
+    dagster_helm_chart_version = "1.9.5"
     def combine_outputs(self, results: List[Output]) -> Output:
         return (
             reduce(
@@ -204,21 +205,7 @@ class HelmTemplateDagster(Step, DagsterBase):
         """
         results = []
         properties = step_input.run_properties
-        context = get_cluster_config_for_project(
-            step_input.run_properties, step_input.project_execution.project
-        ).context
         dagster_config: DagsterConfig = DagsterConfig.from_dict(properties.config)
-
-        config.load_kube_config(context=context)
-        apps_api = client.AppsV1Api()
-
-        dagster_version = get_version_of_deployment(
-            apps_api=apps_api,
-            namespace=dagster_config.base_namespace,
-            deployment=dagster_config.webserver,
-            version_label="app.kubernetes.io/version",
-        )
-        self._logger.info(f"Dagster Version: {dagster_version}")
 
         add_repo_ouput = helm.add_repo(
             self._logger, dagster_config.base_namespace, Constants.HELM_CHART_REPO
@@ -240,7 +227,7 @@ class HelmTemplateDagster(Step, DagsterBase):
         kubernetes_manifests_generation_result = self.generate_kubernetes_manifests(
             self._logger,
             release_name,
-            dagster_version,
+            self.dagster_helm_chart_version,
             values_path,
         )
 
@@ -282,14 +269,6 @@ class TemplateDagster(Step, DagsterBase):
         config.load_kube_config(context=context)
         apps_api = client.AppsV1Api()
 
-        dagster_version = get_version_of_deployment(
-            apps_api=apps_api,
-            namespace=dagster_config.base_namespace,
-            deployment=dagster_config.webserver,
-            version_label="app.kubernetes.io/version",
-        )
-        self._logger.info(f"Dagster Version: {dagster_version}")
-
         add_repo_ouput = helm.add_repo(
             self._logger, dagster_config.base_namespace, Constants.HELM_CHART_REPO
         )
@@ -310,7 +289,7 @@ class TemplateDagster(Step, DagsterBase):
         kubernetes_manifests_generation_result = self.generate_kubernetes_manifests(
             self._logger,
             release_name,
-            dagster_version,
+            self.dagster_helm_chart_version,
             values_path,
         )
 
