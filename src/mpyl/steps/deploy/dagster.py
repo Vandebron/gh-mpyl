@@ -33,7 +33,6 @@ from ...utilities.helm import convert_to_helm_release_name, get_name_suffix
 
 
 class DagsterBase:
-    dagster_helm_chart_version = "1.9.5"
     def combine_outputs(self, results: List[Output]) -> Output:
         return (
             reduce(
@@ -227,7 +226,7 @@ class HelmTemplateDagster(Step, DagsterBase):
         kubernetes_manifests_generation_result = self.generate_kubernetes_manifests(
             self._logger,
             release_name,
-            self.dagster_helm_chart_version,
+            dagster_config.user_code_helm_chart_version,
             values_path,
         )
 
@@ -289,7 +288,7 @@ class TemplateDagster(Step, DagsterBase):
         kubernetes_manifests_generation_result = self.generate_kubernetes_manifests(
             self._logger,
             release_name,
-            self.dagster_helm_chart_version,
+            dagster_config.user_code_helm_chart_version,
             values_path,
         )
 
