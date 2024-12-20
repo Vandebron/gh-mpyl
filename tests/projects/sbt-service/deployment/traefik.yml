@@ -1,9 +1,0 @@
-hosts:
-  - host:
-      pr: "Host(`sbtservice-{PR-NUMBER}.test.nl`)"
-      test: "Host(`sbtservice.test.nl`)"
-      acceptance: "Host(`sbtservice.acceptance1.nl`)"
-      production: "Host(`sbtservice.nl`)"
-    tls:
-      all: "le-custom-prod-wildcard-cert"
-    insecure: true

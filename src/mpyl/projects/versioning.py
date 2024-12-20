@@ -43,23 +43,30 @@ class ProjectUpgraderOne(Upgrader):
 
 
 class ProjectUpgraderTwo(Upgrader):
-    traefik_yml_path: Path
+    project_yml_path: Path
 
     def __init__(self, project_yml_path: Path):
-        self.traefik_yml_path = (
-            project_yml_path.parent / Project.traefik_yaml_file_name()
-        )
+        self.project_yml_path = project_yml_path
 
     target_version = "2"
 
     def upgrade(self, previous_dict: ordereddict) -> ordereddict:
         traefik = previous_dict.get("deployment", {}).get("traefik", {})
-        if traefik:
-            del previous_dict["deployment"]["traefik"]
 
-            self.traefik_yml_path.write_text(
-                yaml_to_string(traefik, yaml_for_roundtrip())
+        if traefik:
+            service_name = previous_dict["name"]
+            traefik_yml_path = (
+                self.project_yml_path.parent
+                / Project.traefik_yaml_file_name(service_name)
             )
+            traefik_config = {
+                "traefik": traefik,
+            }
+            traefik_yml_path.write_text(
+                yaml_to_string(traefik_config, yaml_for_roundtrip())
+            )
+
+            del previous_dict["deployment"]["traefik"]
 
         return previous_dict
 
