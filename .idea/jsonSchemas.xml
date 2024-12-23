@@ -59,6 +59,25 @@
             </SchemaInfo>
           </value>
         </entry>
+        <entry key="mpyl_traefik.schema">
+          <value>
+            <SchemaInfo>
+              <option name="generatedName" value="New Schema" />
+              <option name="name" value="mpyl_traefik.schema" />
+              <option name="relativePathToSchema" value="src/mpyl/schema/mpyl_traefik.schema.yml" />
+              <option name="schemaVersion" value="JSON Schema version 7" />
+              <option name="patterns">
+                <list>
+                  <Item>
+                    <option name="pattern" value="true" />
+                    <option name="path" value="**/*-traefik.yml" />
+                    <option name="mappingKind" value="Pattern" />
+                  </Item>
+                </list>
+              </option>
+            </SchemaInfo>
+          </value>
+        </entry>
         <entry key="run_properties.schema">
           <value>
             <SchemaInfo>

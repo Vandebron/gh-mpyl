@@ -25,11 +25,7 @@ from ..cli.commands.projects.lint import (
 from ..cli.commands.projects.upgrade import check_upgrade
 from ..constants import DEFAULT_CONFIG_FILE_NAME
 from ..project import load_project, Target
-from ..projects.versioning import (
-    check_upgrades_needed,
-    upgrade_file,
-    PROJECT_UPGRADERS,
-)
+from ..projects.versioning import check_upgrades_needed, upgrade_file
 from ..plan.discovery import find_projects
 from ..utilities.pyaml_env import parse_config
 
@@ -166,7 +162,7 @@ def lint(ctx: Context):
 @click.pass_obj
 def upgrade(ctx: Context, apply: bool):
     paths = find_projects()
-    candidates = check_upgrades_needed(paths, PROJECT_UPGRADERS)
+    candidates = check_upgrades_needed(paths)
     console = ctx.console
     if not apply:
         upgradable = check_upgrade(console, candidates)
@@ -187,7 +183,7 @@ def upgrade(ctx: Context, apply: bool):
             status.start()
             for path in need_upgrade:
                 status.update(f"Upgrading {path}")
-                upgraded = upgrade_file(path, PROJECT_UPGRADERS)
+                upgraded = upgrade_file(path)
                 if upgraded:
                     path.write_text(upgraded)
             status.stop()
