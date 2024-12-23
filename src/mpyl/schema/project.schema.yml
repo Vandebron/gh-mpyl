@@ -134,16 +134,6 @@ properties:
             items:
               $ref: '#/definitions/env'
             uniqueItems: true
-          jenkins:
-            type: array
-            items:
-              $ref: '#/definitions/env'
-            uniqueItems: true
-          vault:
-            type: array
-            items:
-              $ref: '#/definitions/vault'
-            uniqueItems: true
           sealedSecret:
             description: >-
               Bitnami sealed secrets (https://bitnami.com/stack/sealed-secrets/helm).
@@ -170,49 +160,10 @@ properties:
           Corresponds to the namespace in Kubernetes to which the artifact will
           be deployed
         type: string
-      s3:
-        additionalProperties: false
-        type: object
-        required:
-          - bucket
-          - region
-        properties:
-          bucket:
-            $ref: '#/definitions/dtapValue'
-          region:
-            type: string
-          path:
-            $ref: '#/definitions/dtapValue'
       kubernetes:
         $ref: '#/definitions/kubernetes'
       traefik:
         $ref: '#/definitions/traefik'
-      nuc:
-        type: object
-        required:
-          - path
-        properties:
-          config:
-            type: string
-          path:
-            type: string
-      helm:
-        additionalProperties: false
-        type: object
-        required:
-          - name
-          - version
-          - repoName
-          - repoUrl
-        properties:
-          name:
-            type: string
-          version:
-            type: string
-          repoName:
-            type: string
-          repoUrl:
-            type: string
       dagster:
         additionalProperties: false
         type: object
