@@ -29,7 +29,9 @@ class DagsterConfig:
                 global_service_account_override=dagster_config.get(
                     "globalServiceAccountOverride", None
                 ),
-                user_code_helm_chart_version=dagster_config["userCodeHelmChartVersion"],
+                user_code_helm_chart_version=dagster_config.get(
+                    "userCodeHelmChartVersion", "1.9.6"
+                ),
             )
         except KeyError as exc:
             raise KeyError(f"Dagster config could not be loaded from {config}") from exc
