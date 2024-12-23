@@ -375,3 +375,6 @@ definitions:
       globalServiceAccountOverride:
         description: Name of an (external) serviceAccount that will be assigned to a dagster user-deployment in favor of creating a new one
         type: string
+      userCodeHelmChartVersion:
+        description: Version of the Helm Chart that is used for user-code deployments
+        type: string

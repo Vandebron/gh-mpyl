@@ -14,6 +14,7 @@ class DagsterConfig:
     daemon: str
     webserver: str
     global_service_account_override: Optional[str]
+    user_code_helm_chart_version: str
 
     @staticmethod
     def from_dict(config: Dict):
@@ -27,6 +28,9 @@ class DagsterConfig:
                 webserver=dagster_config["webserver"],
                 global_service_account_override=dagster_config.get(
                     "globalServiceAccountOverride", None
+                ),
+                user_code_helm_chart_version=dagster_config.get(
+                    "userCodeHelmChartVersion", "1.9.6"
                 ),
             )
         except KeyError as exc:
