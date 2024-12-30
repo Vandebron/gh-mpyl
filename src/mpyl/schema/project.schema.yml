@@ -123,7 +123,6 @@ properties:
     minProperties: 1
   deployment:
     type: object
-    additionalProperties: false
     properties:
       properties:
         type: object
@@ -183,17 +182,6 @@ properties:
             type: string
             examples:
               - /python/my_project/dagster/repo.py
-      bpm:
-        additionalProperties: false
-        type: object
-        required:
-          - projectId
-        properties:
-          projectId:
-            description: >-
-              project Id where diagram is stored in Camunda Modeler,
-              you can find this value from Camunda Saas url when open the project
-            type: string
       cluster:
         type: object
         additionalProperties: false

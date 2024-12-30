@@ -437,17 +437,6 @@ class Traefik:
 
 
 @dataclass(frozen=True)
-class BPM:
-    project_id: str
-
-    @staticmethod
-    def from_config(values: dict):
-        return BPM(
-            project_id=values.get("projectId", ""),
-        )
-
-
-@dataclass(frozen=True)
 class Docker:
     host_name: str
 
@@ -488,7 +477,6 @@ class Deployment:
     kubernetes: Optional[Kubernetes]
     dagster: Optional[Dagster]
     traefik: Optional[Traefik]
-    bpm: Optional[BPM]
 
     @staticmethod
     def from_config(values: dict):
@@ -496,7 +484,6 @@ class Deployment:
         kubernetes = values.get("kubernetes")
         dagster = values.get("dagster")
         traefik = values.get("traefik")
-        bpm = values.get("bpm")
         cluster = values.get("cluster")
 
         return Deployment(
@@ -506,7 +493,6 @@ class Deployment:
             kubernetes=Kubernetes.from_config(kubernetes) if kubernetes else None,
             dagster=Dagster.from_config(dagster) if dagster else None,
             traefik=Traefik.from_config(traefik) if traefik else None,
-            bpm=BPM.from_config(bpm) if bpm else None,
         )
 
 
@@ -562,12 +548,6 @@ class Project:
         if self.deployment is None or self.deployment.dagster is None:
             raise KeyError(f"Project '{self.name}' does not have dagster configuration")
         return self.deployment.dagster
-
-    @property
-    def bpm(self) -> BPM:
-        if self.deployment is None or self.deployment.bpm is None:
-            raise KeyError(f"Project '{self.name}' does not have bpm configuration")
-        return self.deployment.bpm
 
     @property
     def resources(self) -> Resources:
