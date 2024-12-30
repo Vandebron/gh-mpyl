@@ -183,7 +183,7 @@ def pretty_print(diff: DeepDiff) -> str:
 
 def check_upgrades_needed(
     file_path: list[Path], upgraders: list[Upgrader]
-) -> Generator[tuple[Path, DeepDiff], None, None]:
+) -> Generator[tuple[Path, DeepDiff | None], None, None]:
     for path in file_path:
         yield check_upgrade_needed(path, upgraders)
 
