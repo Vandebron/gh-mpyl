@@ -7,10 +7,6 @@
     "dockerfile": "Dockerfile",
   },
 
-  "mounts": [
-    "source=${localEnv:HOME}/.gitconfig,target=/home/vdbnonroot/.gitconfig,type=bind,consistency=cached"
-  ],
-
   // More info: https://containers.dev/features.
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
