@@ -2,15 +2,15 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   labels:
-    name: job
+    name: cronjob
     app.kubernetes.io/version: pr-1234
-    app.kubernetes.io/name: job
-    app.kubernetes.io/instance: job
+    app.kubernetes.io/name: cronjob
+    app.kubernetes.io/instance: cronjob
     maintainers: MPyL
     maintainer: MPyL
     version: pr-1234
     revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-  name: job
+  name: cronjob
 spec:
   concurrencyPolicy: Allow
   failedJobsHistoryLimit: 1
@@ -22,15 +22,15 @@ spec:
           annotations:
             image: registry/image:123
           labels:
-            name: job
+            name: cronjob
             app.kubernetes.io/version: pr-1234
-            app.kubernetes.io/name: job
-            app.kubernetes.io/instance: job
+            app.kubernetes.io/name: cronjob
+            app.kubernetes.io/instance: cronjob
             maintainers: MPyL
             maintainer: MPyL
             version: pr-1234
             revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-          name: job
+          name: cronjob
         spec:
           containers:
           - args:
@@ -44,11 +44,11 @@ spec:
               valueFrom:
                 secretKeyRef:
                   key: SOME_SECRET_ENV
-                  name: job
+                  name: cronjob
                   optional: false
             image: registry/image:123
             imagePullPolicy: Always
-            name: job
+            name: cronjob
             resources:
               limits:
                 cpu: 500m
@@ -57,8 +57,8 @@ spec:
                 cpu: 100m
                 memory: 512Mi
           restartPolicy: Never
-          serviceAccount: job
-          serviceAccountName: job
+          serviceAccount: cronjob
+          serviceAccountName: cronjob
       ttlSecondsAfterFinished: 3600
   schedule: 0 22 * * *
   successfulJobsHistoryLimit: 3

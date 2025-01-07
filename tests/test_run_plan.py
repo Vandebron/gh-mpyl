@@ -25,7 +25,7 @@ def stub_execution(name: str, cached: bool = False) -> ProjectExecution:
         maintainer=[],
         docker=None,
         build=None,
-        deployment=None,
+        deployments=[],
         dependencies=None,
     )
     if cached:

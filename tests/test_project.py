@@ -25,9 +25,9 @@ class TestMpylSchema:
 
         assert project.name == "dockertest"
         assert project.maintainer, ["Marketplace", "Energy Trading"]
-        assert project.deployment is not None
-        assert project.deployment.properties is not None
-        envs = project.deployment.properties.env
+        assert project.deployments is not None
+        assert project.deployments[0].properties is not None
+        envs = project.deployments[0].properties.env
 
         simple_env = [x for x in envs if x.key == "SOME_ENV"].pop()
         assert simple_env.key == "SOME_ENV"
@@ -36,7 +36,7 @@ class TestMpylSchema:
 
         secret_env = [
             x
-            for x in project.deployment.properties.sealed_secret
+            for x in project.deployments[0].properties.sealed_secret
             if x.key == "SOME_SEALED_SECRET_ENV"
         ].pop()
         assert secret_env.get_value(Target.PULL_REQUEST).startswith(
@@ -55,20 +55,20 @@ class TestMpylSchema:
             "specs/*.js"
         ]
 
-        assert project.deployment.kubernetes is not None
-        assert project.deployment.kubernetes.port_mappings == {8080: 80}
-        assert project.deployment.kubernetes.liveness_probe is not None
+        assert project.deployments[0].kubernetes is not None
+        assert project.deployments[0].kubernetes.port_mappings == {8080: 80}
+        assert project.deployments[0].kubernetes.liveness_probe is not None
         assert (
-            project.deployment.kubernetes.liveness_probe.path.get_value(
+            project.deployments[0].kubernetes.liveness_probe.path.get_value(
                 Target.ACCEPTANCE
             )
             == "/health"
         )
-        assert project.deployment.kubernetes.metrics is not None
-        assert project.deployment.kubernetes.metrics.enabled
+        assert project.deployments[0].kubernetes.metrics is not None
+        assert project.deployments[0].kubernetes.metrics.enabled
 
-        assert project.deployment.traefik is not None
-        host = project.deployment.traefik.hosts[0]
+        assert project.deployments[0].traefik is not None
+        host = project.deployments[0].traefik.hosts[0]
         assert host.host.get_value(Target.TEST) == "Host(`payments.test.nl`)"
         assert (
             host.host.get_value(Target.PULL_REQUEST)
@@ -78,7 +78,7 @@ class TestMpylSchema:
         assert host.tls.get_value(Target.TEST) == "le-custom-prod-wildcard-cert"
 
         assert (
-            project.deployment.properties.env[2].all
+            project.deployments[0].properties.env[2].all
             == "minimalService.{namespace}.svc.cluster.local"
         )
 

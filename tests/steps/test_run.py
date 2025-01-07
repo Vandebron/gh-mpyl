@@ -25,9 +25,7 @@ class TestRunResult:
 
     project_a = ProjectExecution.run(test_data.get_project())
     project_b = ProjectExecution.run(
-        Project(
-            "test", "Test project", "", None, Stages({}), [], None, None, None, None
-        )
+        Project("test", "Test project", "", None, Stages({}), [], None, None, [], None)
     )
 
     run_plan = RunPlan.create(

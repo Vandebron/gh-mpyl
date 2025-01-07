@@ -1,4 +1,4 @@
-name: job
+name: cronjob
 description: "A job"
 maintainer: ["MPyL"]
 stages:

@@ -1,0 +1,58 @@
+name: 'testDeploymentsStrategyParameters'
+description: 'This is a test container. For testing the MPyL pipelines, not to be deployed anywhere.'
+stages:
+  build: Echo Build
+  test: Echo Test
+  deploy: Echo Deploy
+maintainer: [ 'MPyL' ]
+build:
+  args:
+    plain:
+      - key: SOME_ENV
+        test: "Test"
+        acceptance: "Acceptance"
+        production: "Production"
+dependencies:
+  build:
+    - 'test/docker/'
+deployments:
+  - name: "testDeploymentsStrategyParameters1"
+    deployStep: "Echo Deploy"
+    namespace: "mpyl"
+    properties:
+      env:
+        - key: SOME_ENV
+          pr: "PullRequest"
+          test: "Test"
+          acceptance: "Acceptance"
+          production: "Production"
+    kubernetes:
+      rancher:
+        projectId:
+          all: test1234
+      deploymentStrategy:
+        rollingUpdate:
+          maxSurge: "100%"
+          maxUnavailable: "0%"
+      portMappings:
+        8080: 8080
+  - name: "testDeploymentsStrategyParameters2"
+    deployStep: "Echo Deploy"
+    namespace: "mpyl"
+    properties:
+      env:
+        - key: SOME_ENV
+          pr: "PullRequest"
+          test: "Test"
+          acceptance: "Acceptance"
+          production: "Production"
+    kubernetes:
+      rancher:
+        projectId:
+          all: test1234
+      deploymentStrategy:
+        rollingUpdate:
+          maxSurge: "100%"
+          maxUnavailable: "0%"
+      portMappings:
+        8080: 8080
