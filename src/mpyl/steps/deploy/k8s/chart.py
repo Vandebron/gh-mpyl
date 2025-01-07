@@ -70,8 +70,6 @@ from ....project import (
     TargetProperty,
     Resources,
     Target,
-    Kubernetes,
-    Job,
     Traefik,
     TraefikHost,
     Alert,
@@ -217,46 +215,38 @@ class DeploymentDefaults:
 class ChartBuilder:
     step_input: Input
     project: Project
-    mappings: dict[int, int]
-    env: list[KeyValueProperty]
-    sealed_secrets: list[KeyValueProperty]
-    secrets: list[KeyValueRef]
-    deployment: Deployment
+    mappings: dict[int, int] = {}
+    sealed_secrets: list[KeyValueProperty] = []
+    deployments: list[Deployment]
     target: Target
     release_name: str
     config_defaults: DeploymentDefaults
     namespace: str
-    role: Optional[dict]
     deployment_strategy: Optional[dict]
 
     def __init__(self, step_input: Input):
         self.step_input = step_input
         project = self.step_input.project_execution.project
         self.project = project
-        if project.deployment is None:
-            raise AttributeError("deployment field should be set")
-
         self.config_defaults = DeploymentDefaults.from_config(
             step_input.run_properties.config
         )
 
-        self.deployment = project.deployment
-        properties = self.deployment.properties
-        self.env = properties.env if properties and properties.env else []
-        self.sealed_secrets = (
-            properties.sealed_secret if properties and properties.sealed_secret else []
-        )
-        self.secrets = (
-            properties.kubernetes if properties and properties.kubernetes else []
-        )
-        self.mappings = self.project.kubernetes.port_mappings
+        if len(project.deployments) == 0:
+            raise AttributeError("Deployments field should be set")
+        self.deployments = project.deployments
+        for deployment in project.deployments:
+            if deployment.kubernetes and deployment.kubernetes.port_mappings:
+                self.mappings = self.mappings | deployment.kubernetes.port_mappings
+            if deployment.properties and deployment.properties.sealed_secret:
+                self.sealed_secrets = (
+                    self.sealed_secrets + deployment.properties.sealed_secret
+                )
         self.target = step_input.run_properties.target
         self.release_name = self.project.name.lower()
         self.namespace = get_namespace(
             run_properties=step_input.run_properties, project=project
         )
-        self.role = project.kubernetes.role
-        self.deployment_strategy = project.kubernetes.deployment_strategy
 
     def to_labels(self) -> dict:
         run_properties = self.step_input.run_properties
@@ -321,7 +311,9 @@ class ChartBuilder:
         )
         return v1_probe
 
-    def _construct_probes(self) -> tuple[Optional[V1Probe], Optional[V1Probe]]:
+    def _construct_probes(
+        self, deployment: Deployment
+    ) -> tuple[Optional[V1Probe], Optional[V1Probe]]:
         """
         Construct kubernetes probes based on project yaml values and default values in mpyl_config.yaml.
 
@@ -331,21 +323,21 @@ class ChartBuilder:
         """
         liveness_probe = (
             ChartBuilder._to_probe(
-                self.project.kubernetes.liveness_probe,
+                deployment.kubernetes.liveness_probe,
                 self.config_defaults.liveness_probe_defaults,
                 self.target,
             )
-            if self.project.kubernetes.liveness_probe
+            if deployment.kubernetes.liveness_probe
             else None
         )
 
         startup_probe = (
             ChartBuilder._to_probe(
-                self.project.kubernetes.startup_probe,
+                deployment.kubernetes.startup_probe,
                 self.config_defaults.startup_probe_defaults,
                 self.target,
             )
-            if self.project.kubernetes.liveness_probe
+            if deployment.kubernetes.liveness_probe  # Should check for startup_probe in the future?
             else None
         )
 
@@ -379,21 +371,21 @@ class ChartBuilder:
             ),
         )
 
-    def to_job(self) -> V1Job:
+    def to_job(self, deployment: Deployment) -> V1Job:
         job_container = V1Container(
             name=self.release_name,
             image=self._get_image(),
-            env=self._get_env_vars(),
+            env=self._get_env_vars(deployment),
             image_pull_policy="Always",
-            resources=self._get_resources(),
+            resources=self._get_resources(deployment),
             command=(
-                self.project.kubernetes.command.get_value(self.target).split(" ")
-                if self.project.kubernetes.command
+                deployment.kubernetes.command.get_value(self.target).split(" ")
+                if deployment.kubernetes.command
                 else None
             ),
             args=(
-                self.project.kubernetes.args.get_value(self.target).split(" ")
-                if self.project.kubernetes.args
+                deployment.kubernetes.args.get_value(self.target).split(" ")
+                if deployment.kubernetes.args
                 else None
             ),
         )
@@ -409,7 +401,11 @@ class ChartBuilder:
         )
 
         defaults = with_target(self.config_defaults.job_defaults, self.target)
-        specified = defaults | with_target(self.project.job.job, self.target)
+        specified = defaults | (
+            with_target(deployment.kubernetes.job.job, self.target)
+            if deployment.kubernetes.job
+            else {}
+        )
 
         template_dict = to_dict(pod_template)
         specified["template"] = template_dict
@@ -426,9 +422,11 @@ class ChartBuilder:
             spec=spec,
         )
 
-    def to_cron_job(self) -> V1CronJob:
-        values = self.project.job.cron.get_value(self.target)
-        job_template = V1JobTemplateSpec(spec=self.to_job().spec)
+    def to_cron_job(self, deployment: Deployment) -> V1CronJob:
+        if deployment.kubernetes.job is None:
+            raise ValueError("CronJob deployment must have a job configuration")
+        values = deployment.kubernetes.job.cron.get_value(self.target)
+        job_template = V1JobTemplateSpec(spec=self.to_job(deployment).spec)
         template_dict = to_dict(job_template)
         values["jobTemplate"] = template_dict
         v1_cron_job_spec: V1CronJobSpec = ChartBuilder._to_k8s_model(
@@ -468,9 +466,10 @@ class ChartBuilder:
 
     def create_host_wrappers(self) -> list[HostWrapper]:
         default_hosts: list[TraefikHost] = self.config_defaults.traefik_defaults.hosts
-        hosts: list[TraefikHost] = (
-            self.deployment.traefik.hosts if self.deployment.traefik else []
-        )
+        hosts: list[TraefikHost] = []
+        for deployment in self.deployments:
+            if deployment.traefik and deployment.traefik.hosts:
+                hosts += deployment.traefik.hosts
 
         address_dictionary = {
             address.name: address.host.get_value(self.target)
@@ -539,13 +538,13 @@ class ChartBuilder:
 
         return traefik_object
 
-    def to_ingress(self) -> Optional[V1AlphaIngressRoute]:
+    def to_ingress(self, deployment: Deployment) -> Optional[V1AlphaIngressRoute]:
         """Converts the deployment traefik ingress routes configuration to a V1AlphaIngressRoute object."""
         ingress_route_spec = (
             self._replace_placeholders(
-                self.deployment.traefik.ingress_routes.get_value(self.target)
+                deployment.traefik.ingress_routes.get_value(self.target)
             )
-            if self.deployment.traefik and self.deployment.traefik.ingress_routes
+            if deployment.traefik and deployment.traefik.ingress_routes
             else None
         )
 
@@ -609,13 +608,12 @@ class ChartBuilder:
 
     def to_middlewares(self) -> dict[str, V1AlphaMiddleware]:
         hosts: list[HostWrapper] = self.create_host_wrappers()
-        traefik = self.deployment.traefik
-        middlewares = []
-
-        if traefik and traefik.middlewares:
-            middlewares = self._replace_placeholders(
-                traefik.middlewares.get_value(self.target)
-            )
+        middlewares: list = []
+        for deployment in self.deployments:
+            if deployment.traefik and deployment.traefik.middlewares:
+                middlewares = middlewares + self._replace_placeholders(
+                    deployment.traefik.middlewares.get_value(self.target)
+                )
 
         adjusted_middlewares = {
             f'middleware-{middleware["metadata"]["name"]}': V1AlphaMiddleware.from_spec(
@@ -643,10 +641,14 @@ class ChartBuilder:
     def to_service_account(
         self,
     ) -> V1ServiceAccount:
-        kubernetes = self._get_kubernetes()
-        image_pull_secrets_config = (
-            kubernetes.image_pull_secrets or self.config_defaults.image_pull_secrets
-        )
+        image_pull_secrets_config = next(
+            (
+                deployment.kubernetes.image_pull_secrets
+                for deployment in self.deployments
+                if deployment.kubernetes.image_pull_secrets
+            ),
+            self.config_defaults.image_pull_secrets,
+        )  # Should move out of deployments?
         secrets = [
             ChartBuilder._to_k8s_model(
                 secret,
@@ -742,22 +744,10 @@ class ChartBuilder:
             return image
         raise ValueError("Unable to generate a Helm chart without a Docker image")
 
-    def _get_resources(self):
-        resources = self.project.kubernetes.resources
+    def _get_resources(self, deployment: Deployment) -> V1ResourceRequirements:
+        resources = deployment.kubernetes.resources
         defaults = self.config_defaults.resources_defaults
         return ChartBuilder._to_resource_requirements(resources, defaults, self.target)
-
-    def _get_kubernetes(self) -> Kubernetes:
-        kubernetes = self.deployment.kubernetes
-        if kubernetes is None:
-            raise AttributeError("deployment.kubernetes field should be set")
-        return kubernetes
-
-    def _get_job(self) -> Job:
-        job = self._get_kubernetes().job
-        if job is None:
-            raise AttributeError("deployment.kubernetes.job field should be set")
-        return job
 
     def _create_sealed_secret_env_vars(
         self, secret_list: list[KeyValueProperty]
@@ -795,8 +785,12 @@ class ChartBuilder:
         )
         return self._create_sealed_secret_env_vars(sealed_secrets_for_target)
 
-    def _get_env_vars(self):
-        raw_env_vars = self.extract_raw_env(self.target, self.env)
+    def _get_env_vars(self, deployment: Deployment) -> list[V1EnvVar]:
+        raw_env_vars = (
+            self.extract_raw_env(self.target, deployment.properties.env)
+            if deployment.properties
+            else {}
+        )
         pr_identifier = (
             None
             if self.step_input.run_properties.versioning.tag
@@ -820,15 +814,15 @@ class ChartBuilder:
         env_vars = [
             V1EnvVar(name=key, value=value) for key, value in processed_env_vars.items()
         ]
-        secrets = self._create_secret_env_vars(self.secrets)
+        secrets = (
+            self._create_secret_env_vars(deployment.properties.kubernetes)
+            if deployment.properties
+            else []
+        )
 
         return env_vars + self.get_sealed_secret_as_env_vars() + secrets
 
-    @property
-    def is_cron_job(self) -> bool:
-        return self._get_job().cron is not None
-
-    def to_deployment(self) -> V1Deployment:
+    def to_deployment(self, deployment: Deployment) -> V1Deployment:
         ports = [
             V1ContainerPort(
                 container_port=self.mappings[key], protocol="TCP", name=f"port-{idx}"
@@ -836,16 +830,14 @@ class ChartBuilder:
             for idx, key in enumerate(self.mappings.keys())
         ]
 
-        project = self.project
-        resources = project.resources
+        resources = deployment.kubernetes.resources
         defaults = self.config_defaults.resources_defaults
-
-        liveness_probe, startup_probe = self._construct_probes()
+        liveness_probe, startup_probe = self._construct_probes(deployment)
 
         container = V1Container(
             name="service",
             image=self._get_image(),
-            env=self._get_env_vars(),
+            env=self._get_env_vars(deployment),
             ports=ports,
             image_pull_policy="Always",
             resources=ChartBuilder._to_resource_requirements(
@@ -854,13 +846,13 @@ class ChartBuilder:
             liveness_probe=liveness_probe,
             startup_probe=startup_probe,
             command=(
-                self.project.kubernetes.command.get_value(self.target).split(" ")
-                if self.project.kubernetes.command
+                deployment.kubernetes.command.get_value(self.target).split(" ")
+                if deployment.kubernetes.command
                 else None
             ),
             args=(
-                self.project.kubernetes.args.get_value(self.target).split(" ")
-                if self.project.kubernetes.args
+                deployment.kubernetes.args.get_value(self.target).split(" ")
+                if deployment.kubernetes.args
                 else None
             ),
         )
@@ -868,7 +860,7 @@ class ChartBuilder:
         instances = resources.instances if resources.instances else defaults.instances
         merged_config = {
             **self.config_defaults.deployment_strategy,
-            **(self.deployment_strategy or {}),
+            **(deployment.kubernetes.deployment_strategy or {}),
         }
         strategy = ChartBuilder._to_k8s_model(merged_config, V1DeploymentStrategy)
         return V1Deployment(
@@ -897,11 +889,15 @@ class ChartBuilder:
     def to_common_chart(self) -> dict[str, CustomResourceDefinition]:
         chart = {"service-account": self.to_service_account()}
 
-        if self.sealed_secrets:
+        if len(self.sealed_secrets) > 0:
             chart["sealed-secrets"] = self.to_sealed_secrets()
 
-        if self.role:
-            chart["role"] = self.to_role(self.role)
+        role = {}
+        for deployment in self.deployments:
+            if deployment.kubernetes.role:
+                role.update(deployment.kubernetes.role)
+        if role:
+            chart["role"] = self.to_role(role)
             chart["rolebinding"] = self.to_role_binding()
 
         prometheus = _to_prometheus_chart(self)
@@ -918,11 +914,21 @@ def to_service_chart(builder: ChartBuilder) -> dict[str, CustomResourceDefinitio
 
 
 def _to_service_components_chart(builder):
-    common_chart = {
-        "deployment": builder.to_deployment(),
+    deployment_charts = {
+        f"deployment-{deployment.name}": builder.to_deployment(deployment)
+        for deployment in builder.deployments
+    }
+    service_chart = {
         "service": builder.to_service(),
     }
-    metrics = builder.project.kubernetes.metrics
+    metrics = next(
+        (
+            deployment.kubernetes.metrics
+            for deployment in builder.deployments
+            if deployment.kubernetes.metrics
+        ),
+        None,
+    )  # Temp hack, should move out of deployments
     service_monitor = (
         {
             "service-monitor": builder.to_service_monitor(metrics=metrics),
@@ -938,14 +944,18 @@ def _to_service_components_chart(builder):
         f"{builder.project.name}-ingress-{i}-http": route
         for i, route in enumerate(builder.to_ingress_routes(https=False))
     }
-    ingress = builder.to_ingress()
-    ingress_routes = {"ingress-routes": ingress} if ingress else {}
+    ingress_routes = {
+        f"ingress-routes-{deployment.name}": builder.to_ingress(deployment)
+        for deployment in builder.deployments
+        if builder.to_ingress(deployment)
+    }
     additional_routes = {
         route.metadata.name: route
         for i, route in enumerate(builder.to_additional_routes())
     }
     return (
-        common_chart
+        deployment_charts
+        | service_chart
         | ingress_https
         | ingress_http
         | ingress_routes
@@ -954,8 +964,15 @@ def _to_service_components_chart(builder):
     )
 
 
-def _to_prometheus_chart(builder):
-    metrics = builder.project.kubernetes.metrics
+def _to_prometheus_chart(builder: ChartBuilder):
+    metrics = next(
+        (
+            deployment.kubernetes.metrics
+            for deployment in builder.deployments
+            if deployment.kubernetes.metrics
+        ),
+        None,
+    )  # Temp hack, should move out of deployments
     prometheus_chart = (
         {
             "prometheus-rule": builder.to_prometheus_rule(alerts=metrics.alerts),
@@ -966,9 +983,11 @@ def _to_prometheus_chart(builder):
     return prometheus_chart
 
 
-def to_job_chart(builder: ChartBuilder) -> dict[str, CustomResourceDefinition]:
-    return builder.to_common_chart() | {"job": builder.to_job()}
+def to_job_chart(builder: ChartBuilder, deployment: Deployment) -> dict[str, V1Job]:
+    return {f"job-{deployment.name}": builder.to_job(deployment)}
 
 
-def to_cron_job_chart(builder: ChartBuilder) -> dict[str, CustomResourceDefinition]:
-    return builder.to_common_chart() | {"cronjob": builder.to_cron_job()}
+def to_cron_job_chart(
+    builder: ChartBuilder, deployment: Deployment
+) -> dict[str, V1CronJob]:
+    return {f"cronjob-{deployment.name}": builder.to_cron_job(deployment)}

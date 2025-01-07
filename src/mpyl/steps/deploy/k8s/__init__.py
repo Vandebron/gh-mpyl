@@ -124,8 +124,8 @@ def get_namespace(run_properties: RunProperties, project: Project) -> str:
 
 
 def __get_namespace_from_project(project: Project) -> Optional[str]:
-    if project.deployment and project.deployment.namespace:
-        return project.deployment.namespace
+    if project.deployments and project.deployments[0].namespace:
+        return project.deployments[0].namespace
 
     return None
 

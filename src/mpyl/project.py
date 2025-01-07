@@ -27,6 +27,7 @@ from mypy.checker import Generic
 from ruamel.yaml import YAML
 
 from .constants import RUN_ARTIFACTS_FOLDER
+from .steps import deploy
 from .validation import validate
 
 T = TypeVar("T")
@@ -471,10 +472,12 @@ class Build:
 
 @dataclass(frozen=True)
 class Deployment:
+    name: str
+    deploy_step: str
     cluster: Optional[TargetProperty[str]]
     namespace: Optional[str]
     properties: Optional[Properties]
-    kubernetes: Optional[Kubernetes]
+    _kubernetes: Optional[Kubernetes]
     dagster: Optional[Dagster]
     traefik: Optional[Traefik]
 
@@ -487,13 +490,24 @@ class Deployment:
         cluster = values.get("cluster")
 
         return Deployment(
+            name=values["name"],
+            deploy_step=values["deployStep"],
             cluster=TargetProperty.from_config(cluster) if cluster else None,
             namespace=values.get("namespace"),
             properties=Properties.from_config(props) if props else None,
-            kubernetes=Kubernetes.from_config(kubernetes) if kubernetes else None,
+            _kubernetes=Kubernetes.from_config(kubernetes) if kubernetes else None,
             dagster=Dagster.from_config(dagster) if dagster else None,
             traefik=Traefik.from_config(traefik) if traefik else None,
         )
+
+    @property
+    def kubernetes(self) -> Kubernetes:
+        if not self._kubernetes:
+            raise KeyError(
+                f"Deployment '{self.name}' does not have kubernetes configuration"
+            )
+
+        return self._kubernetes
 
 
 @dataclass(frozen=True)
@@ -512,7 +526,7 @@ class Project:
     maintainer: list[str]
     docker: Optional[Docker]
     build: Optional[Build]
-    deployment: Optional[Deployment]
+    deployments: list[Deployment]
     dependencies: Optional[Dependencies]
 
     def __lt__(self, other):
@@ -529,37 +543,23 @@ class Project:
         return ProjectName(
             name=self.name,
             namespace=(
-                self.deployment.namespace
-                if self.deployment and self.deployment.namespace
-                else None
+                self.deployments[0].namespace if self.deployments[0].namespace else None
             ),
         )
 
     @property
-    def kubernetes(self) -> Kubernetes:
-        if self.deployment is None or self.deployment.kubernetes is None:
-            raise KeyError(
-                f"Project '{self.name}' does not have kubernetes configuration"
-            )
-        return self.deployment.kubernetes
-
-    @property
     def dagster(self) -> Dagster:
-        if self.deployment is None or self.deployment.dagster is None:
+        dagster_config = next(
+            (
+                deployment.dagster
+                for deployment in self.deployments
+                if deployment.dagster
+            ),
+            None,
+        )  # Dagster config should move out of deployment?
+        if dagster_config is None:
             raise KeyError(f"Project '{self.name}' does not have dagster configuration")
-        return self.deployment.dagster
-
-    @property
-    def resources(self) -> Resources:
-        return self.kubernetes.resources
-
-    @property
-    def job(self) -> Job:
-        if self.kubernetes.job is None:
-            raise KeyError(
-                f"Project '{self.name}' does not have kubernetes.job configuration"
-            )
-        return self.kubernetes.job
+        return dagster_config
 
     @staticmethod
     def project_yaml_file_name() -> str:
@@ -592,18 +592,27 @@ class Project:
     @staticmethod
     def from_config(values: dict, project_path: Path):
         docker_config = values.get("docker")
-        deployment = values.get("deployment")
+        stages = Stages.from_config(values.get("stages", {}))
+        deployment = values.get("deployment", {})
+        if deployment:
+            deployment["name"] = values["name"]
+            deployment["deployStep"] = stages.for_stage(deploy.STAGE_NAME)
+        deployments = values.get("deployments", [])
+        deployment_list = [deployment] if deployment else deployments
         dependencies = values.get("dependencies")
+        deployments = [
+            Deployment.from_config(deployment) for deployment in deployment_list
+        ]
         return Project(
             name=values["name"],
             description=values["description"],
             path=str(project_path),
             pipeline=values.get("pipeline"),
-            stages=Stages.from_config(values.get("stages", {})),
+            stages=stages,
             maintainer=values.get("maintainer", []),
             docker=Docker.from_config(docker_config) if docker_config else None,
             build=Build.from_config(values.get("build", {})),
-            deployment=Deployment.from_config(deployment) if deployment else None,
+            deployments=deployments,
             dependencies=(
                 Dependencies.from_config(dependencies) if dependencies else None
             ),
@@ -709,23 +718,3 @@ def merge_dicts(
         else:
             merged[key] = value
     return merged
-
-
-def get_env_variables(project: Project, target: Target) -> dict[str, str]:
-    if project.deployment is None:
-        raise KeyError(
-            f"No deployment information was found for project: {project.name}"
-        )
-    if project.deployment.properties is None:
-        raise KeyError(
-            f"No properties information was found for project: {project.name}"
-        )
-    if len(project.deployment.properties.env) == 0:
-        raise KeyError(f"No properties.env is defined for project: {project.name}")
-
-    env_variables: dict[str, str] = {
-        env_variable.key: env_variable.get_value(target)
-        for env_variable in project.deployment.properties.env
-    }
-
-    return env_variables

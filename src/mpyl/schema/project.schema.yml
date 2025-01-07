@@ -7,6 +7,11 @@ required:
   - stages
   - description
   - maintainer
+oneOf:
+  - required:
+      - deployment
+  - required:
+      - deployments
 dependencies:
   deployment:
     - maintainer
@@ -122,6 +127,40 @@ properties:
                   type: string
     minProperties: 1
   deployment:
+    $ref: '#/definitions/deployment'
+  deployments:
+    type: array
+    description: >-
+      Defines multiple deployments for the same service.
+    items:
+      required:
+        - name
+        - deployStep
+      properties:
+        name:
+          type: string
+          description: The name of this deployment
+        deployStep:
+          type: string
+          description: The name of the mpyl deploy step to use for this deployment.
+      $ref: '#/definitions/deployment'
+  postdeploy:
+    additionalProperties: false
+    type: object
+    required:
+      - specs
+      - recordKey
+    properties:
+      specs:
+        additionalProperties: false
+        type: array
+      recordKey:
+        additionalProperties: false
+        type: string
+  dependencies:
+    $ref: mpyl_stages.schema.yml#/definitions/dependencies
+definitions:
+  deployment:
     type: object
     properties:
       properties:
@@ -199,22 +238,6 @@ properties:
     minProperties: 1
     required:
       - namespace
-  postdeploy:
-    additionalProperties: false
-    type: object
-    required:
-      - specs
-      - recordKey
-    properties:
-      specs:
-        additionalProperties: false
-        type: array
-      recordKey:
-        additionalProperties: false
-        type: string
-  dependencies:
-    $ref: mpyl_stages.schema.yml#/definitions/dependencies
-definitions:
   traefik:
     additionalProperties: true
     type: object
@@ -496,37 +519,6 @@ definitions:
       production:
         type: string
       all:
-        type: string
-  vault:
-    type: object
-    additionalItems: false
-    required:
-      - key
-      - path
-    properties:
-      key:
-        type: string
-      path:
-        type: string
-  secret:
-    type: object
-    additionalItems: false
-    required:
-      - secretType
-      - name
-      - key
-      - value
-    properties:
-      secretType:
-        type: string
-        enum:
-          - Generic
-          - DockerSecret
-      name:
-        type: string
-      key:
-        type: string
-      value:
         type: string
   requestResources:
     type: object

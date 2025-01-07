@@ -35,6 +35,11 @@
                     <option name="path" value="*/*project.yml" />
                     <option name="mappingKind" value="Pattern" />
                   </Item>
+                  <Item>
+                    <option name="directory" value="true" />
+                    <option name="path" value="tests/test_resources/test_projects" />
+                    <option name="mappingKind" value="Directory" />
+                  </Item>
                 </list>
               </option>
             </SchemaInfo>

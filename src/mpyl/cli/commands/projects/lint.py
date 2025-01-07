@@ -58,20 +58,66 @@ def _assert_unique_project_names(console: Console, all_projects: list[Project]):
     return duplicates
 
 
-def _assert_project_ids(console: Console, all_projects: list[Project]):
+def _assert_namespaces(console: Console, all_projects: list[Project]):
+    console.print("")
+    console.print("Checking for different namespaces in deployments: ")
+    different_namespace = []
+    for project in all_projects:
+        namespaces = {deployment.namespace for deployment in project.deployments}
+        if len(namespaces) > 1:
+            different_namespace.append({project.name: namespaces})
+
+    return different_namespace
+
+
+def _assert_dagster_configs(console: Console, all_projects: list[Project]):
+    console.print("")
+    console.print("Checking for multiple dagster configs in deployments: ")
+    multiple_dagster_configs = []
+    for project in all_projects:
+        dagster_configs = [
+            deployment.dagster
+            for deployment in project.deployments
+            if deployment.dagster
+        ]
+        if len(dagster_configs) > 1:
+            multiple_dagster_configs.append({project.name: dagster_configs})
+
+    return multiple_dagster_configs
+
+
+def _assert_missing_project_ids(console: Console, all_projects: list[Project]):
     console.print("")
     console.print("Checking for missing project ids: ")
-    missing_ids = [
+    return [
         project.name
         for project in all_projects
         if project.stages.for_stage(STAGE_NAME) is not None
         and "override" not in project.path
-        and project.deployment
-        and project.deployment.kubernetes
-        and project.kubernetes.rancher
-        and not project.kubernetes.rancher.project_id
+        and not any(_get_project_ids(project))
     ]
-    return missing_ids
+
+
+def _assert_different_project_ids(console: Console, all_projects: list[Project]):
+    console.print("")
+    console.print("Checking for different project ids: ")
+    return [
+        {project.name: _get_project_ids(project)}
+        for project in all_projects
+        if project.stages.for_stage(STAGE_NAME) is not None
+        and "override" not in project.path
+        and len(_get_project_ids(project)) > 1
+    ]
+
+
+def _get_project_ids(project: Project):
+    return {
+        deployment.kubernetes.rancher.project_id.get_value(Target.PRODUCTION)
+        for deployment in project.deployments
+        if deployment.kubernetes
+        and deployment.kubernetes.rancher
+        and deployment.kubernetes.rancher.project_id.get_value(Target.PRODUCTION)
+    }
 
 
 @dataclass
@@ -101,21 +147,25 @@ def __get_wrong_substitutions_per_project(
 ) -> list[WrongLinkupPerProject]:
     project_linkup: list[WrongLinkupPerProject] = []
     for project in projects:
-        if project.deployment and project.deployment.properties:
-            env = ChartBuilder.extract_raw_env(
-                target=target, env=project.deployment.properties.env
-            )
-            substituted: dict[str, str] = substitute_namespaces(
-                env_vars=env,
-                all_projects=set(map(lambda p: p.to_name, projects)),
-                projects_to_deploy=set(map(lambda p: p.to_name, projects)),
-                pr_identifier=pr_identifier,
-            )
-            wrong_subs = list(
-                filter(lambda x: "{namespace}" in x[1], substituted.items())
-            )
-            if len(wrong_subs) > 0:
-                project_linkup.append(WrongLinkupPerProject(project.name, wrong_subs))
+        if project.deployments:
+            for deployment in project.deployments:
+                if deployment.properties:
+                    env = ChartBuilder.extract_raw_env(
+                        target=target, env=deployment.properties.env
+                    )
+                    substituted: dict[str, str] = substitute_namespaces(
+                        env_vars=env,
+                        all_projects=set(map(lambda p: p.to_name, projects)),
+                        projects_to_deploy=set(map(lambda p: p.to_name, projects)),
+                        pr_identifier=pr_identifier,
+                    )
+                    wrong_subs = list(
+                        filter(lambda x: "{namespace}" in x[1], substituted.items())
+                    )
+                    if len(wrong_subs) > 0:
+                        project_linkup.append(
+                            WrongLinkupPerProject(project.name, wrong_subs)
+                        )
     return project_linkup
 
 
@@ -151,23 +201,24 @@ def _lint_whitelisting_rules(
     )
     wrong_whitelists: list[tuple[Project, set[str]]] = []
     for project in projects:
-        if project.deployment:
-            if traefik := project.deployment.traefik:
-                whitelists: set[str] = set(
-                    itertools.chain.from_iterable(
-                        [
-                            whitelist_property.get_value(target)
-                            for whitelist_property in [
-                                host.whitelists
-                                for host in traefik.hosts
-                                if host.whitelists is not None
+        if project.deployments:
+            for deployment in project.deployments:
+                if traefik := deployment.traefik:
+                    whitelists: set[str] = set(
+                        itertools.chain.from_iterable(
+                            [
+                                whitelist_property.get_value(target)
+                                for whitelist_property in [
+                                    host.whitelists
+                                    for host in traefik.hosts
+                                    if host.whitelists is not None
+                                ]
+                                if whitelist_property.get_value(target) is not None
                             ]
-                            if whitelist_property.get_value(target) is not None
-                        ]
+                        )
                     )
-                )
-                if diff := whitelists.difference(defined_whitelists):
-                    wrong_whitelists.append((project, diff))
+                    if diff := whitelists.difference(defined_whitelists):
+                        wrong_whitelists.append((project, diff))
 
     return wrong_whitelists
 

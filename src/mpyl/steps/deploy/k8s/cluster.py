@@ -39,10 +39,10 @@ def get_cluster_config_for_project(
     ).get_value(run_properties.target)
 
     cluster_override_name = (
-        project.deployment.cluster.get_value(run_properties.target)
-        if project.deployment and project.deployment.cluster
+        project.deployments[0].cluster.get_value(run_properties.target)
+        if project.deployments[0].cluster
         else None
-    )
+    )  # Temp hack since this logic is not used and will be removed in a future ticket
 
     cluster_override = next(
         (cluster for cluster in clusters if cluster.name == cluster_override_name), None

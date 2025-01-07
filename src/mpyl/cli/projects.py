@@ -19,18 +19,21 @@ from ..cli.commands.projects.lint import (
     _assert_correct_project_linkup,
     _lint_whitelisting_rules,
     __detail_wrong_substitutions,
-    _assert_project_ids,
+    _assert_missing_project_ids,
     _assert_no_self_dependencies,
+    _assert_namespaces,
+    _assert_dagster_configs,
+    _assert_different_project_ids,
 )
 from ..cli.commands.projects.upgrade import check_upgrade
 from ..constants import DEFAULT_CONFIG_FILE_NAME
+from ..plan.discovery import find_projects
 from ..project import load_project, Target
 from ..projects.versioning import (
     check_upgrades_needed,
     upgrade_file,
     PROJECT_UPGRADERS,
 )
-from ..plan.discovery import find_projects
 from ..utilities.pyaml_env import parse_config
 
 
@@ -82,7 +85,7 @@ def list_project_names(ctx: Context):
 
 @projects.command(help="Validate the yaml of changed projects against their schema")
 @click.pass_obj
-# pylint: disable=too-many-branches
+# pylint: disable=too-many-branches,too-many-statements
 def lint(ctx: Context):
     all_projects = _check_and_load_projects(
         console=ctx.console, project_paths=find_projects()
@@ -103,7 +106,27 @@ def lint(ctx: Context):
     else:
         console.print("  ✅ No duplicate project names found")
 
-    missing_project_ids = _assert_project_ids(
+    namespaces = _assert_namespaces(console=console, all_projects=all_projects)
+    if len(namespaces) > 0:
+        console.print(
+            f"  ❌ Found {len(namespaces)} project with different namespaces in its deployments: {namespaces}"
+        )
+        failed = True
+    else:
+        console.print("  ✅ All deployments have the same namespace")
+
+    dagster_configs = _assert_dagster_configs(
+        console=console, all_projects=all_projects
+    )
+    if len(dagster_configs) > 0:
+        console.print(
+            f"  ❌ Found {len(dagster_configs)} project(s) with multiple dagster configs: {dagster_configs}"
+        )
+        failed = True
+    else:
+        console.print("  ✅ Only one dagster config found in deployments")
+
+    missing_project_ids = _assert_missing_project_ids(
         console=console, all_projects=all_projects
     )
     if missing_project_ids:
@@ -113,6 +136,17 @@ def lint(ctx: Context):
         failed = True
     else:
         console.print("  ✅ All kubernetes projects have a project id")
+
+    different_project_ids = _assert_different_project_ids(
+        console=console, all_projects=all_projects
+    )
+    if different_project_ids:
+        console.print(
+            f"  ❌ Found {len(different_project_ids)} projects with different project ids: {different_project_ids}"
+        )
+        failed = True
+    else:
+        console.print("  ✅ All project id's are equal")
 
     wrong_substitutions = _assert_correct_project_linkup(
         console=console,

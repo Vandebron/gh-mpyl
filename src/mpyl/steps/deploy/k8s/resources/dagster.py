@@ -7,7 +7,7 @@ from typing import Optional
 
 from . import to_dict
 from ..chart import ChartBuilder
-from .....project import get_env_variables
+from .....project import Project, Target
 from .....steps.models import RunProperties
 from .....utilities.docker import DockerConfig, registry_for_project
 from .....utilities.helm import shorten_name
@@ -101,3 +101,14 @@ def to_user_code_values(
         }
         | extra_manifests
     )
+
+
+def get_env_variables(project: Project, target: Target) -> dict[str, str]:
+    env_variables: dict[str, str] = {
+        env_variable.key: env_variable.get_value(target)
+        for deployment in project.deployments
+        if deployment.properties
+        for env_variable in deployment.properties.env
+    }
+
+    return env_variables
