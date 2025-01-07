@@ -1,6 +1,6 @@
 name: 'sbtservice'
 maintainer: ['MPyL']
-projectYmlVersion: '2'
+projectYmlVersion: 2
 stages:
   build: Echo Build
   deploy: Kubernetes Deploy

@@ -20,20 +20,20 @@ from ..project import Project
 from ..utilities.yaml import yaml_to_string, load_for_roundtrip, yaml_for_roundtrip
 
 VERSION_FIELD = "projectYmlVersion"
-BASE_RELEASE = "1"
+BASE_RELEASE = 1
 
 
 class Upgrader(ABC):
     """Base class for upgrade scripts"""
 
-    target_version: str
+    target_version: int
 
     def upgrade(self, previous_dict: ordereddict) -> ordereddict:
         return previous_dict
 
 
 class ProjectUpgraderOne(Upgrader):
-    target_version = "1"
+    target_version = 1
 
     def upgrade(self, previous_dict: ordereddict) -> ordereddict:
         if "mpylVersion" in previous_dict:
@@ -48,7 +48,7 @@ class ProjectUpgraderTwo(Upgrader):
     def __init__(self, project_yml_path: Path):
         self.project_yml_path = project_yml_path
 
-    target_version = "2"
+    target_version = 2
 
     def upgrade(self, previous_dict: ordereddict) -> ordereddict:
         traefik = previous_dict.get("deployment", {}).get("traefik", {})
@@ -72,7 +72,7 @@ class ProjectUpgraderTwo(Upgrader):
 
 
 def get_entry_upgrader_index(
-    current_version: str, upgraders: list[Upgrader]
+    current_version: int, upgraders: list[Upgrader]
 ) -> Optional[int]:
     next_index = next(
         (i for i, v in enumerate(upgraders) if v.target_version == current_version),
@@ -81,7 +81,7 @@ def get_entry_upgrader_index(
     return next_index
 
 
-def __get_version(project: dict) -> str:
+def __get_version(project: dict) -> int:
     return project.get(VERSION_FIELD, BASE_RELEASE)
 
 

@@ -30,7 +30,7 @@ properties:
   projectYmlVersion:
     description: >-
       The upgrade version of the project.yml, used for the Upgrader script.
-    type: string
+    type: integer
   maintainer:
     description: >-
       Describes which team or guild is ultimately responsible for the life cycle

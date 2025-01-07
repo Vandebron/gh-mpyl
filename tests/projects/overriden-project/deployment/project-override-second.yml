@@ -1,6 +1,6 @@
 name: ocpp-second
 maintainer: ['MPyL']
-projectYmlVersion: '1'
+projectYmlVersion: 1
 stages:
   deploy: Echo Deploy
 deployment:

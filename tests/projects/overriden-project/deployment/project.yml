@@ -1,6 +1,6 @@
 name: ocpp
 maintainer: ['MPyL']
-projectYmlVersion: '1'
+projectYmlVersion: 1
 description: 'Deployment of ocpp'
 stages:
   build: Echo Build

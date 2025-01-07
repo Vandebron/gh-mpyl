@@ -30,9 +30,9 @@ class TestVersioning:
             ProjectUpgraderTwo(Path("")),
         ]
 
-        assert get_entry_upgrader_index("1", upgraders) == 0
-        assert get_entry_upgrader_index("2", upgraders) == 1
-        assert get_entry_upgrader_index("0", upgraders) is None
+        assert get_entry_upgrader_index(1, upgraders) == 0
+        assert get_entry_upgrader_index(2, upgraders) == 1
+        assert get_entry_upgrader_index(0, upgraders) is None
 
     def test_full_upgrade(self):
         self.__roundtrip(

@@ -1,6 +1,6 @@
 name: job
 description: "A job"
-projectYmlVersion: '1'
+projectYmlVersion: 1
 maintainer: ["MPyL"]
 stages:
   build: Echo Build

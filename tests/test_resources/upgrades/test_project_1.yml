@@ -1,6 +1,6 @@
 name: 'dockertest'
 description: 'This is a test container. For testing the MPyL pipelines, not to be deployed anywhere.'
-projectYmlVersion: '1'
+projectYmlVersion: 1
 stages:
   build: Docker Build
   test: Docker Test
