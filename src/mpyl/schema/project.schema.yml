@@ -127,7 +127,6 @@ properties:
     minProperties: 1
   deployment:
     type: object
-    additionalProperties: false
     properties:
       properties:
         type: object
@@ -137,16 +136,6 @@ properties:
             type: array
             items:
               $ref: '#/definitions/env'
-            uniqueItems: true
-          jenkins:
-            type: array
-            items:
-              $ref: '#/definitions/env'
-            uniqueItems: true
-          vault:
-            type: array
-            items:
-              $ref: '#/definitions/vault'
             uniqueItems: true
           sealedSecret:
             description: >-
@@ -174,49 +163,10 @@ properties:
           Corresponds to the namespace in Kubernetes to which the artifact will
           be deployed
         type: string
-      s3:
-        additionalProperties: false
-        type: object
-        required:
-          - bucket
-          - region
-        properties:
-          bucket:
-            $ref: '#/definitions/dtapValue'
-          region:
-            type: string
-          path:
-            $ref: '#/definitions/dtapValue'
       kubernetes:
         $ref: '#/definitions/kubernetes'
       traefik:
         $ref: '#/definitions/traefik'
-      nuc:
-        type: object
-        required:
-          - path
-        properties:
-          config:
-            type: string
-          path:
-            type: string
-      helm:
-        additionalProperties: false
-        type: object
-        required:
-          - name
-          - version
-          - repoName
-          - repoUrl
-        properties:
-          name:
-            type: string
-          version:
-            type: string
-          repoName:
-            type: string
-          repoUrl:
-            type: string
       dagster:
         additionalProperties: false
         type: object
@@ -236,17 +186,6 @@ properties:
             type: string
             examples:
               - /python/my_project/dagster/repo.py
-      bpm:
-        additionalProperties: false
-        type: object
-        required:
-          - projectId
-        properties:
-          projectId:
-            description: >-
-              project Id where diagram is stored in Camunda Modeler,
-              you can find this value from Camunda Saas url when open the project
-            type: string
       cluster:
         type: object
         additionalProperties: false

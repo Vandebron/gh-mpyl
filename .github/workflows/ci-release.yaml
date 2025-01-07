@@ -14,6 +14,12 @@ on:
       - Pipfile
       - Pipfile.lock
 
+# if multiple pull requests are merged while this workflow is still running, cancel this one and build the last one
+# to include all changes
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
 jobs:
   release:
     if: github.event.pull_request.merged == true
@@ -46,7 +52,7 @@ jobs:
           registry-type: public
 
       - name: Create repository in ECR
-        uses: int128/create-ecr-repository-action@v1.331.0
+        uses: int128/create-ecr-repository-action@v1.341.0
         with:
           repository: ${{ env.image-name }}
           public: true
@@ -55,7 +61,7 @@ jobs:
         uses: docker/setup-qemu-action@v3.2.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3.7.1
+        uses: docker/setup-buildx-action@v3.8.0
 
       - name: Build and push
         id: docker-build-push
@@ -93,7 +99,7 @@ jobs:
           done
 
       - name: Generate token to commit to main
-        uses: actions/create-github-app-token@v1.11.0
+        uses: actions/create-github-app-token@v1.11.1
         id: commit-token
         with:
           repositories: gh-mpyl

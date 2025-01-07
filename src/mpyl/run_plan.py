@@ -87,6 +87,9 @@ class RunPlan:
             return flatten(self._full_plan)
         return flatten(self._selected_plan)
 
+    def _get_all_projects(self, use_full_plan: bool = False) -> set[Project]:
+        return {p.project for p in self._get_all_executions(use_full_plan)}
+
     def _get_executions_for_stage(
         self, stage: Stage, use_full_plan: bool = False
     ) -> set[ProjectExecution]:
@@ -140,37 +143,49 @@ class RunPlan:
             pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
 
     def write_to_summary_file(self):
+        def get_icon(project: Project, stage_name: str):
+            if project.pipeline == "docker":
+                return "🐳"
+            if project.pipeline == "sbt":
+                executions_for_stage = self.get_executions_for_stage_name(stage_name)
+                execution_for_stage = next(
+                    (
+                        execution_for_stage
+                        for execution_for_stage in executions_for_stage
+                        if execution_for_stage.name == project.name
+                    ),
+                    None,
+                )
+                if execution_for_stage:
+                    return "💾" if execution_for_stage.cached else "☕️"
+            return ""
+
+        def is_project_in_stage(project: Project, stage_name: str):
+            return any(
+                project.name == execution_for_stage.name
+                for execution_for_stage in self.get_executions_for_stage_name(
+                    stage_name
+                )
+            )
+
         summary = "| 👷 Project | 🏗 Build | 🧪 Test | 🚀 Deploy | 🦺 Post-deploy |\n"
         summary += "| ---------- | :------: | :-----: | :-------: | :------------: |\n"
-
-        def get_icon(project_execution: ProjectExecution, stage_name: str):
-            if project_execution.project.pipeline == "docker":
-                return "🐳"
-            if (
-                project_execution.project.pipeline == "sbt"
-                and project_execution in self.get_executions_for_stage_name(stage_name)
-            ):
-                return "💾" if project_execution.cached else "☕️"
-            return ""
 
         all_executions = self._get_all_executions()
         if len(all_executions) == 0:
             summary = "Nothing to do 🤷\n"
 
-        for execution in all_executions:
-            build_plan = get_icon(execution, "build")
-            test_plan = get_icon(execution, "test")
-            deploy_plan = (
-                "🚀"
-                if execution in self.get_executions_for_stage_name("deploy")
-                else ""
-            )
+        for project in sorted(
+            self._get_all_projects(), key=operator.attrgetter("name")
+        ):
+            build_plan = get_icon(project, "build")
+            test_plan = get_icon(project, "test")
+            deploy_plan = "🚀" if is_project_in_stage(project, "deploy") else ""
             postdeploy_plan = (
-                "🦺"
-                if execution in self.get_executions_for_stage_name("postdeploy")
-                else ""
+                "🦺" if is_project_in_stage(project, "post-deploy") else ""
             )
-            summary += f"| {execution.name} | {build_plan} | {test_plan} | {deploy_plan} | {postdeploy_plan} |\n"
+
+            summary += f"| {project.name} | {build_plan} | {test_plan} | {deploy_plan} | {postdeploy_plan} |\n"
 
         logger = logging.getLogger("mpyl")
         os.makedirs(os.path.dirname(RUN_PLAN_SUMMARY_FILE), exist_ok=True)

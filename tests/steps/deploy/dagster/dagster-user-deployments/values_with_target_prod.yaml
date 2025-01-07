@@ -3,6 +3,8 @@ global:
 serviceAccount:
   create: false
 fullnameOverride: ucd-educ
+imagePullSecrets:
+- name: aws-ecr
 deployments:
 - dagsterApiGrpcArgs:
   - --python-file
@@ -16,8 +18,6 @@ deployments:
   - name: some-normal-secret
   image:
     pullPolicy: Always
-    imagePullSecrets:
-    - name: bigdataregistry
     tag: 20230829-1234
     repository: docker_host/example-dagster-user-code
   labels:
@@ -26,6 +26,7 @@ deployments:
     maintainer: MPyL
     version: 20230829-1234
     revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
+    vandebron.nl/dagster: user-code-deployment
   includeConfigInLaunchedRuns:
     enabled: true
   name: example-dagster-user-code

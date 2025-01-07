@@ -59,6 +59,9 @@ def to_user_code_values(
             "serviceAccount": {"create": create_local_service_account},
             # ucd, short for user-code-deployment
             "fullnameOverride": f"ucd-{shorten_name(project.name)}{name_suffix}",
+            "imagePullSecrets": [
+                {"name": "aws-ecr"},
+            ],
             "deployments": [
                 {
                     "dagsterApiGrpcArgs": [
@@ -75,14 +78,16 @@ def to_user_code_values(
                     "envSecrets": [{"name": s.name} for s in project.dagster.secrets],
                     "image": {
                         "pullPolicy": "Always",
-                        "imagePullSecrets": [{"name": "bigdataregistry"}],
                         "tag": run_properties.versioning.identifier,
                         "repository": f"{docker_registry.host_name}/{project.name}",
                     },
                     "labels": {
-                        k: v
-                        for k, v in builder.to_labels().items()
-                        if not k.startswith("app.")
+                        **{
+                            k: v
+                            for k, v in builder.to_labels().items()
+                            if not k.startswith("app.")
+                        },
+                        "vandebron.nl/dagster": "user-code-deployment",
                     },
                     "includeConfigInLaunchedRuns": {"enabled": True},
                     "name": release_name,
