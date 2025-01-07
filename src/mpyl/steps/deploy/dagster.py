@@ -20,16 +20,20 @@ from .k8s import (
     get_version_of_deployment,
 )
 from .k8s.chart import ChartBuilder
-from .k8s.cluster import get_cluster_config_for_project
 from .k8s.helm import write_chart, template_chart
 from .k8s.resources.dagster import to_user_code_values, to_grpc_server_entry, Constants
 from ..input import Input
 from ..output import Output
 from ..step import Step, Meta
 from ..models import RunProperties
+from ...project import Project, Target
 from ...utilities.dagster import DagsterConfig
 from ...utilities.docker import DockerConfig
 from ...utilities.helm import convert_to_helm_release_name, get_name_suffix
+
+
+def _cluster_context(project: Project, target: Target) -> str:
+    return f"vdb-core-digital-k8s-{project.cluster_env(target)}"
 
 
 class DagsterBase:
@@ -260,9 +264,10 @@ class TemplateDagster(Step, DagsterBase):
         """
         results = []
         properties = step_input.run_properties
-        context = get_cluster_config_for_project(
-            step_input.run_properties, step_input.project_execution.project
-        ).context
+        context = _cluster_context(
+            project=step_input.project_execution.project,
+            target=step_input.run_properties.target,
+        )
         dagster_config: DagsterConfig = DagsterConfig.from_dict(properties.config)
 
         config.load_kube_config(context=context)
@@ -328,9 +333,10 @@ class DeployDagster(Step, DagsterBase):
         """
         results = []
         properties = step_input.run_properties
-        context = get_cluster_config_for_project(
-            step_input.run_properties, step_input.project_execution.project
-        ).context
+        context = _cluster_context(
+            project=step_input.project_execution.project,
+            target=step_input.run_properties.target,
+        )
         dagster_config: DagsterConfig = DagsterConfig.from_dict(properties.config)
 
         config.load_kube_config(context=context)

@@ -42,7 +42,6 @@ from kubernetes.client import (
 )
 
 from . import substitute_namespaces, get_namespace
-from .cluster import get_cluster_config_for_project
 from .resources import (
     CustomResourceDefinition,
     to_dict,
@@ -532,9 +531,7 @@ class ChartBuilder:
         traefik_object = replace_item(
             traefik_object,
             CLUSTER_ENV_PLACEHOLDER,
-            get_cluster_config_for_project(
-                self.step_input.run_properties, self.project
-            ).cluster_env,
+            self.project.cluster_env(self.step_input.run_properties.target),
         )
 
         return traefik_object
@@ -559,9 +556,6 @@ class ChartBuilder:
 
     def to_ingress_routes(self, https: bool) -> list[V1AlphaIngressRoute]:
         hosts = self.create_host_wrappers()
-        cluster_env = get_cluster_config_for_project(
-            self.step_input.run_properties, self.project
-        ).cluster_env
         return [
             V1AlphaIngressRoute.from_hosts(
                 metadata=self._to_object_meta(
@@ -573,7 +567,9 @@ class ChartBuilder:
                 namespace=get_namespace(self.step_input.run_properties, self.project),
                 pr_number=self.step_input.run_properties.versioning.pr_number,
                 https=https,
-                cluster_env=cluster_env,
+                cluster_env=self.project.cluster_env(
+                    self.step_input.run_properties.target
+                ),
                 middlewares_override=[],
                 entrypoints_override=[],
                 http_middleware=self.config_defaults.traefik_config.http_middleware,
@@ -584,9 +580,6 @@ class ChartBuilder:
 
     def to_additional_routes(self) -> list[V1AlphaIngressRoute]:
         hosts = self.create_host_wrappers()
-        cluster_env = get_cluster_config_for_project(
-            self.step_input.run_properties, self.project
-        ).cluster_env
         return [
             V1AlphaIngressRoute.from_hosts(
                 metadata=self._to_object_meta(
@@ -597,7 +590,9 @@ class ChartBuilder:
                 namespace=get_namespace(self.step_input.run_properties, self.project),
                 pr_number=self.step_input.run_properties.versioning.pr_number,
                 https=True,
-                cluster_env=cluster_env,
+                cluster_env=self.project.cluster_env(
+                    self.step_input.run_properties.target
+                ),
                 middlewares_override=host.additional_route.middlewares,
                 entrypoints_override=host.additional_route.entrypoints,
                 http_middleware=self.config_defaults.traefik_config.http_middleware,

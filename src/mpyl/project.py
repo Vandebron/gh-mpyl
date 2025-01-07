@@ -471,7 +471,6 @@ class Build:
 
 @dataclass(frozen=True)
 class Deployment:
-    cluster: Optional[TargetProperty[str]]
     namespace: Optional[str]
     properties: Optional[Properties]
     kubernetes: Optional[Kubernetes]
@@ -484,10 +483,8 @@ class Deployment:
         kubernetes = values.get("kubernetes")
         dagster = values.get("dagster")
         traefik = values.get("traefik")
-        cluster = values.get("cluster")
 
         return Deployment(
-            cluster=TargetProperty.from_config(cluster) if cluster else None,
             namespace=values.get("namespace"),
             properties=Properties.from_config(props) if props else None,
             kubernetes=Kubernetes.from_config(kubernetes) if kubernetes else None,
@@ -588,6 +585,19 @@ class Project:
     @property
     def test_report_path(self) -> Path:
         return Path(self.root_path) / "target/test-reports"
+
+    def cluster_env(self, target: Target) -> str:
+        match target:
+            case Target.PULL_REQUEST:
+                return "test"
+            case Target.TEST:
+                return "test"
+            case Target.ACCEPTANCE:
+                return "acce"
+            case Target.PRODUCTION:
+                return "prod"
+            case _:
+                raise ValueError(f"Unexpected target {target}")
 
     @staticmethod
     def from_config(values: dict, project_path: Path):

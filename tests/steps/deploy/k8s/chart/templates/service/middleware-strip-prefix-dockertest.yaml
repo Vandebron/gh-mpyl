@@ -14,4 +14,4 @@ metadata:
 spec:
   stripPrefix:
     prefixes:
-    - /service2/test-other/pr-1234/1234
+    - /service2/test/pr-1234/1234
