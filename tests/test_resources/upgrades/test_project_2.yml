@@ -1,11 +1,11 @@
 name: 'dockertest'
 description: 'This is a test container. For testing the MPyL pipelines, not to be deployed anywhere.'
+projectYmlVersion: 2
 stages:
   build: Docker Build
   test: Docker Test
   deploy: Kubernetes Deploy
-  postdeploy: Cypress Test
-mpylVersion: 1.3.1
+  postdeploy: Skip Postdeploy
 maintainer: ['MPyL']
 build:
   args:
@@ -63,6 +63,14 @@ deployment:
             divisor: 0.5
             resource: limits.memory
   kubernetes:
+    rancher:
+      projectId:
+        all: test1234
+    job:
+      cron:
+        all:
+          schedule: "0 22 * * *"
+          timeZone: "Europe/Amsterdam"
     role:
       resources:
         - "pods"
@@ -109,36 +117,3 @@ deployment:
           all: 256
     command:
       all: "script.sh --opt"
-  traefik:
-    hosts:
-      - host:
-          pr: "Host(`payments-{PR-NUMBER}.test.nl`)"
-          test: "Host(`payments.test.nl`)"
-          acceptance: "Host(`payments.acceptance1.nl`)"
-          production: "Host(`payments.nl`)"
-        tls:
-          all: "le-custom-prod-wildcard-cert"
-        insecure: true
-        whitelists:
-          test:
-            - "Test"
-        additionalRoute: "ingress-intracloud-https"
-      - host:
-          all: "Host(`some.other.host.com`)"
-        servicePort: 4091
-        priority: 1000
-        whitelists:
-          pr:
-            - "K8s-Test"
-            - "VPN"
-            - "TargetSpecificWhitelist"
-          test:
-            - "K8s-Test"
-            - "VPN"
-          acceptance:
-            - "VPN"
-          production:
-            - "Outside-World"
-        tls:
-          all: "le-other-prod-wildcard-cert"
-
