@@ -1,9 +1,9 @@
 name: 'sbtservice'
 maintainer: ['MPyL']
+projectYmlVersion: 2
 stages:
   build: Echo Build
   deploy: Kubernetes Deploy
-mpylVersion: 1.4.18
 description: 'Demonstrates how an SBT project can be built and tested'
 deployment:
   namespace: 'sbtservice'
@@ -53,13 +53,3 @@ deployment:
           forDuration: '1m'
           description: 'Service has encountered critical errors'
           severity: 'critical'
-  traefik:
-    hosts:
-      - host:
-          pr: "Host(`sbtservice-{PR-NUMBER}.test.nl`)"
-          test: "Host(`sbtservice.test.nl`)"
-          acceptance: "Host(`sbtservice.acceptance1.nl`)"
-          production: "Host(`sbtservice.nl`)"
-        tls:
-          all: "le-custom-prod-wildcard-cert"
-        insecure: true

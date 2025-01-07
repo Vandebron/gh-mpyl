@@ -1,7 +1,7 @@
 name: ocpp
-maintainer: [ 'MPyL' ]
+maintainer: ['MPyL']
+projectYmlVersion: 1
 description: 'Deployment of ocpp'
-mpylVersion: 1.0.10
 stages:
   build: Echo Build
   test: Echo Test

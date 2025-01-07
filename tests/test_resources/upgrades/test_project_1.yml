@@ -1,11 +1,11 @@
 name: 'dockertest'
 description: 'This is a test container. For testing the MPyL pipelines, not to be deployed anywhere.'
+projectYmlVersion: 1
 stages:
   build: Docker Build
   test: Docker Test
   deploy: Kubernetes Deploy
-  postdeploy: Cypress Test
-mpylVersion: 1.0.10
+  postdeploy: Skip Postdeploy
 maintainer: ['MPyL']
 build:
   args:
@@ -17,9 +17,16 @@ build:
 dependencies:
   build:
     - 'test/docker/'
+  test:
+    - 'test2/docker/'
   postdeploy:
     - 'specs/*.js'
 deployment:
+  cluster:
+    pr: 'other-test'
+    test: 'test'
+    acceptance: 'acce'
+    production: 'prod'
   namespace: 'dockertest'
   properties:
     env:
@@ -56,14 +63,20 @@ deployment:
             divisor: 0.5
             resource: limits.memory
   kubernetes:
+    rancher:
+      projectId:
+        all: test1234
+    job:
+      cron:
+        all:
+          schedule: "0 22 * * *"
+          timeZone: "Europe/Amsterdam"
     role:
       resources:
         - "pods"
       verbs:
         - "list"
         - "get"
-    cmd:
-      all: "script.sh --opt"
     livenessProbe:
       path:
         all: /health
@@ -102,6 +115,8 @@ deployment:
           all: 0.2
         mem:
           all: 256
+    command:
+      all: "script.sh --opt"
   traefik:
     hosts:
       - host:
@@ -116,10 +131,13 @@ deployment:
           test:
             - "Test"
         additionalRoute: "ingress-intracloud-https"
+        syntax:
+          all: v2
       - host:
           all: "Host(`some.other.host.com`)"
         servicePort: 4091
-        priority: 1000
+        priority:
+          all: 1000
         whitelists:
           pr:
             - "K8s-Test"
@@ -134,4 +152,5 @@ deployment:
             - "Outside-World"
         tls:
           all: "le-other-prod-wildcard-cert"
-
+        syntax:
+          all: v3
