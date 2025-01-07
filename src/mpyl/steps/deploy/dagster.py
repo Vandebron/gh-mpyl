@@ -26,14 +26,24 @@ from ..input import Input
 from ..output import Output
 from ..step import Step, Meta
 from ..models import RunProperties
-from ...project import Project, Target
+from ...project import Target
 from ...utilities.dagster import DagsterConfig
 from ...utilities.docker import DockerConfig
 from ...utilities.helm import convert_to_helm_release_name, get_name_suffix
 
 
-def _cluster_context(project: Project, target: Target) -> str:
-    return f"vdb-core-digital-k8s-{project.cluster_env(target)}"
+def _cluster_context(target: Target) -> str:
+    match target:
+        case Target.PULL_REQUEST:
+            return "vdb-core-digital-k8s-test"
+        case Target.TEST:
+            return "vdb-core-digital-k8s-test"
+        case Target.ACCEPTANCE:
+            return "vdb-core-digital-k8s-acce"
+        case Target.PRODUCTION:
+            return "vdb-core-digital-k8s-prod"
+        case _:
+            raise ValueError(f"Unexpected target {target}")
 
 
 class DagsterBase:
@@ -264,10 +274,7 @@ class TemplateDagster(Step, DagsterBase):
         """
         results = []
         properties = step_input.run_properties
-        context = _cluster_context(
-            project=step_input.project_execution.project,
-            target=step_input.run_properties.target,
-        )
+        context = _cluster_context(step_input.run_properties.target)
         dagster_config: DagsterConfig = DagsterConfig.from_dict(properties.config)
 
         config.load_kube_config(context=context)
@@ -333,10 +340,7 @@ class DeployDagster(Step, DagsterBase):
         """
         results = []
         properties = step_input.run_properties
-        context = _cluster_context(
-            project=step_input.project_execution.project,
-            target=step_input.run_properties.target,
-        )
+        context = _cluster_context(step_input.run_properties.target)
         dagster_config: DagsterConfig = DagsterConfig.from_dict(properties.config)
 
         config.load_kube_config(context=context)

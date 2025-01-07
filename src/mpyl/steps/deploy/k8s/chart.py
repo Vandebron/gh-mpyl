@@ -59,7 +59,6 @@ from ....constants import (
     PR_NUMBER_PLACEHOLDER,
     SERVICE_NAME_PLACEHOLDER,
     NAMESPACE_PLACEHOLDER,
-    CLUSTER_ENV_PLACEHOLDER,
 )
 from ....project import (
     Project,
@@ -528,12 +527,6 @@ class ChartBuilder:
         traefik_object = replace_item(
             traefik_object, NAMESPACE_PLACEHOLDER, self.namespace
         )
-        traefik_object = replace_item(
-            traefik_object,
-            CLUSTER_ENV_PLACEHOLDER,
-            self.project.cluster_env(self.step_input.run_properties.target),
-        )
-
         return traefik_object
 
     def to_ingress(self) -> Optional[V1AlphaIngressRoute]:
@@ -567,9 +560,6 @@ class ChartBuilder:
                 namespace=get_namespace(self.step_input.run_properties, self.project),
                 pr_number=self.step_input.run_properties.versioning.pr_number,
                 https=https,
-                cluster_env=self.project.cluster_env(
-                    self.step_input.run_properties.target
-                ),
                 middlewares_override=[],
                 entrypoints_override=[],
                 http_middleware=self.config_defaults.traefik_config.http_middleware,
@@ -590,9 +580,6 @@ class ChartBuilder:
                 namespace=get_namespace(self.step_input.run_properties, self.project),
                 pr_number=self.step_input.run_properties.versioning.pr_number,
                 https=True,
-                cluster_env=self.project.cluster_env(
-                    self.step_input.run_properties.target
-                ),
                 middlewares_override=host.additional_route.middlewares,
                 entrypoints_override=host.additional_route.entrypoints,
                 http_middleware=self.config_defaults.traefik_config.http_middleware,

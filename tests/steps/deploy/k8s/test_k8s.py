@@ -124,7 +124,6 @@ class TestKubernetesChart:
             target=Target.PRODUCTION,
             pr_number=1234,
             namespace="pr-1234",
-            cluster_env="test",
             middlewares_override=[],
             entrypoints_override=[],
             http_middleware="http",

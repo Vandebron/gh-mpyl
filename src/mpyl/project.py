@@ -586,19 +586,6 @@ class Project:
     def test_report_path(self) -> Path:
         return Path(self.root_path) / "target/test-reports"
 
-    def cluster_env(self, target: Target) -> str:
-        match target:
-            case Target.PULL_REQUEST:
-                return "test"
-            case Target.TEST:
-                return "test"
-            case Target.ACCEPTANCE:
-                return "acce"
-            case Target.PRODUCTION:
-                return "prod"
-            case _:
-                raise ValueError(f"Unexpected target {target}")
-
     @staticmethod
     def from_config(values: dict, project_path: Path):
         docker_config = values.get("docker")

@@ -11,7 +11,6 @@ from . import CustomResourceDefinition
 from .....constants import (
     SERVICE_NAME_PLACEHOLDER,
     NAMESPACE_PLACEHOLDER,
-    CLUSTER_ENV_PLACEHOLDER,
 )
 from .....project import TraefikHost, Target, TraefikAdditionalRoute
 from .....utilities import replace_pr_number
@@ -41,7 +40,6 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
         host: HostWrapper,
         target: Target,
         namespace: str,
-        cluster_env: str,
         pr_number: Optional[int],
         middlewares_override: list[str],
         entrypoints_override: list[str],
@@ -49,10 +47,9 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
         default_tls: str,
         https: bool = True,
     ):
-        def _interpolate_names(host: str, name: str, cluster_env: str) -> str:
+        def _interpolate_names(host: str, name: str) -> str:
             host = host.replace(SERVICE_NAME_PLACEHOLDER, name)
             host = host.replace(NAMESPACE_PLACEHOLDER, namespace)
-            host = host.replace(CLUSTER_ENV_PLACEHOLDER, cluster_env)
             host = replace_pr_number(host, pr_number)
             return host
 
@@ -70,7 +67,6 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
             "match": _interpolate_names(
                 host=host.traefik_host.host.get_value(target),
                 name=host.name,
-                cluster_env=cluster_env,
             ),
             "services": [
                 {"name": host.name, "kind": "Service", "port": host.service_port}

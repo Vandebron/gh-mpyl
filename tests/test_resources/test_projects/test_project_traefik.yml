@@ -124,7 +124,7 @@ deployment:
           - web
         routes:
           - kind: Rule
-            match: placeholder-{CLUSTER-ENV}-{namespace}-{PR-NUMBER}-test
+            match: placeholder-test-{namespace}-{PR-NUMBER}-test
             middlewares:
               - name: "strip-prefix-{SERVICE-NAME}"
     middlewares:
@@ -140,10 +140,10 @@ deployment:
           spec:
             stripPrefix:
               prefixes:
-                - "/service2/{CLUSTER-ENV}/{namespace}/{PR-NUMBER}"
+                - "/service2/test/{namespace}/{PR-NUMBER}"
     hosts:
       - host:
-          pr: "Host(`payments-{PR-NUMBER}.{CLUSTER-ENV}.nl`)"
+          pr: "Host(`payments-{PR-NUMBER}.test.nl`)"
           test: "Host(`payments.test.nl`)"
           acceptance: "Host(`payments.acceptance1.nl`)"
           production: "Host(`payments.nl`)"
