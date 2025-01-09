@@ -1,7 +1,7 @@
 name: job
 description: "A job"
+projectYmlVersion: 1
 maintainer: ["MPyL"]
-mpylVersion: 1.4.18
 stages:
   build: Echo Build
   deploy: "Kubernetes Job Deploy"

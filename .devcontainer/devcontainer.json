@@ -4,19 +4,15 @@
   "name": "MPyL",
   "build": {
     "context": "..",
-    "dockerfile": "Dockerfile",
+    "dockerfile": "Dockerfile"
   },
-
-  "mounts": [
-    "source=${localEnv:HOME}/.gitconfig,target=/home/vdbnonroot/.gitconfig,type=bind,consistency=cached"
-  ],
 
   // More info: https://containers.dev/features.
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
       "configureZshAsDefaultShell": true,
       "upgradePackages": false,
-      "username": "vdbnonroot",
+      "username": "vdbnonroot"
     },
     "ghcr.io/devcontainers/features/git:1": {}
   },
@@ -48,7 +44,11 @@
         "ms-python.python",
         "ms-python.pylint",
         "mikoz.black-py"
-      ]
+      ],
+      "settings": {
+        "python.testing.pytestArgs": [ "tests" ],
+        "python.testing.pytestEnabled": true
+      }
     }
   }
 }

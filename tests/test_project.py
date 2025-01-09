@@ -10,24 +10,20 @@ from tests.test_resources.test_data import TestStage
 
 
 class TestMpylSchema:
-    resource_path = root_test_path / "test_resources"
+    resource_path = root_test_path / "test_resources" / "test_projects"
     project = load_project(
-        Path(resource_path, "test_projects", "test_project.yml"),
+        Path(resource_path, "default", "test_project.yml"),
         validate_project_yaml=True,
     )
 
     def test_schema_load(self):
         os.environ["CHANGE_ID"] = "123"
-        project = load_project(
-            self.resource_path / "test_projects" / "test_project.yml",
-            validate_project_yaml=True,
-        )
 
-        assert project.name == "dockertest"
-        assert project.maintainer, ["Marketplace", "Energy Trading"]
-        assert project.deployments is not None
-        assert project.deployments[0].properties is not None
-        envs = project.deployments[0].properties.env
+        assert self.project.name == "dockertest"
+        assert self.project.maintainer, ["Marketplace", "Energy Trading"]
+        assert self.project.deployments is not None
+        assert self.project.deployments[0].properties is not None
+        envs = self.project.deployments[0].properties.env
 
         simple_env = [x for x in envs if x.key == "SOME_ENV"].pop()
         assert simple_env.key == "SOME_ENV"
@@ -36,39 +32,39 @@ class TestMpylSchema:
 
         secret_env = [
             x
-            for x in project.deployments[0].properties.sealed_secret
+            for x in self.project.deployments[0].properties.sealed_secret
             if x.key == "SOME_SEALED_SECRET_ENV"
         ].pop()
         assert secret_env.get_value(Target.PULL_REQUEST).startswith(
             "AgCA5/qvMMp"
         ), "should start with"
 
-        assert project.dependencies is not None
-        assert project.dependencies.for_stage(TestStage.build().name) == [
+        assert self.project.dependencies is not None
+        assert self.project.dependencies.for_stage(TestStage.build().name) == [
             "test/docker/"
         ]
-        assert project.dependencies.for_stage(TestStage.test().name) == [
+        assert self.project.dependencies.for_stage(TestStage.test().name) == [
             "test2/docker/"
         ]
-        assert project.dependencies.for_stage(TestStage.deploy().name) is None
-        assert project.dependencies.for_stage(TestStage.post_deploy().name) == [
+        assert self.project.dependencies.for_stage(TestStage.deploy().name) is None
+        assert self.project.dependencies.for_stage(TestStage.post_deploy().name) == [
             "specs/*.js"
         ]
 
-        assert project.deployments[0].kubernetes is not None
-        assert project.deployments[0].kubernetes.port_mappings == {8080: 80}
-        assert project.deployments[0].kubernetes.liveness_probe is not None
+        assert self.project.deployments[0].kubernetes is not None
+        assert self.project.deployments[0].kubernetes.port_mappings == {8080: 80}
+        assert self.project.deployments[0].kubernetes.liveness_probe is not None
         assert (
-            project.deployments[0].kubernetes.liveness_probe.path.get_value(
+            self.project.deployments[0].kubernetes.liveness_probe.path.get_value(
                 Target.ACCEPTANCE
             )
             == "/health"
         )
-        assert project.deployments[0].kubernetes.metrics is not None
-        assert project.deployments[0].kubernetes.metrics.enabled
+        assert self.project.deployments[0].kubernetes.metrics is not None
+        assert self.project.deployments[0].kubernetes.metrics.enabled
 
-        assert project.deployments[0].traefik is not None
-        host = project.deployments[0].traefik.hosts[0]
+        assert self.project.deployments[0].traefik is not None
+        host = self.project.deployments[0].traefik.hosts[0]
         assert host.host.get_value(Target.TEST) == "Host(`payments.test.nl`)"
         assert (
             host.host.get_value(Target.PULL_REQUEST)
@@ -78,7 +74,7 @@ class TestMpylSchema:
         assert host.tls.get_value(Target.TEST) == "le-custom-prod-wildcard-cert"
 
         assert (
-            project.deployments[0].properties.env[2].all
+            self.project.deployments[0].properties.env[2].all
             == "minimalService.{namespace}.svc.cluster.local"
         )
 
@@ -95,25 +91,21 @@ class TestMpylSchema:
         assert target == Target.PULL_REQUEST
 
     def test_project_path(self):
-        assert (
-            self.project.path == f"{self.resource_path}/test_projects/test_project.yml"
-        )
+        assert self.project.path == f"{self.resource_path}/default/test_project.yml"
 
     def test_project_root_path(self):
         assert self.project.root_path == self.resource_path
 
     def test_project_deployment_path(self):
-        assert self.project.deployment_path == self.resource_path / "test_projects"
+        assert self.project.deployment_path == self.resource_path / "default"
 
     def test_project_target_path(self):
-        assert (
-            self.project.target_path == self.resource_path / "test_projects" / ".mpyl"
-        )
+        assert self.project.target_path == self.resource_path / "default" / ".mpyl"
 
     def test_project_test_containers_path(self):
         assert (
             self.project.test_containers_path
-            == self.resource_path / "test_projects" / "docker-compose-test.yml"
+            == self.resource_path / "default" / "docker-compose-test.yml"
         )
 
     def test_project_test_report_path(self):

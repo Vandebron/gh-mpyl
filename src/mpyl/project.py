@@ -569,6 +569,10 @@ class Project:
     def project_overrides_yaml_file_pattern() -> str:
         return "project-override-*.yml"
 
+    @staticmethod
+    def traefik_yaml_file_name(service_name: str) -> str:
+        return f"{service_name}-traefik.yml"
+
     @property
     def root_path(self) -> Path:
         return Path(self.path).parent.parent
@@ -647,6 +651,14 @@ def load_possible_parent(
         return loader.load(file)
 
 
+def load_traefik_config(traefik_path: Path, loader: YAML) -> Optional[dict]:
+    if not traefik_path.exists():
+        return None
+
+    with open(traefik_path, encoding="utf-8") as file:
+        return loader.load(file)
+
+
 def load_project(
     project_path: Path,
     validate_project_yaml: bool,
@@ -669,6 +681,13 @@ def load_project(
                 project_path, loader
             )
             yaml_values = merge_dicts(yaml_values, parent_yaml_values, True)
+            traefik_config = load_traefik_config(
+                project_path.parent
+                / Project.traefik_yaml_file_name(yaml_values["name"]),
+                loader,
+            )
+            if traefik_config:
+                yaml_values["deployment"]["traefik"] = traefik_config["traefik"]
             if validate_project_yaml:
                 validate_project(yaml_values)
             project = Project.from_config(yaml_values, project_path)
