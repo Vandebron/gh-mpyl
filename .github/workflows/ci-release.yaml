@@ -33,7 +33,7 @@ jobs:
 
       - name: Compute the next version to release
         id: semver
-        uses: ietf-tools/semver-action@v1.8.0
+        uses: ietf-tools/semver-action@v1.9.0
         with:
           token: ${{ github.token }}
           noVersionBumpBehavior: patch
