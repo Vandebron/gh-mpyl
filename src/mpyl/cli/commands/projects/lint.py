@@ -86,37 +86,24 @@ def _assert_dagster_configs(console: Console, all_projects: list[Project]):
     return multiple_dagster_configs
 
 
-def _assert_missing_project_ids(console: Console, all_projects: list[Project]):
-    console.print("")
-    console.print("Checking for missing project ids: ")
-    return [
-        project.name
-        for project in all_projects
-        if project.stages.for_stage(STAGE_NAME) is not None
-        and "override" not in project.path
-        and not any(_get_project_ids(project))
-    ]
-
-
 def _assert_different_project_ids(console: Console, all_projects: list[Project]):
     console.print("")
     console.print("Checking for different project ids: ")
     return [
-        {project.name: _get_project_ids(project)}
+        {project.name: {target.name: _get_project_ids(project, target)}}
+        for target in Target
         for project in all_projects
         if project.stages.for_stage(STAGE_NAME) is not None
         and "override" not in project.path
-        and len(_get_project_ids(project)) > 1
+        and len(_get_project_ids(project, target)) > 1
     ]
 
 
-def _get_project_ids(project: Project):
+def _get_project_ids(project: Project, target: Target) -> set[Project]:
     return {
-        deployment.kubernetes.rancher.project_id.get_value(Target.PRODUCTION)
+        deployment.kubernetes.rancher.project_id.get_value(target)
         for deployment in project.deployments
-        if deployment.kubernetes
-        and deployment.kubernetes.rancher
-        and deployment.kubernetes.rancher.project_id.get_value(Target.PRODUCTION)
+        if deployment.has_kubernetes() and deployment.kubernetes.rancher
     }
 
 
@@ -242,3 +229,16 @@ def _assert_no_self_dependencies(console: Console, all_projects: list[Project]):
                 projects_with_self_dependencies.append(project)
 
     return projects_with_self_dependencies
+
+
+def _assert_deployments(console: Console, all_projects: list[Project]):
+    console.print("")
+    console.print("Checking for deployments:")
+    projects_without_deployments = []
+
+    for project in all_projects:
+        if project.stages.for_stage(STAGE_NAME):
+            if not project.deployments:
+                projects_without_deployments.append(project)
+
+    return projects_without_deployments

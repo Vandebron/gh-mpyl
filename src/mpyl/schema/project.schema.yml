@@ -7,11 +7,6 @@ required:
   - stages
   - description
   - maintainer
-oneOf:
-  - required:
-      - deployment
-  - required:
-      - deployments
 dependencies:
   deployment:
     - maintainer

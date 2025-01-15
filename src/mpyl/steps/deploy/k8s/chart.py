@@ -236,7 +236,7 @@ class ChartBuilder:
             raise AttributeError("Deployments field should be set")
         self.deployments = project.deployments
         for deployment in project.deployments:
-            if deployment.kubernetes and deployment.kubernetes.port_mappings:
+            if deployment.has_kubernetes() and deployment.kubernetes.port_mappings:
                 self.mappings = self.mappings | deployment.kubernetes.port_mappings
             if deployment.properties and deployment.properties.sealed_secret:
                 self.sealed_secrets = (

@@ -19,11 +19,11 @@ from ..cli.commands.projects.lint import (
     _assert_correct_project_linkup,
     _lint_whitelisting_rules,
     __detail_wrong_substitutions,
-    _assert_missing_project_ids,
     _assert_no_self_dependencies,
     _assert_namespaces,
     _assert_dagster_configs,
     _assert_different_project_ids,
+    _assert_deployments,
 )
 from ..cli.commands.projects.upgrade import check_upgrade
 from ..constants import DEFAULT_CONFIG_FILE_NAME
@@ -122,17 +122,6 @@ def lint(ctx: Context):
     else:
         console.print("  ✅ Only one dagster config found in deployments")
 
-    missing_project_ids = _assert_missing_project_ids(
-        console=console, all_projects=all_projects
-    )
-    if missing_project_ids:
-        console.print(
-            f"  ❌ Found {len(missing_project_ids)} projects without a project id: {missing_project_ids}"
-        )
-        failed = True
-    else:
-        console.print("  ✅ All kubernetes projects have a project id")
-
     different_project_ids = _assert_different_project_ids(
         console=console, all_projects=all_projects
     )
@@ -180,6 +169,16 @@ def lint(ctx: Context):
     else:
         for project in projects_with_self_dependencies:
             console.print(f"  ❌ Project {project.name} has a dependency on itself")
+        failed = True
+
+    projects_without_deployments = _assert_deployments(console, all_projects)
+    if len(projects_without_deployments) == 0:
+        console.print("  ✅ No project without a required deployment found")
+    else:
+        for project in projects_without_deployments:
+            console.print(
+                f"  ❌ Project {project.name} has a deploy stage defined without a deployments config"
+            )
         failed = True
 
     if failed:

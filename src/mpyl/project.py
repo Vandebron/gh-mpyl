@@ -500,6 +500,9 @@ class Deployment:
             traefik=Traefik.from_config(traefik) if traefik else None,
         )
 
+    def has_kubernetes(self) -> bool:
+        return self._kubernetes is not None
+
     @property
     def kubernetes(self) -> Kubernetes:
         if not self._kubernetes:
@@ -549,7 +552,9 @@ class Project:
         return ProjectName(
             name=self.name,
             namespace=(
-                self.deployments[0].namespace if self.deployments[0].namespace else None
+                self.deployments[0].namespace
+                if self.deployments and self.deployments[0].namespace
+                else None
             ),
         )
 
