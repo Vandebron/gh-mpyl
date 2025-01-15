@@ -41,7 +41,7 @@ from kubernetes.client import (
     RbacV1Subject,
 )
 
-from . import substitute_namespaces, get_namespace
+from . import substitute_namespaces
 from .cluster import get_cluster_config_for_project
 from .resources import (
     CustomResourceDefinition,
@@ -244,8 +244,10 @@ class ChartBuilder:
                 )
         self.target = step_input.run_properties.target
         self.release_name = self.project.name.lower()
-        self.namespace = get_namespace(
-            run_properties=step_input.run_properties, project=project
+        self.namespace = (
+            step_input.run_properties.versioning.identifier
+            if step_input.run_properties.target == Target.PULL_REQUEST
+            else project.namespace
         )
 
     def to_labels(self) -> dict:
@@ -569,7 +571,7 @@ class ChartBuilder:
                 ),
                 host=host,
                 target=self.target,
-                namespace=get_namespace(self.step_input.run_properties, self.project),
+                namespace=self.namespace,
                 pr_number=self.step_input.run_properties.versioning.pr_number,
                 https=https,
                 cluster_env=cluster_env,
@@ -593,7 +595,7 @@ class ChartBuilder:
                 ),
                 host=host,
                 target=self.target,
-                namespace=get_namespace(self.step_input.run_properties, self.project),
+                namespace=self.namespace,
                 pr_number=self.step_input.run_properties.versioning.pr_number,
                 https=True,
                 cluster_env=cluster_env,

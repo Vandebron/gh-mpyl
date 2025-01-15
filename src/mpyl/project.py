@@ -539,6 +539,12 @@ class Project:
         return hash(self.path)
 
     @property
+    def namespace(self) -> str:
+        namespace = next(deployment.namespace for deployment in self.deployments)
+
+        return namespace or self.name
+
+    @property
     def to_name(self) -> ProjectName:
         return ProjectName(
             name=self.name,
@@ -601,12 +607,13 @@ class Project:
         if deployment:
             deployment["name"] = values["name"]
             deployment["deployStep"] = stages.for_stage(deploy.STAGE_NAME)
-        deployments = values.get("deployments", [])
-        deployment_list = [deployment] if deployment else deployments
-        dependencies = values.get("dependencies")
+            deployment_list = [deployment]
+        else:
+            deployment_list = values.get("deployments", [])
         deployments = [
             Deployment.from_config(deployment) for deployment in deployment_list
         ]
+        dependencies = values.get("dependencies")
         return Project(
             name=values["name"],
             description=values["description"],
