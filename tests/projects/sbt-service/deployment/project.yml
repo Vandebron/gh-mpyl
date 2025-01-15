@@ -1,12 +1,11 @@
 name: 'sbtservice'
 maintainer: ['MPyL']
-projectYmlVersion: 2
+projectYmlVersion: 3
 stages:
   build: Echo Build
   deploy: Kubernetes Deploy
 description: 'Demonstrates how an SBT project can be built and tested'
 deployment:
-  namespace: 'sbtservice'
   properties:
     env:
       - key: SOME_ENV
@@ -22,9 +21,6 @@ deployment:
             key: sbt-job
             optional: false
   kubernetes:
-    rancher:
-      projectId:
-        all: "p-11111"
     livenessProbe:
       path:
         all: /health
@@ -53,3 +49,8 @@ deployment:
           forDuration: '1m'
           description: 'Service has encountered critical errors'
           severity: 'critical'
+kubernetes:
+  namespace:
+    all: 'sbtservice'
+  projectId:
+    all: "p-11111"

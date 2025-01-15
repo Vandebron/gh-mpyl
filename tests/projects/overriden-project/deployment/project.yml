@@ -1,12 +1,11 @@
 name: ocpp
 maintainer: ['MPyL']
-projectYmlVersion: 1
+projectYmlVersion: 3
 description: 'Deployment of ocpp'
 stages:
   build: Echo Build
   test: Echo Test
 deployment:
-  namespace: ocpp
   properties:
     env:
       - key: DEPLOY_ENV
@@ -15,11 +14,13 @@ deployment:
         acceptance: "Acceptance"
         production: "Production"
   kubernetes:
-    rancher:
-      projectId:
-        all: test1234
     portMappings:
       8088: 8088
       8089: 8089
     metrics:
       enabled: true
+kubernetes:
+  namespace:
+    all: ocpp
+  projectId:
+    all: test1234
