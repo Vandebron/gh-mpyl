@@ -310,19 +310,7 @@ class Job:
 
 
 @dataclass(frozen=True)
-class Rancher:
-    project_id: TargetProperty[dict]
-
-    @staticmethod
-    def from_config(values: dict):
-        return Rancher(
-            project_id=TargetProperty.from_config(values.get("projectId", {}))
-        )
-
-
-@dataclass(frozen=True)
 class Kubernetes:
-    rancher: Optional[Rancher]
     port_mappings: dict[int, int]
     liveness_probe: Optional[Probe]
     startup_probe: Optional[Probe]
@@ -339,7 +327,6 @@ class Kubernetes:
     @staticmethod
     def from_config(values: dict):
         return Kubernetes(
-            rancher=Rancher.from_config(values.get("rancher", {})),
             port_mappings=values.get("portMappings", {}),
             liveness_probe=Probe.from_config(values.get("livenessProbe", {})),
             startup_probe=Probe.from_config(values.get("startupProbe", {})),
@@ -352,6 +339,19 @@ class Kubernetes:
             args=TargetProperty.from_config(values.get("args", {})),
             labels=list(map(KeyValueProperty.from_config, values.get("labels", []))),
             deployment_strategy=values.get("deploymentStrategy", {}),
+        )
+
+
+@dataclass(frozen=True)
+class KubernetesCommon:
+    project_id: TargetProperty[str]
+    namespace: TargetProperty[str]
+
+    @staticmethod
+    def from_config(values: dict):
+        return KubernetesCommon(
+            project_id=TargetProperty.from_config(values.get("projectId", {})),
+            namespace=TargetProperty.from_config(values.get("namespace", {})),
         )
 
 
@@ -475,17 +475,14 @@ class Deployment:
     name: str
     deploy_step: str
     cluster: Optional[TargetProperty[str]]
-    namespace: Optional[str]
     properties: Optional[Properties]
     _kubernetes: Optional[Kubernetes]
-    dagster: Optional[Dagster]
     traefik: Optional[Traefik]
 
     @staticmethod
     def from_config(values: dict):
         props = values.get("properties")
         kubernetes = values.get("kubernetes")
-        dagster = values.get("dagster")
         traefik = values.get("traefik")
         cluster = values.get("cluster")
 
@@ -493,10 +490,8 @@ class Deployment:
             name=values["name"],
             deploy_step=values["deployStep"],
             cluster=TargetProperty.from_config(cluster) if cluster else None,
-            namespace=values.get("namespace"),
             properties=Properties.from_config(props) if props else None,
             _kubernetes=Kubernetes.from_config(kubernetes) if kubernetes else None,
-            dagster=Dagster.from_config(dagster) if dagster else None,
             traefik=Traefik.from_config(traefik) if traefik else None,
         )
 
@@ -531,6 +526,8 @@ class Project:
     build: Optional[Build]
     deployments: list[Deployment]
     dependencies: Optional[Dependencies]
+    kubernetes: Optional[KubernetesCommon]
+    _dagster: Optional[Dagster]
 
     def __lt__(self, other):
         return self.path < other.path
@@ -541,36 +538,24 @@ class Project:
     def __hash__(self):
         return hash(self.path)
 
-    @property
-    def namespace(self) -> str:
-        namespace = next(deployment.namespace for deployment in self.deployments)
+    def namespace(self, target: Target) -> str:
+        return (
+            self.kubernetes.namespace.get_value(target)
+            if self.kubernetes
+            else self.name
+        )
 
-        return namespace or self.name
-
-    @property
-    def to_name(self) -> ProjectName:
+    def to_name(self, target: Target) -> ProjectName:
         return ProjectName(
             name=self.name,
-            namespace=(
-                self.deployments[0].namespace
-                if self.deployments and self.deployments[0].namespace
-                else None
-            ),
+            namespace=self.namespace(target),
         )
 
     @property
     def dagster(self) -> Dagster:
-        dagster_config = next(
-            (
-                deployment.dagster
-                for deployment in self.deployments
-                if deployment.dagster
-            ),
-            None,
-        )  # Dagster config should move out of deployment?
-        if dagster_config is None:
+        if self._dagster is None:
             raise KeyError(f"Project '{self.name}' does not have dagster configuration")
-        return dagster_config
+        return self._dagster
 
     @staticmethod
     def project_yaml_file_name() -> str:
@@ -619,6 +604,7 @@ class Project:
             Deployment.from_config(deployment) for deployment in deployment_list
         ]
         dependencies = values.get("dependencies")
+        dagster = values.get("dagster")
         return Project(
             name=values["name"],
             description=values["description"],
@@ -632,6 +618,8 @@ class Project:
             dependencies=(
                 Dependencies.from_config(dependencies) if dependencies else None
             ),
+            _dagster=Dagster.from_config(dagster) if dagster else None,
+            kubernetes=KubernetesCommon.from_config(values.get("kubernetes", {})),
         )
 
 

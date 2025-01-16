@@ -89,7 +89,7 @@ properties:
         description: >-
           Corresponds to the namespace in Kubernetes to which the artifact will
           be deployed
-        $ref: dtapValue
+        $ref: '#/definitions/dtapValue'
       projectId:
         description: >-
           The rancher project id that this project should be deployed to, required for rbac. Represents a domain in rancher.

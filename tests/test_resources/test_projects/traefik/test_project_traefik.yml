@@ -21,13 +21,17 @@ dependencies:
     - 'test2/docker/'
   postdeploy:
     - 'specs/*.js'
+kubernetes:
+  namespace:
+    all: "dockertest"
+  projectId:
+    all: test1234
 deployment:
   cluster:
     pr: 'other-test'
     test: 'test'
     acceptance: 'acce'
     production: 'prod'
-  namespace: 'dockertest'
   properties:
     env:
       - key: SOME_ENV
@@ -63,9 +67,6 @@ deployment:
             divisor: 0.5
             resource: limits.memory
   kubernetes:
-    rancher:
-      projectId:
-        all: test1234
     job:
       cron:
         all:

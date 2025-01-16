@@ -1,7 +1,7 @@
 """ Utilities for creating rancher compatible helm charts. """
 
 from dataclasses import dataclass
-from typing import Optional, Any
+from typing import Optional
 
 from ...models import RunProperties
 from ....project import TargetProperty, Project
@@ -67,23 +67,3 @@ def get_cluster_config_for_project(
 
 def __get_default_cluster(clusters, default_cluster_name):
     return next(cluster for cluster in clusters if cluster.name == default_cluster_name)
-
-
-def get_namespace_metadata(
-    namespace: str, cluster_config: ClusterConfig, project_id: str
-):
-    metadata: dict[str, Any] = {
-        "name": namespace,
-    }
-
-    if cluster_config.cluster_id:
-        metadata["annotations"] = {
-            "field.cattle.io/projectId": f"{cluster_config.cluster_id}:{project_id}",
-            "lifecycle.cattle.io/create.namespace-auth": "true",
-        }
-        metadata["labels"] = {
-            "field.cattle.io/projectId": project_id,
-            "kubernetes.io/metadata.name": namespace,
-        }
-
-    return metadata

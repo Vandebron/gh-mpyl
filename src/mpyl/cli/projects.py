@@ -20,9 +20,6 @@ from ..cli.commands.projects.lint import (
     _lint_whitelisting_rules,
     __detail_wrong_substitutions,
     _assert_no_self_dependencies,
-    _assert_namespaces,
-    _assert_dagster_configs,
-    _assert_different_project_ids,
     _assert_deployments,
 )
 from ..cli.commands.projects.upgrade import check_upgrade
@@ -101,37 +98,6 @@ def lint(ctx: Context):
         failed = True
     else:
         console.print("  ✅ No duplicate project names found")
-
-    namespaces = _assert_namespaces(console=console, all_projects=all_projects)
-    if len(namespaces) > 0:
-        console.print(
-            f"  ❌ Found {len(namespaces)} project with different namespaces in its deployments: {namespaces}"
-        )
-        failed = True
-    else:
-        console.print("  ✅ All deployments have the same namespace")
-
-    dagster_configs = _assert_dagster_configs(
-        console=console, all_projects=all_projects
-    )
-    if len(dagster_configs) > 0:
-        console.print(
-            f"  ❌ Found {len(dagster_configs)} project(s) with multiple dagster configs: {dagster_configs}"
-        )
-        failed = True
-    else:
-        console.print("  ✅ Only one dagster config found in deployments")
-
-    different_project_ids = _assert_different_project_ids(
-        console=console, all_projects=all_projects
-    )
-    if different_project_ids:
-        console.print(
-            f"  ❌ Found {len(different_project_ids)} projects with different project ids: {different_project_ids}"
-        )
-        failed = True
-    else:
-        console.print("  ✅ All project id's are equal")
 
     wrong_substitutions = _assert_correct_project_linkup(
         console=console,

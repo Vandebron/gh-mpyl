@@ -82,7 +82,18 @@ class TestSteps:
             {"build": None, "test": None, "deploy": None, "postdeploy": None}
         )
         project = Project(
-            "test", "Test project", "", None, stages, [], None, None, [], None
+            "test",
+            "Test project",
+            "",
+            None,
+            stages,
+            [],
+            None,
+            None,
+            [],
+            None,
+            None,
+            None,
         )
         output = steps.execute(
             stage=TestStage.deploy(),

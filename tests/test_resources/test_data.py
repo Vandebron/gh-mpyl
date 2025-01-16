@@ -122,7 +122,18 @@ def get_project_with_stages(
         maintainers = ["Team1", "Team2"]
     stages = Stages.from_config(stage_config)
     return Project(
-        "test", "Test project", path, None, stages, maintainers, None, None, [], None
+        "test",
+        "Test project",
+        path,
+        None,
+        stages,
+        maintainers,
+        None,
+        None,
+        [],
+        None,
+        None,
+        None,
     )
 
 
