@@ -10,7 +10,6 @@ from src.mpyl.constants import DEFAULT_CONFIG_FILE_NAME
 from src.mpyl.project import Target, Project
 from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.run_plan import RunPlan
-from src.mpyl.steps.deploy.k8s import get_cluster_config_for_project
 from src.mpyl.steps.deploy.k8s.chart import (
     ChartBuilder,
     to_service_chart,
@@ -31,7 +30,6 @@ from tests.test_resources.test_data import (
     get_job_project,
     get_cron_job_project,
     get_minimal_project,
-    get_project_execution,
     stub_run_properties,
     RUN_PROPERTIES,
     TestStage,
@@ -116,31 +114,6 @@ class TestKubernetesChart:
         docker_config = DockerConfig.from_dict(yaml_values)
         assert docker_config.registries[0].host_name == "docker_host"
 
-    def test_load_cluster_config(self):
-        step_input = Input(
-            get_project_execution(),
-            run_properties=test_data.RUN_PROPERTIES,
-            run_plan=RunPlan.empty(),
-        )
-        config = get_cluster_config_for_project(
-            step_input.run_properties,
-            test_data.get_minimal_project(),
-        )
-        assert config.cluster_env == "test"
-
-    def test_load_cluster_config_with_project_override(self):
-        step_input = Input(
-            get_project_execution(),
-            run_properties=test_data.RUN_PROPERTIES,
-            run_plan=RunPlan.empty(),
-        )
-        config = get_cluster_config_for_project(
-            step_input.run_properties,
-            project=test_data.get_project(),
-        )
-        assert config.cluster_env == "test-other"
-        assert config.context == "digital-k8s-test-other"
-
     def test_should_validate_against_crd_schema(self):
         project = test_data.get_project()
         builder = self._get_builder(project)
@@ -151,7 +124,6 @@ class TestKubernetesChart:
             target=Target.PRODUCTION,
             pr_number=1234,
             namespace="pr-1234",
-            cluster_env="test",
             middlewares_override=[],
             entrypoints_override=[],
             http_middleware="http",
@@ -224,7 +196,7 @@ class TestKubernetesChart:
         ingress_routes = self._get_builder(get_project_traefik()).to_ingress()
         assert (
             ingress_routes.spec["routes"][0]["match"]
-            == "placeholder-test-other-pr-1234-1234-test"
+            == "placeholder-test-pr-1234-1234-test"
         )
         assert (
             ingress_routes.spec["routes"][0]["middlewares"][0]["name"]
@@ -236,7 +208,7 @@ class TestKubernetesChart:
         assert "middleware-strip-prefix-dockertest" in middlewares
         assert middlewares["middleware-strip-prefix-dockertest"].spec["stripPrefix"][
             "prefixes"
-        ] == ["/service2/test-other/pr-1234/1234"]
+        ] == ["/service2/test/pr-1234/1234"]
 
     def test_deployment_strategy_roundtrip(self):
         project = get_deployment_strategy_project()

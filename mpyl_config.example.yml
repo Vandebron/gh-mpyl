@@ -53,27 +53,6 @@ kubernetes:
       maxSurge: 25%
     type: RollingUpdate
   deployAction: KubectlManifest
-  defaultCluster:
-    pr: K8S-Test
-    test: K8S-Test
-    acceptance: K8S-Acceptance
-    production: K8S-Production
-  clusters:
-    - name: K8S-Test
-      clusterId: c-acme
-      projectId: p-acme
-      clusterEnv: test
-      context: kind-chart-testing
-    - name: K8S-Acceptance
-      clusterId: c-acme
-      projectId: p-acme
-      clusterEnv: acce
-      context: acme-k8s-acce
-    - name: K8S-Production
-      clusterId: c-acme
-      projectId: p-lb52t
-      clusterEnv: prod
-      context: acme-k8s-prod
 project:  # default values
   allowedMaintainers: [Team1, Team2, MPyL]
   deployment:
@@ -124,10 +103,10 @@ project:  # default values
     traefik:
       hosts:
         - host:
-            pr: Host(`{SERVICE-NAME}-{PR-NUMBER}.{CLUSTER-ENV}-backend.nl`)
-            test: Host(`{namespace}-{SERVICE-NAME}.{CLUSTER-ENV}-backend.nl`)
-            acceptance: Host(`{namespace}-{SERVICE-NAME}.{CLUSTER-ENV}-backend.nl`)
-            production: Host(`{namespace}-{SERVICE-NAME}.{CLUSTER-ENV}-backend.nl`)
+            pr: Host(`{SERVICE-NAME}-{PR-NUMBER}.test-backend.nl`)
+            test: Host(`{namespace}-{SERVICE-NAME}.test-backend.nl`)
+            acceptance: Host(`{namespace}-{SERVICE-NAME}.acce-backend.nl`)
+            production: Host(`{namespace}-{SERVICE-NAME}.prod-backend.nl`)
           tls:
             all: le-custom-prod-wildcard-cert
           insecure: false
