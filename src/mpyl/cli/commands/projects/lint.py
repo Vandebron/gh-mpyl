@@ -93,10 +93,9 @@ def __get_wrong_substitutions_per_project(
                     )
                     substituted: dict[str, str] = substitute_namespaces(
                         env_vars=env,
-                        all_projects=set(map(lambda p: p.to_name(target), projects)),
-                        projects_to_deploy=set(
-                            map(lambda p: p.to_name(target), projects)
-                        ),
+                        all_projects=set(projects),
+                        projects_to_deploy=set(projects),
+                        target=target,
                         pr_identifier=pr_identifier,
                     )
                     wrong_subs = list(

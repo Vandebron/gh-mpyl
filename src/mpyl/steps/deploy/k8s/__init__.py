@@ -13,10 +13,10 @@ from .helm import write_helm_chart
 from ...deploy.k8s.resources import CustomResourceDefinition
 from ...input import Input
 from ...output import Output
-from ....project import ProjectName
 from ....steps.deploy.k8s import helm
 from ....steps.deploy.k8s.cluster import ClusterConfig, get_cluster_config_for_project
 from ....steps.deploy.k8s.resources import to_yaml
+from ....project import Project, Target
 from ....utilities import replace_pr_number
 
 
@@ -113,8 +113,9 @@ def generate_helm_charts(
 
 def substitute_namespaces(
     env_vars: dict[str, str],
-    all_projects: set[ProjectName],
-    projects_to_deploy: set[ProjectName],
+    all_projects: set[Project],
+    projects_to_deploy: set[Project],
+    target: Target,
     pr_identifier: Optional[int],
 ) -> dict[str, str]:
     """
@@ -137,16 +138,17 @@ def substitute_namespaces(
     :param env_vars: environment variables to substitute
     :param all_projects: all projects in repo
     :param projects_to_deploy: projects in run plan
+    :param target: the deploy target to resolve the namespace
     :param pr_identifier: PR number if applicable
     :return: dictionary of substituted env vars
     """
     env = env_vars.copy()
 
-    def get_namespace_for_linked_project(project_name: ProjectName) -> str:
-        is_part_of_same_deploy_set = project_name in projects_to_deploy
+    def get_namespace_for_linked_project(project: Project) -> str:
+        is_part_of_same_deploy_set = project in projects_to_deploy
         if is_part_of_same_deploy_set and pr_identifier:
             return f"pr-{pr_identifier}"
-        return project_name.namespace or project.name
+        return project.namespace(target)
 
     def replace_namespace(env_value: str, project_name: str, namespace: str) -> str:
         search_value = project_name + ".{namespace}"
@@ -154,12 +156,12 @@ def substitute_namespaces(
         return env_value.replace(search_value, replace_value)
 
     for project in all_projects:
-        if project.namespace:
-            linked_project_namespace = get_namespace_for_linked_project(project)
-            for key, value in env.items():
-                replaced_namespace = replace_namespace(
-                    value, project.name, linked_project_namespace
-                )
-                updated_pr = replace_pr_number(replaced_namespace, pr_identifier)
-                env[key] = updated_pr
+        linked_project_namespace = get_namespace_for_linked_project(project)
+        for key, value in env.items():
+            replaced_namespace = replace_namespace(
+                value, project.name, linked_project_namespace
+            )
+            updated_pr = replace_pr_number(replaced_namespace, pr_identifier)
+            env[key] = updated_pr
+
     return env
