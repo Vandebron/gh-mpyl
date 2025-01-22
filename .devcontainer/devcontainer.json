@@ -2,29 +2,32 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/docker-existing-dockerfile
 {
   "name": "MPyL",
-  "build": {
-    "context": "..",
-    "dockerfile": "Dockerfile"
-  },
+  "image": "python:3.13-slim-bookworm",
 
   // More info: https://containers.dev/features.
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
       "configureZshAsDefaultShell": true,
-      "upgradePackages": false,
-      "username": "vdbnonroot"
     },
-    "ghcr.io/devcontainers/features/git:1": {}
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers-extra/features/pipenv": {},
+    "ghcr.io/devcontainers-extra/features/pylint": {},
+    "ghcr.io/devcontainers-extra/features/black": {},
+    "ghcr.io/devcontainers-extra/features/pre-commit": {}
   },
 
   "containerEnv": {
-    "PIPENV_CUSTOM_VENV_NAME": "gh-mpyl"  // helps IntelliJ keep a stable .idea/misc.xml file
+    "PIPENV_CUSTOM_VENV_NAME": "gh-mpyl" // helps IntelliJ keep a stable .idea/misc.xml file
   },
 
-  // 👇 IntelliJ settings
+  "remoteEnv": {
+    "LANG": "en_US.UTF-8",
+    "LC_CTYPE": "en_US.UTF-8"
+  },
+
   "postCreateCommand": {
-    "install-project-dependencies": "pipenv sync --dev",  // install Python dependencies
-    "pre-commit": "pre-commit install --install-hooks"    // install pre-commit and all configured hooks
+    "install-project-dependencies": "pipenv sync --dev", // install Python dependencies
+    "pre-commit": "pre-commit install --install-hooks" // install pre-commit and all configured hooks
   },
 
   "customizations": {
@@ -43,11 +46,15 @@
       "extensions": [
         "ms-python.python",
         "ms-python.pylint",
-        "mikoz.black-py"
+        "ms-python.mypy-type-checker",
+        "ms-python.black-formatter",
+        "ms-azuretools.vscode-docker"
       ],
       "settings": {
-        "python.testing.pytestArgs": [ "tests" ],
-        "python.testing.pytestEnabled": true
+        "python.testing.pytestArgs": [
+          "tests"
+        ],
+        "python.testing.pytestEnabled": true,
       }
     }
   }
