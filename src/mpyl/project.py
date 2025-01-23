@@ -474,7 +474,6 @@ class Build:
 class Deployment:
     name: str
     deploy_step: str
-    cluster: Optional[TargetProperty[str]]
     properties: Optional[Properties]
     _kubernetes: Optional[Kubernetes]
     traefik: Optional[Traefik]
@@ -484,12 +483,10 @@ class Deployment:
         props = values.get("properties")
         kubernetes = values.get("kubernetes")
         traefik = values.get("traefik")
-        cluster = values.get("cluster")
 
         return Deployment(
             name=values["name"],
             deploy_step=values["deployStep"],
-            cluster=TargetProperty.from_config(cluster) if cluster else None,
             properties=Properties.from_config(props) if props else None,
             _kubernetes=Kubernetes.from_config(kubernetes) if kubernetes else None,
             traefik=Traefik.from_config(traefik) if traefik else None,

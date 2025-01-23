@@ -104,7 +104,7 @@ class TestSteps:
 
     def test_should_return_error_if_config_invalid(self):
         config_values = parse_config(self.resource_path / DEFAULT_CONFIG_FILE_NAME)
-        config_values["kubernetes"]["clusters"][0]["name"] = {}
+        config_values["kubernetes"] = {}
         properties = RunProperties(
             details=RUN_PROPERTIES.details,
             target=Target.PULL_REQUEST,
@@ -118,7 +118,7 @@ class TestSteps:
                 run_properties=properties,
                 run_plan=RunPlan.empty(),
             )
-        assert "{} is not of type 'string'" in excinfo.value.message
+        assert "'deploymentStrategy' is a required property" in excinfo.value.message
 
     def test_should_succeed_if_step_is_known(self):
         project = test_data.get_project_with_stages(

@@ -15,7 +15,6 @@ from ...input import Input
 from ...output import Output
 from ....project import ProjectName
 from ....steps.deploy.k8s import helm
-from ....steps.deploy.k8s.cluster import ClusterConfig, get_cluster_config_for_project
 from ....steps.deploy.k8s.resources import to_yaml
 from ....utilities import replace_pr_number
 

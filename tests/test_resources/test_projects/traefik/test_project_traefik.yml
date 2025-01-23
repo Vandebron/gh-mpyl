@@ -27,11 +27,6 @@ kubernetes:
   projectId:
     all: test1234
 deployment:
-  cluster:
-    pr: 'other-test'
-    test: 'test'
-    acceptance: 'acce'
-    production: 'prod'
   properties:
     env:
       - key: SOME_ENV
@@ -118,4 +113,3 @@ deployment:
           all: 256
     command:
       all: "script.sh --opt"
-

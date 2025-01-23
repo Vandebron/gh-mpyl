@@ -68,7 +68,7 @@ class TestMpylSchema:
         assert host.host.get_value(Target.TEST) == "Host(`payments.test.nl`)"
         assert (
             host.host.get_value(Target.PULL_REQUEST)
-            == "Host(`payments-{PR-NUMBER}.{CLUSTER-ENV}.nl`)"
+            == "Host(`payments-{PR-NUMBER}.test.nl`)"
         )
         assert host.tls
         assert host.tls.get_value(Target.TEST) == "le-custom-prod-wildcard-cert"

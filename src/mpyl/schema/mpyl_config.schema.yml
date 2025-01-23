@@ -85,64 +85,10 @@ definitions:
   Kubernetes:
     type: object
     required:
-      - defaultCluster
-      - clusters
       - deploymentStrategy
     properties:
       deploymentStrategy:
         $ref: k8s_api_core.schema.yml#/definitions/io.k8s.api.apps.v1.DeploymentStrategy
-      defaultCluster:
-        type: object
-        description: Default cluster to deploy to. Can be overridden in the project.yaml
-        properties:
-          test:
-            type: string
-          acceptance:
-            type: string
-          production:
-            type: string
-      clusters:
-        type: array
-        items:
-          $ref: '#/definitions/NamedCluster'
-  Clusters:
-    type: object
-    additionalProperties: false
-    properties:
-      test:
-        $ref: '#/definitions/Cluster'
-      acceptance:
-        $ref: '#/definitions/Cluster'
-      production:
-        $ref: '#/definitions/Cluster'
-  NamedCluster:
-    type: object
-    additionalProperties: false
-    properties:
-      name:
-        type: string
-      clusterId:
-        type: string
-        description: Rancher specific cluster ID
-      projectId:
-        type: string
-        description: Rancher specific project ID
-      clusterEnv:
-        type: string
-      context:
-        type: string
-    required: [name, clusterEnv, context]
-  Cluster:
-    type: object
-    additionalProperties: false
-    properties:
-      clusterId:
-        type: string
-      clusterEnv:
-        type: string
-      context:
-        type: string
-    required: [clusterId, clusterEnv, context]
   VCS:
     type: object
     properties:
