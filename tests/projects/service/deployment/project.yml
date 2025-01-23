@@ -1,6 +1,6 @@
 name: 'nodeservice'
 description: 'This is a test container. For testing the MPyL pipelines, not to be deployed anywhere.'
-projectYmlVersion: 2
+projectYmlVersion: 3
 stages:
   build: ''
   deploy: Kubernetes Deploy
@@ -19,7 +19,6 @@ dependencies:
   build:
     - 'test/docker/'
 deployment:
-  namespace: 'nodeservice'
   properties:
     env:
       - key: SOME_ENV
@@ -32,9 +31,6 @@ deployment:
         maxSurge: "25%"
         maxUnavailable: "25%"
       type: "RollingUpdate"
-    rancher:
-      projectId:
-        all: "p-11111"
     livenessProbe:
       path:
         all: /health
@@ -52,3 +48,8 @@ deployment:
           all: 0.1
         mem:
           all: 128
+kubernetes:
+  namespace:
+    all: 'nodeservice'
+  projectId:
+    all: "p-11111"

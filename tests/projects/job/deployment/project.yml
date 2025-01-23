@@ -1,16 +1,12 @@
 name: job
 description: "A job"
-projectYmlVersion: 1
+projectYmlVersion: 3
 maintainer: ["MPyL"]
 stages:
   build: Echo Build
   deploy: "Kubernetes Job Deploy"
 deployment:
-  namespace: job
   kubernetes:
-    rancher:
-      projectId:
-        all: "p-11111"
     job:
       cron:
         all:
@@ -21,3 +17,8 @@ dependencies:
     - tests/projects/sbt-service/src/
   test:
     - tests/projects/service/file.py
+kubernetes:
+  namespace:
+    all: job
+  projectId:
+    all: "p-11111"

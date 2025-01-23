@@ -77,6 +77,43 @@ properties:
           - Skip Postdeploy
         type: string
     minProperties: 1
+  kubernetes:
+    description: Shared kubernetes details for all deployments
+    type: object
+    additionalProperties: false
+    required:
+      - namespace
+      - projectId
+    properties:
+      namespace:
+        description: >-
+          Corresponds to the namespace in Kubernetes to which the artifact will
+          be deployed
+        $ref: '#/definitions/dtapValue'
+      projectId:
+        description: >-
+          The rancher project id that this project should be deployed to, required for rbac. Represents a domain in rancher.
+        $ref: '#/definitions/dtapValue'
+  dagster:
+    description: Configuration for dagster projects
+    additionalProperties: false
+    type: object
+    required:
+      - repo
+    properties:
+      secrets:
+        description: >-
+          List of k8s secrets that will be injected into the Dagster
+          configuration file as envSecrets.
+        type: array
+        additionalItems: false
+        items:
+          $ref: '#/definitions/envSecret'
+      repo:
+        description: Absolute path to Dagster repository py-file
+        type: string
+        examples:
+          - /python/my_project/dagster/repo.py
   docker:
     description: Defines docker repository and it's credentials
     type: object
@@ -192,34 +229,10 @@ definitions:
                   type: string
                 valueFrom:
                   $ref: k8s_api_core.schema.yml#/definitions/io.k8s.api.core.v1.EnvVarSource
-      namespace:
-        description: >-
-          Corresponds to the namespace in Kubernetes to which the artifact will
-          be deployed
-        type: string
       kubernetes:
         $ref: '#/definitions/kubernetes'
       traefik:
         $ref: '#/definitions/traefik'
-      dagster:
-        additionalProperties: false
-        type: object
-        required:
-          - repo
-        properties:
-          secrets:
-            description: >-
-              List of k8s secrets that will be injected into the Dagster
-              configuration file as envSecrets.
-            type: array
-            additionalItems: false
-            items:
-              $ref: '#/definitions/envSecret'
-          repo:
-            description: Absolute path to Dagster repository py-file
-            type: string
-            examples:
-              - /python/my_project/dagster/repo.py
       cluster:
         type: object
         additionalProperties: false
@@ -235,8 +248,6 @@ definitions:
           all:
             type: string
     minProperties: 1
-    required:
-      - namespace
   traefik:
     additionalProperties: true
     type: object
@@ -681,19 +692,8 @@ definitions:
         type: string
   kubernetes:
     type: object
-    required:
-      - rancher
     additionalProperties: false
     properties:
-      rancher:
-        type: object
-        required:
-          - projectId
-        properties:
-          projectId:
-            description: >-
-              The rancher project id that this project should be deployed to, required for rbac. Represents a domain in rancher.
-            $ref: '#/definitions/dtapValue'
       secrets:
         type: array
         additionalItems: false

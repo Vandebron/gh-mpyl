@@ -71,6 +71,39 @@ class ProjectUpgraderTwo(Upgrader):
         return previous_dict
 
 
+class ProjectUpgraderThree(Upgrader):
+    target_version = 3
+
+    def upgrade(self, previous_dict: ordereddict) -> ordereddict:
+        namespace = previous_dict.get("deployment", {}).get("namespace")
+        project_id = (
+            previous_dict.get("deployment", {})
+            .get("kubernetes", {})
+            .get("rancher", {})
+            .get("projectId")
+        )
+        dagster_config = previous_dict.get("deployment", {}).get("dagster")
+        new_kubernetes_config = previous_dict.get("kubernetes")
+
+        if (namespace or project_id) and not new_kubernetes_config:
+            previous_dict["kubernetes"] = {}
+
+        if namespace:
+            del previous_dict["deployment"]["namespace"]
+            previous_dict["kubernetes"]["namespace"] = {}
+            previous_dict["kubernetes"]["namespace"]["all"] = namespace
+
+        if project_id:
+            del previous_dict["deployment"]["kubernetes"]["rancher"]
+            previous_dict["kubernetes"]["projectId"] = project_id
+
+        if dagster_config:
+            del previous_dict["deployment"]["dagster"]
+            previous_dict["dagster"] = dagster_config
+
+        return previous_dict
+
+
 def get_entry_upgrader_index(
     current_version: int, upgraders: list[Upgrader]
 ) -> Optional[int]:
@@ -91,6 +124,7 @@ def upgrade_to_latest(project_file: Path) -> ordereddict:
     upgraders = [
         ProjectUpgraderOne(),
         ProjectUpgraderTwo(project_file),
+        ProjectUpgraderThree(),
     ]
 
     upgrade_index = get_entry_upgrader_index(__get_version(to_upgrade), upgraders)

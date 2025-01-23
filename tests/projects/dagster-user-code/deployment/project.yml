@@ -1,12 +1,11 @@
 name: 'example-dagster-user-code'
 description: 'Example user-code deployment for dagster'
-projectYmlVersion: 1
+projectYmlVersion: 3
 maintainer:
   - MPyL
 stages:
   build: Echo Build
 deployment:
-  namespace: 'example-dagster-user-code'
   properties:
     env:
       - key: DEPLOY_ENV
@@ -19,14 +18,16 @@ deployment:
         test: 'DEBUG'
         acceptance: 'DEBUG'
         production: 'INFO'
-  dagster:
-    repo: "/tests/projects/dagster-user-code/main.py"
-    secrets:
-      - name: "some-normal-secret"
   kubernetes:
-    rancher:
-      projectId:
-        all: "p-11111"
     job:
       ttlSecondsAfterFinished:
         all: 30
+kubernetes:
+  namespace:
+    all: 'example-dagster-user-code'
+  projectId:
+    all: "p-11111"
+dagster:
+  repo: "/tests/projects/dagster-user-code/main.py"
+  secrets:
+    - name: "some-normal-secret"

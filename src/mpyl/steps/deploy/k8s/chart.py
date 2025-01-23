@@ -247,7 +247,7 @@ class ChartBuilder:
         self.namespace = (
             step_input.run_properties.versioning.identifier
             if step_input.run_properties.target == Target.PULL_REQUEST
-            else project.namespace
+            else project.namespace(step_input.run_properties.target)
         )
 
     def to_labels(self) -> dict:
@@ -802,11 +802,11 @@ class ChartBuilder:
         processed_env_vars = substitute_namespaces(
             env_vars=raw_env_vars,
             all_projects={
-                project.to_name
+                project.to_name(self.target)
                 for project in self.step_input.run_plan.all_known_projects
             },
             projects_to_deploy={
-                project_execution.project.to_name
+                project_execution.project.to_name(self.target)
                 for project_execution in self.step_input.run_plan.get_executions_for_stage_name(
                     deploy.STAGE_NAME, use_full_plan=True
                 )

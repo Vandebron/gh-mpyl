@@ -12,15 +12,10 @@ from kubernetes.client import V1ConfigMap, ApiException, V1Deployment
 from .helm import write_helm_chart
 from ...deploy.k8s.resources import CustomResourceDefinition
 from ...input import Input
-from ...models import RunProperties
 from ...output import Output
-from ....project import ProjectName, Project, Target
+from ....project import ProjectName
 from ....steps.deploy.k8s import helm
-from ....steps.deploy.k8s.cluster import (
-    get_namespace_metadata,
-    ClusterConfig,
-    get_cluster_config_for_project,
-)
+from ....steps.deploy.k8s.cluster import ClusterConfig, get_cluster_config_for_project
 from ....steps.deploy.k8s.resources import to_yaml
 from ....utilities import replace_pr_number
 

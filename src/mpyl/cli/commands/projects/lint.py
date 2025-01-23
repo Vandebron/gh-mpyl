@@ -58,55 +58,6 @@ def _assert_unique_project_names(console: Console, all_projects: list[Project]):
     return duplicates
 
 
-def _assert_namespaces(console: Console, all_projects: list[Project]):
-    console.print("")
-    console.print("Checking for different namespaces in deployments: ")
-    different_namespace = []
-    for project in all_projects:
-        namespaces = {deployment.namespace for deployment in project.deployments}
-        if len(namespaces) > 1:
-            different_namespace.append({project.name: namespaces})
-
-    return different_namespace
-
-
-def _assert_dagster_configs(console: Console, all_projects: list[Project]):
-    console.print("")
-    console.print("Checking for multiple dagster configs in deployments: ")
-    multiple_dagster_configs = []
-    for project in all_projects:
-        dagster_configs = [
-            deployment.dagster
-            for deployment in project.deployments
-            if deployment.dagster
-        ]
-        if len(dagster_configs) > 1:
-            multiple_dagster_configs.append({project.name: dagster_configs})
-
-    return multiple_dagster_configs
-
-
-def _assert_different_project_ids(console: Console, all_projects: list[Project]):
-    console.print("")
-    console.print("Checking for different project ids: ")
-    return [
-        {project.name: {target.name: _get_project_ids(project, target)}}
-        for target in Target
-        for project in all_projects
-        if project.stages.for_stage(STAGE_NAME) is not None
-        and "override" not in project.path
-        and len(_get_project_ids(project, target)) > 1
-    ]
-
-
-def _get_project_ids(project: Project, target: Target) -> set[Project]:
-    return {
-        deployment.kubernetes.rancher.project_id.get_value(target)
-        for deployment in project.deployments
-        if deployment.has_kubernetes() and deployment.kubernetes.rancher
-    }
-
-
 @dataclass
 class WrongLinkupPerProject:
     name: str
@@ -142,8 +93,10 @@ def __get_wrong_substitutions_per_project(
                     )
                     substituted: dict[str, str] = substitute_namespaces(
                         env_vars=env,
-                        all_projects=set(map(lambda p: p.to_name, projects)),
-                        projects_to_deploy=set(map(lambda p: p.to_name, projects)),
+                        all_projects=set(map(lambda p: p.to_name(target), projects)),
+                        projects_to_deploy=set(
+                            map(lambda p: p.to_name(target), projects)
+                        ),
                         pr_identifier=pr_identifier,
                     )
                     wrong_subs = list(

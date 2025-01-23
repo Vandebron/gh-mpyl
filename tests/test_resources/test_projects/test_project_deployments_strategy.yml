@@ -15,10 +15,14 @@ build:
 dependencies:
   build:
     - 'test/docker/'
+kubernetes:
+  namespace:
+    all: "mpyl"
+  projectId:
+    all: test1234
 deployments:
   - name: "testDeploymentsStrategyParameters1"
     deployStep: "Echo Deploy"
-    namespace: "mpyl"
     properties:
       env:
         - key: SOME_ENV
@@ -27,9 +31,6 @@ deployments:
           acceptance: "Acceptance"
           production: "Production"
     kubernetes:
-      rancher:
-        projectId:
-          all: test1234
       deploymentStrategy:
         rollingUpdate:
           maxSurge: "100%"
@@ -38,7 +39,6 @@ deployments:
         8080: 8080
   - name: "testDeploymentsStrategyParameters2"
     deployStep: "Echo Deploy"
-    namespace: "mpyl"
     properties:
       env:
         - key: SOME_ENV
@@ -47,9 +47,6 @@ deployments:
           acceptance: "Acceptance"
           production: "Production"
     kubernetes:
-      rancher:
-        projectId:
-          all: test1234
       deploymentStrategy:
         rollingUpdate:
           maxSurge: "100%"
