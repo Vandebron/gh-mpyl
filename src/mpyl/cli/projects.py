@@ -20,7 +20,7 @@ from ..cli.commands.projects.lint import (
     _lint_whitelisting_rules,
     __detail_wrong_substitutions,
     _assert_no_self_dependencies,
-    _assert_deployments,
+    _find_projects_without_deployments,
 )
 from ..cli.commands.projects.upgrade import check_upgrade
 from ..constants import DEFAULT_CONFIG_FILE_NAME
@@ -137,7 +137,9 @@ def lint(ctx: Context):
             console.print(f"  ❌ Project {project.name} has a dependency on itself")
         failed = True
 
-    projects_without_deployments = _assert_deployments(console, all_projects)
+    projects_without_deployments = _find_projects_without_deployments(
+        console, all_projects
+    )
     if len(projects_without_deployments) == 0:
         console.print("  ✅ No project without a required deployment found")
     else:

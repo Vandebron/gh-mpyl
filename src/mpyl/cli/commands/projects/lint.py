@@ -184,7 +184,7 @@ def _assert_no_self_dependencies(console: Console, all_projects: list[Project]):
     return projects_with_self_dependencies
 
 
-def _assert_deployments(console: Console, all_projects: list[Project]):
+def _find_projects_without_deployments(console: Console, all_projects: list[Project]):
     console.print("")
     console.print("Checking for deployments:")
     projects_without_deployments = []
