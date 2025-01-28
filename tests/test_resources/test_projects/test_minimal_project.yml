@@ -20,32 +20,33 @@ kubernetes:
     all: "mpyl"
   projectId:
     all: test1234
-deployment:
-  properties:
-    env:
-      - key: SOME_ENV
-        pr: "PullRequest"
-        test: "Test"
-        acceptance: "Acceptance"
-        production: "Production"
-  kubernetes:
-    livenessProbe:
-      path:
-        all: /health
-      successThreshold: 0
-      failureThreshold: 99
-      grpc:
-        port: 123
-        service: 'grpcService'
-    portMappings:
-      8080: 8080
-    metrics:
-      enabled: false
-    resources:
-      instances:
-        all: 1
-      limit:
-        cpus:
-          all: 0.5
-        mem:
-          all: 1024
+deployments:
+  - name: 'minimalService'
+    properties:
+      env:
+        - key: SOME_ENV
+          pr: "PullRequest"
+          test: "Test"
+          acceptance: "Acceptance"
+          production: "Production"
+    kubernetes:
+      livenessProbe:
+        path:
+          all: /health
+        successThreshold: 0
+        failureThreshold: 99
+        grpc:
+          port: 123
+          service: 'grpcService'
+      portMappings:
+        8080: 8080
+      metrics:
+        enabled: false
+      resources:
+        instances:
+          all: 1
+        limit:
+          cpus:
+            all: 0.5
+          mem:
+            all: 1024

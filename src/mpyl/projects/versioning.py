@@ -75,31 +75,49 @@ class ProjectUpgraderThree(Upgrader):
     target_version = 3
 
     def upgrade(self, previous_dict: ordereddict) -> ordereddict:
-        namespace = previous_dict.get("deployment", {}).get("namespace")
+        deployment = previous_dict.get("deployment")
+
+        # only upgrades for projects with deployment config
+        if not deployment:
+            return previous_dict
+
+        namespace = deployment.get("namespace")
         project_id = (
-            previous_dict.get("deployment", {})
-            .get("kubernetes", {})
-            .get("rancher", {})
-            .get("projectId")
+            deployment.get("kubernetes", {}).get("rancher", {}).get("projectId")
         )
-        dagster_config = previous_dict.get("deployment", {}).get("dagster")
+        dagster_config = deployment.get("dagster")
         new_kubernetes_config = previous_dict.get("kubernetes")
 
+        # create new dict entry if needed
         if (namespace or project_id) and not new_kubernetes_config:
             previous_dict["kubernetes"] = {}
 
+        # move namespace from deployment to common kubernetes config since it's shared between deployments
         if namespace:
-            del previous_dict["deployment"]["namespace"]
+            del deployment["namespace"]
             previous_dict["kubernetes"]["namespace"] = {}
             previous_dict["kubernetes"]["namespace"]["all"] = namespace
 
+        # same as namespace above
         if project_id:
-            del previous_dict["deployment"]["kubernetes"]["rancher"]
+            del deployment["kubernetes"]["rancher"]
             previous_dict["kubernetes"]["projectId"] = project_id
 
+        # move dagster config out of deployment since it's not related
         if dagster_config:
-            del previous_dict["deployment"]["dagster"]
+            del deployment["dagster"]
             previous_dict["dagster"] = dagster_config
+
+        # copy project name to deployment name (just for the migration, they don't need to match later)
+        deployment.insert(0, "name", previous_dict["name"])
+
+        # move deployment to deployments
+        del previous_dict["deployment"]
+        previous_dict["deployments"] = [deployment]
+
+        # combine kubernetes deploy steps
+        if previous_dict["stages"].get("deploy", "") == "Kubernetes Job Deploy":
+            previous_dict["stages"]["deploy"] = "Kubernetes Deploy"
 
         return previous_dict
 

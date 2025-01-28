@@ -18,38 +18,39 @@ build:
 dependencies:
   build:
     - 'test/docker/'
-deployment:
-  properties:
-    env:
-      - key: SOME_ENV
-        test: "Test"
-        acceptance: "Acceptance"
-        production: "Production"
-  kubernetes:
-    deploymentStrategy:
-      rollingUpdate:
-        maxSurge: "25%"
-        maxUnavailable: "25%"
-      type: "RollingUpdate"
-    livenessProbe:
-      path:
-        all: /health
-      successThreshold: 0
-      failureThreshold: 99
-    portMappings:
-      8081: 8081
-    metrics:
-      enabled: false
-    resources:
-      instances:
-        all: 1
-      limit:
-        cpus:
-          all: 0.1
-        mem:
-          all: 128
 kubernetes:
   namespace:
     all: 'nodeservice'
   projectId:
     all: "p-11111"
+deployments:
+  - name: 'nodeservice'
+    properties:
+      env:
+        - key: SOME_ENV
+          test: "Test"
+          acceptance: "Acceptance"
+          production: "Production"
+    kubernetes:
+      deploymentStrategy:
+        rollingUpdate:
+          maxSurge: "25%"
+          maxUnavailable: "25%"
+        type: "RollingUpdate"
+      livenessProbe:
+        path:
+          all: /health
+        successThreshold: 0
+        failureThreshold: 99
+      portMappings:
+        8081: 8081
+      metrics:
+        enabled: false
+      resources:
+        instances:
+          all: 1
+        limit:
+          cpus:
+            all: 0.1
+          mem:
+            all: 128

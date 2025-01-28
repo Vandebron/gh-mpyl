@@ -97,12 +97,6 @@ def get_minimal_project() -> Project:
     return safe_load_project(f"{resource_path}/test_projects/test_minimal_project.yml")
 
 
-def get_project_without_swagger() -> Project:
-    return safe_load_project(
-        f"{resource_path}/test_projects/test_project_without_swagger.yml"
-    )
-
-
 def get_job_project() -> Project:
     return safe_load_project(f"{resource_path}/test_projects/test_job_project.yml")
 

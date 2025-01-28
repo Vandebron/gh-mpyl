@@ -5,13 +5,14 @@ maintainer: ["MPyL"]
 stages:
   build: Echo Build
   deploy: "Kubernetes Job Deploy"
-deployment:
-  kubernetes:
-    job:
-      cron:
-        all:
-          schedule: "0 22 * * *"
-          timeZone: "Europe/Amsterdam"
+deployments:
+  - name: job
+    kubernetes:
+      job:
+        cron:
+          all:
+            schedule: "0 22 * * *"
+            timeZone: "Europe/Amsterdam"
 dependencies:
   build:
     - tests/projects/sbt-service/src/

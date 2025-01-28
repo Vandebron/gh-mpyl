@@ -163,22 +163,19 @@ properties:
                   type: string
     minProperties: 1
   deployment:
+    description: "DEPRECATED: will be removed soon. Please use 'deployments' from now on."
     $ref: '#/definitions/deployment'
   deployments:
     type: array
     description: >-
       Defines multiple deployments for the same service.
+    required:
+      - name
+    properties:
+      name:
+        type: string
+        description: The name of this deployment
     items:
-      required:
-        - name
-        - deployStep
-      properties:
-        name:
-          type: string
-          description: The name of this deployment
-        deployStep:
-          type: string
-          description: The name of the mpyl deploy step to use for this deployment.
       $ref: '#/definitions/deployment'
   postdeploy:
     additionalProperties: false

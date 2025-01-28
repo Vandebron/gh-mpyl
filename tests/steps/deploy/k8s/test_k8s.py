@@ -24,7 +24,6 @@ from tests import root_test_path
 from tests.test_resources import test_data
 from tests.test_resources.test_data import (
     assert_roundtrip,
-    get_deployment_strategy_project,
     get_job_project,
     get_cron_job_project,
     get_minimal_project,
@@ -32,6 +31,7 @@ from tests.test_resources.test_data import (
     RUN_PROPERTIES,
     TestStage,
     get_project_traefik,
+    get_deployment_strategy_project,
     get_deployments_strategy_project,
 )
 
@@ -210,7 +210,9 @@ class TestKubernetesChart:
             "prefixes"
         ] == ["/service2/test/pr-1234/1234"]
 
-    def test_deployment_strategy_roundtrip(self):
+    def test_deployment_strategy_roundtrip(
+        self,
+    ):  # To test backward compatibility with old tags
         project = get_deployment_strategy_project()
         builder = self._get_builder(project)
         chart = to_service_chart(builder)

@@ -5,23 +5,24 @@ maintainer:
   - MPyL
 stages:
   build: Echo Build
-deployment:
-  properties:
-    env:
-      - key: DEPLOY_ENV
-        pr: 'test'
-        test: 'test'
-        acceptance: 'acce'
-        production: 'prod'
-      - key: LOGGING_LEVEL
-        pr: 'DEBUG'
-        test: 'DEBUG'
-        acceptance: 'DEBUG'
-        production: 'INFO'
-  kubernetes:
-    job:
-      ttlSecondsAfterFinished:
-        all: 30
+deployments:
+  - name: 'example-dagster-user-code'
+    properties:
+      env:
+        - key: DEPLOY_ENV
+          pr: 'test'
+          test: 'test'
+          acceptance: 'acce'
+          production: 'prod'
+        - key: LOGGING_LEVEL
+          pr: 'DEBUG'
+          test: 'DEBUG'
+          acceptance: 'DEBUG'
+          production: 'INFO'
+    kubernetes:
+      job:
+        ttlSecondsAfterFinished:
+          all: 30
 kubernetes:
   namespace:
     all: 'example-dagster-user-code'

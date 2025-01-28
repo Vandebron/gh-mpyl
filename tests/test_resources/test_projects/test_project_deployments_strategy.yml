@@ -22,7 +22,6 @@ kubernetes:
     all: test1234
 deployments:
   - name: "testDeploymentsStrategyParameters1"
-    deployStep: "Echo Deploy"
     properties:
       env:
         - key: SOME_ENV
@@ -38,7 +37,6 @@ deployments:
       portMappings:
         8080: 8080
   - name: "testDeploymentsStrategyParameters2"
-    deployStep: "Echo Deploy"
     properties:
       env:
         - key: SOME_ENV

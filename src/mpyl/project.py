@@ -27,7 +27,6 @@ from mypy.checker import Generic
 from ruamel.yaml import YAML
 
 from .constants import RUN_ARTIFACTS_FOLDER
-from .steps import deploy
 from .validation import validate
 
 T = TypeVar("T")
@@ -473,7 +472,6 @@ class Build:
 @dataclass(frozen=True)
 class Deployment:
     name: str
-    deploy_step: str
     properties: Optional[Properties]
     _kubernetes: Optional[Kubernetes]
     traefik: Optional[Traefik]
@@ -486,7 +484,6 @@ class Deployment:
 
         return Deployment(
             name=values["name"],
-            deploy_step=values["deployStep"],
             properties=Properties.from_config(props) if props else None,
             _kubernetes=Kubernetes.from_config(kubernetes) if kubernetes else None,
             traefik=Traefik.from_config(traefik) if traefik else None,
@@ -590,10 +587,9 @@ class Project:
     def from_config(values: dict, project_path: Path):
         docker_config = values.get("docker")
         stages = Stages.from_config(values.get("stages", {}))
-        deployment = values.get("deployment", {})
+        deployment = values.get("deployment", {})  # Still needed for old tags
         if deployment:
             deployment["name"] = values["name"]
-            deployment["deployStep"] = stages.for_stage(deploy.STAGE_NAME)
             deployment_list = [deployment]
         else:
             deployment_list = values.get("deployments", [])
@@ -678,13 +674,14 @@ def load_project(
                 project_path, loader
             )
             yaml_values = merge_dicts(yaml_values, parent_yaml_values, True)
-            traefik_config = load_traefik_config(
-                project_path.parent
-                / Project.traefik_yaml_file_name(yaml_values["name"]),
-                loader,
-            )
-            if traefik_config:
-                yaml_values["deployment"]["traefik"] = traefik_config["traefik"]
+            for deployment in yaml_values.get("deployments", []):
+                traefik_config = load_traefik_config(
+                    project_path.parent
+                    / Project.traefik_yaml_file_name(deployment["name"]),
+                    loader,
+                )
+                if traefik_config:
+                    deployment["traefik"] = traefik_config["traefik"]
             if validate_project_yaml:
                 validate_project(yaml_values)
             project = Project.from_config(yaml_values, project_path)
@@ -722,11 +719,20 @@ def merge_dicts(
     merged = parent_yaml_values.copy()
     for key, value in yaml_values.items():
         # ignore all keys that are not allowed to be overridden
-        if root_level and key not in ("stages", "deployment", "name", "description"):
+        if root_level and key not in (
+            "stages",
+            "deployment",
+            "deployments",
+            "name",
+            "description",
+        ):
             continue
         # overriden project does not inherit stages
         if root_level and key == "stages":
             merged[key] = value
+        # combine the deployment lists
+        if key == "deployments":
+            merged[key] = merged[key] + value
         elif (
             key in merged and isinstance(merged[key], dict) and isinstance(value, dict)
         ):
