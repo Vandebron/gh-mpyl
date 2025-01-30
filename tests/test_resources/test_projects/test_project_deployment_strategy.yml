@@ -33,5 +33,13 @@ deployment:
       rollingUpdate:
         maxSurge: "100%"
         maxUnavailable: "0%"
+    livenessProbe:
+      path:
+        all: /health
+      successThreshold: 0
+      failureThreshold: 99
+      grpc:
+        port: 123
+        service: 'grpcService'
     portMappings:
       8080: 8080

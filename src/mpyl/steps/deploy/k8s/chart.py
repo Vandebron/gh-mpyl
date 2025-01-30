@@ -188,7 +188,7 @@ class DeploymentDefaults:
         if deployment_values is None:
             raise KeyError("Configuration should have project.deployment section")
         kubernetes = deployment_values.get("kubernetes", {})
-        additional_routes = deployment_values.get("additionalTraefikRoutes", None)
+        additional_routes = deployment_values.get("additionalTraefikRoutes", [])
         traefik_config = TraefikConfig.from_config(
             deployment_values.get("traefikDefaults", None)
         )
@@ -201,10 +201,8 @@ class DeploymentDefaults:
             white_lists=DefaultWhitelists.from_config(config.get("whiteLists", {})),
             image_pull_secrets=kubernetes.get("imagePullSecrets", {}),
             deployment_strategy=config["kubernetes"]["deploymentStrategy"],
-            additional_routes=(
-                list(map(TraefikAdditionalRoute.from_config, additional_routes))
-                if additional_routes
-                else []
+            additional_routes=list(
+                map(TraefikAdditionalRoute.from_config, additional_routes)
             ),
             traefik_config=traefik_config,
         )
@@ -213,9 +211,6 @@ class DeploymentDefaults:
 class ChartBuilder:
     step_input: Input
     project: Project
-    mappings: dict[int, int] = {}
-    sealed_secrets: list[KeyValueProperty] = []
-    deployments: list[Deployment]
     target: Target
     release_name: str
     config_defaults: DeploymentDefaults
@@ -232,14 +227,6 @@ class ChartBuilder:
 
         if len(project.deployments) == 0:
             raise AttributeError("Deployments field should be set")
-        self.deployments = project.deployments
-        for deployment in project.deployments:
-            if deployment.has_kubernetes() and deployment.kubernetes.port_mappings:
-                self.mappings = self.mappings | deployment.kubernetes.port_mappings
-            if deployment.properties and deployment.properties.sealed_secret:
-                self.sealed_secrets = (
-                    self.sealed_secrets + deployment.properties.sealed_secret
-                )
         self.target = step_input.run_properties.target
         self.release_name = self.project.name.lower()
         self.namespace = (
@@ -343,16 +330,16 @@ class ChartBuilder:
 
         return liveness_probe, startup_probe
 
-    def to_service(self) -> V1Service:
+    def to_service(self, deployment: Deployment) -> V1Service:
         service_ports = list(
             map(
                 lambda key: V1ServicePort(
                     port=int(key),
-                    target_port=int(self.mappings[key]),
+                    target_port=int(deployment.kubernetes.port_mappings[key]),
                     protocol="TCP",
                     name=f"{key}-webservice-port",
                 ),
-                self.mappings.keys(),
+                deployment.kubernetes.port_mappings.keys(),
             )
         )
 
@@ -447,30 +434,32 @@ class ChartBuilder:
             alerts=alerts,
         )
 
-    def to_service_monitor(self, metrics: Metrics) -> V1ServiceMonitor:
+    def to_service_monitor(
+        self, metrics: Metrics, default_port: int
+    ) -> V1ServiceMonitor:
         return V1ServiceMonitor(
             metadata=self._to_object_meta(
                 name=f"{self.project.name.lower()}-service-monitor"
             ),
             metrics=metrics,
-            default_port=self.__find_default_port(),
+            default_port=default_port,
             namespace=self.namespace,
             release_name=self.release_name,
         )
 
-    def __find_default_port(self) -> int:
-        found = next(iter(self.mappings.keys()))
+    @staticmethod
+    def find_default_port(mappings: dict[int, int]) -> int:
+        found = next(iter(mappings.keys()))
         if found:
             return int(found)
         raise KeyError("No default port found. Did you define a port mapping?")
 
-    def create_host_wrappers(self) -> list[HostWrapper]:
-        default_hosts: list[TraefikHost] = self.config_defaults.traefik_defaults.hosts
-        hosts: list[TraefikHost] = []
-        for deployment in self.deployments:
-            if deployment.traefik and deployment.traefik.hosts:
-                hosts += deployment.traefik.hosts
-
+    def create_host_wrappers(self, deployment: Deployment) -> list[HostWrapper]:
+        hosts: list[TraefikHost] = (
+            deployment.traefik.hosts
+            if deployment.traefik and deployment.traefik.hosts
+            else self.config_defaults.traefik_defaults.hosts
+        )
         address_dictionary = {
             address.name: address.host.get_value(self.target)
             for address in self.config_defaults.white_lists.addresses
@@ -495,7 +484,9 @@ class ChartBuilder:
                 service_port=(
                     host.service_port
                     if host.service_port
-                    else self.__find_default_port()
+                    else ChartBuilder.find_default_port(
+                        deployment.kubernetes.port_mappings
+                    )
                 ),
                 white_lists=to_white_list(host.whitelists),
                 tls=host.tls.get_value(self.target) if host.tls else None,
@@ -513,7 +504,7 @@ class ChartBuilder:
                     else None
                 ),
             )
-            for idx, host in enumerate(hosts if hosts else default_hosts)
+            for idx, host in enumerate(hosts)
         ]
 
     def _replace_placeholders(self, traefik_object: dict | list):
@@ -548,8 +539,10 @@ class ChartBuilder:
             spec=ingress_route_spec,
         )
 
-    def to_ingress_routes(self, https: bool) -> list[V1AlphaIngressRoute]:
-        hosts = self.create_host_wrappers()
+    def to_ingress_routes(
+        self, deployment: Deployment, https: bool
+    ) -> list[V1AlphaIngressRoute]:
+        hosts = self.create_host_wrappers(deployment)
         return [
             V1AlphaIngressRoute.from_hosts(
                 metadata=self._to_object_meta(
@@ -569,8 +562,8 @@ class ChartBuilder:
             for i, host in enumerate(hosts)
         ]
 
-    def to_additional_routes(self) -> list[V1AlphaIngressRoute]:
-        hosts = self.create_host_wrappers()
+    def to_additional_routes(self, deployment: Deployment) -> list[V1AlphaIngressRoute]:
+        hosts = self.create_host_wrappers(deployment)
         return [
             V1AlphaIngressRoute.from_hosts(
                 metadata=self._to_object_meta(
@@ -590,15 +583,15 @@ class ChartBuilder:
             if host.additional_route
         ]
 
-    def to_middlewares(self) -> dict[str, V1AlphaMiddleware]:
-        hosts: list[HostWrapper] = self.create_host_wrappers()
-        middlewares: list = []
-        for deployment in self.deployments:
-            if deployment.traefik and deployment.traefik.middlewares:
-                middlewares = middlewares + self._replace_placeholders(
-                    deployment.traefik.middlewares.get_value(self.target)
-                )
-
+    def to_middlewares(self, deployment: Deployment) -> dict[str, V1AlphaMiddleware]:
+        hosts: list[HostWrapper] = self.create_host_wrappers(deployment)
+        middlewares = (
+            self._replace_placeholders(
+                deployment.traefik.middlewares.get_value(self.target)
+            )
+            if deployment.traefik and deployment.traefik.middlewares
+            else []
+        )
         adjusted_middlewares = {
             f'middleware-{middleware["metadata"]["name"]}': V1AlphaMiddleware.from_spec(
                 metadata=self._to_object_meta(name=middleware["metadata"]["name"]),
@@ -622,17 +615,11 @@ class ChartBuilder:
             for host in hosts
         } | adjusted_middlewares
 
-    def to_service_account(
-        self,
-    ) -> V1ServiceAccount:
-        image_pull_secrets_config = next(
-            (
-                deployment.kubernetes.image_pull_secrets
-                for deployment in self.deployments
-                if deployment.kubernetes.image_pull_secrets
-            ),
-            self.config_defaults.image_pull_secrets,
-        )  # Should move out of deployments?
+    def to_service_account(self, deployment: Deployment) -> V1ServiceAccount:
+        image_pull_secrets_config = (
+            deployment.kubernetes.image_pull_secrets
+            or self.config_defaults.image_pull_secrets
+        )
         secrets = [
             ChartBuilder._to_k8s_model(
                 secret,
@@ -676,9 +663,11 @@ class ChartBuilder:
             ],
         )
 
-    def to_sealed_secrets(self) -> V1SealedSecret:
+    def to_sealed_secrets(
+        self, sealed_secrets: list[KeyValueProperty]
+    ) -> V1SealedSecret:
         secrets: dict[str, str] = {}
-        for secret in self.sealed_secrets:
+        for secret in sealed_secrets:
             secrets[secret.key] = secret.get_value(self.target)
 
         return V1SealedSecret(name=self.release_name, secrets=secrets)
@@ -763,9 +752,11 @@ class ChartBuilder:
         }
         return raw_env_vars
 
-    def get_sealed_secret_as_env_vars(self) -> list[V1EnvVar]:
+    def get_sealed_secret_as_env_vars(
+        self, sealed_secrets: list[KeyValueProperty]
+    ) -> list[V1EnvVar]:
         sealed_secrets_for_target = list(
-            filter(lambda v: v.get_value(self.target) is not None, self.sealed_secrets)
+            filter(lambda v: v.get_value(self.target) is not None, sealed_secrets)
         )
         return self._create_sealed_secret_env_vars(sealed_secrets_for_target)
 
@@ -803,15 +794,22 @@ class ChartBuilder:
             if deployment.properties
             else []
         )
+        sealed_secrets = (
+            self.get_sealed_secret_as_env_vars(deployment.properties.sealed_secrets)
+            if deployment.properties
+            else []
+        )
 
-        return env_vars + self.get_sealed_secret_as_env_vars() + secrets
+        return env_vars + sealed_secrets + secrets
 
     def to_deployment(self, deployment: Deployment) -> V1Deployment:
         ports = [
             V1ContainerPort(
-                container_port=self.mappings[key], protocol="TCP", name=f"port-{idx}"
+                container_port=deployment.kubernetes.port_mappings[key],
+                protocol="TCP",
+                name=f"port-{idx}",
             )
-            for idx, key in enumerate(self.mappings.keys())
+            for idx, key in enumerate(deployment.kubernetes.port_mappings.keys())
         ]
 
         resources = deployment.kubernetes.resources
@@ -870,93 +868,76 @@ class ChartBuilder:
             ),
         )
 
-    def to_common_chart(self) -> dict[str, CustomResourceDefinition]:
-        chart = {"service-account": self.to_service_account()}
+    def to_common_chart(
+        self, deployment: Deployment
+    ) -> dict[str, CustomResourceDefinition]:
+        chart = {"service-account": self.to_service_account(deployment)}
 
-        if len(self.sealed_secrets) > 0:
-            chart["sealed-secrets"] = self.to_sealed_secrets()
+        if deployment.properties and len(deployment.properties.sealed_secrets) > 0:
+            chart["sealed-secrets"] = self.to_sealed_secrets(
+                deployment.properties.sealed_secrets
+            )
 
-        role = {}
-        for deployment in self.deployments:
-            if deployment.kubernetes.role:
-                role.update(deployment.kubernetes.role)
+        role = deployment.kubernetes.role or {}
         if role:
             chart["role"] = self.to_role(role)
             chart["rolebinding"] = self.to_role_binding()
 
-        prometheus = _to_prometheus_chart(self)
+        prometheus = _to_prometheus_chart(self, deployment)
 
         return chart | prometheus
 
 
-def to_service_chart(builder: ChartBuilder) -> dict[str, CustomResourceDefinition]:
-    return (
-        builder.to_common_chart()
-        | _to_service_components_chart(builder)
-        | builder.to_middlewares()
-    )
-
-
-def _to_service_components_chart(builder):
-    deployment_charts = {
-        f"deployment-{deployment.name}": builder.to_deployment(deployment)
-        for deployment in builder.deployments
-    }
-    service_chart = {
-        "service": builder.to_service(),
-    }
-    metrics = next(
-        (
-            deployment.kubernetes.metrics
-            for deployment in builder.deployments
-            if deployment.kubernetes.metrics
-        ),
-        None,
-    )  # Temp hack, should move out of deployments
+def to_metrics(builder: ChartBuilder, deployment: Deployment):
+    default_port = builder.find_default_port(deployment.kubernetes.port_mappings)
+    metrics = deployment.kubernetes.metrics
     service_monitor = (
         {
-            "service-monitor": builder.to_service_monitor(metrics=metrics),
+            "service-monitor": builder.to_service_monitor(metrics, default_port),
         }
         if metrics and metrics.enabled
         else {}
     )
-    ingress_https = {
-        f"{builder.project.name}-ingress-{i}-https": route
-        for i, route in enumerate(builder.to_ingress_routes(https=True))
-    }
-    ingress_http = {
-        f"{builder.project.name}-ingress-{i}-http": route
-        for i, route in enumerate(builder.to_ingress_routes(https=False))
-    }
-    ingress_routes = {
-        f"ingress-routes-{deployment.name}": builder.to_ingress(deployment)
-        for deployment in builder.deployments
-        if builder.to_ingress(deployment)
-    }
-    additional_routes = {
-        route.metadata.name: route
-        for i, route in enumerate(builder.to_additional_routes())
-    }
+    return service_monitor
+
+
+def to_service_chart(
+    builder: ChartBuilder, deployment: Deployment
+) -> dict[str, CustomResourceDefinition]:
     return (
-        deployment_charts
-        | service_chart
-        | ingress_https
-        | ingress_http
-        | ingress_routes
-        | additional_routes
-        | service_monitor
+        builder.to_common_chart(deployment)
+        | {"service": builder.to_service(deployment)}
+        | {f"deployment-{deployment.name}": builder.to_deployment(deployment)}
+        | _to_ingress_routes_charts(builder, deployment)
+        | builder.to_middlewares(deployment)
+        | to_metrics(builder, deployment)
     )
 
 
-def _to_prometheus_chart(builder: ChartBuilder):
-    metrics = next(
-        (
-            deployment.kubernetes.metrics
-            for deployment in builder.deployments
-            if deployment.kubernetes.metrics
-        ),
-        None,
-    )  # Temp hack, should move out of deployments
+def _to_ingress_routes_charts(builder: ChartBuilder, deployment: Deployment):
+    ingress_https = {
+        f"{builder.project.name}-ingress-{i}-https": route
+        for i, route in enumerate(builder.to_ingress_routes(deployment, https=True))
+    }
+    ingress_http = {
+        f"{builder.project.name}-ingress-{i}-http": route
+        for i, route in enumerate(builder.to_ingress_routes(deployment, https=False))
+    }
+    ingress_routes = (
+        {f"ingress-routes-{deployment.name}": builder.to_ingress(deployment)}
+        if builder.to_ingress(deployment)
+        else {}
+    )
+    additional_routes = {
+        route.metadata.name: route
+        for i, route in enumerate(builder.to_additional_routes(deployment))
+    }
+
+    return ingress_https | ingress_http | ingress_routes | additional_routes
+
+
+def _to_prometheus_chart(builder: ChartBuilder, deployment: Deployment):
+    metrics = deployment.kubernetes.metrics
     prometheus_chart = (
         {
             "prometheus-rule": builder.to_prometheus_rule(alerts=metrics.alerts),

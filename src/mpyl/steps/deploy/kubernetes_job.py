@@ -12,6 +12,7 @@ from ..output import Output
 from ..step import Meta, Step
 
 
+# DEPRECATED: Only here for backward compatibility with old tags
 class DeployKubernetesJob(Step):
     def __init__(self, logger: Logger) -> None:
         super().__init__(
@@ -26,10 +27,10 @@ class DeployKubernetesJob(Step):
 
     def execute(self, step_input: Input) -> Output:
         builder = ChartBuilder(step_input)
-        chart: dict[str, CustomResourceDefinition | V1Job | V1CronJob] = (
-            builder.to_common_chart()
-        )
-        for deployment in builder.deployments:
+        chart: dict[str, CustomResourceDefinition | V1Job | V1CronJob] = {}
+
+        for deployment in step_input.project_execution.project.deployments:
+            chart.update(builder.to_common_chart(deployment))
             chart.update(
                 to_cron_job_chart(builder, deployment)
                 if deployment.kubernetes.job and deployment.kubernetes.job.cron

@@ -196,14 +196,14 @@ class Env:
 @dataclass(frozen=True)
 class Properties:
     env: list[KeyValueProperty]
-    sealed_secret: list[KeyValueProperty]
+    sealed_secrets: list[KeyValueProperty]
     kubernetes: list[KeyValueRef]
 
     @staticmethod
     def from_config(values: dict[Any, Any]):
         return Properties(
             env=list(map(KeyValueProperty.from_config, values.get("env", []))),
-            sealed_secret=list(
+            sealed_secrets=list(
                 map(KeyValueProperty.from_config, values.get("sealedSecret", []))
             ),
             kubernetes=list(map(KeyValueRef.from_config, values.get("kubernetes", []))),

@@ -32,7 +32,7 @@ class TestMpylSchema:
 
         secret_env = [
             x
-            for x in self.project.deployments[0].properties.sealed_secret
+            for x in self.project.deployments[0].properties.sealed_secrets
             if x.key == "SOME_SEALED_SECRET_ENV"
         ].pop()
         assert secret_env.get_value(Target.PULL_REQUEST).startswith(

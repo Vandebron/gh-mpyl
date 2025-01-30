@@ -116,7 +116,7 @@ class TestKubernetesChart:
     def test_should_validate_against_crd_schema(self):
         project = test_data.get_project()
         builder = self._get_builder(project)
-        wrappers = builder.create_host_wrappers()
+        wrappers = builder.create_host_wrappers(builder.project.deployments[0])
         route = V1AlphaIngressRoute.from_hosts(
             metadata=V1ObjectMeta(),
             host=wrappers[0],
@@ -139,7 +139,7 @@ class TestKubernetesChart:
     def test_should_not_extend_whitelists_if_none_defined_for_target(self):
         project = test_data.get_project()
         builder = self._get_builder(project)
-        wrappers = builder.create_host_wrappers()
+        wrappers = builder.create_host_wrappers(project.deployments[0])
         assert test_data.RUN_PROPERTIES.target == Target.PULL_REQUEST
         assert "Test" not in wrappers[0].white_lists
 
@@ -168,8 +168,10 @@ class TestKubernetesChart:
     )
     def test_service_chart_roundtrip(self, template):
         builder = self._get_builder(get_project_traefik())
-        chart = to_service_chart(builder)
+        chart = to_service_chart(builder, builder.project.deployments[0])
         self._roundtrip(self.template_path / "service", template, chart)
+        for key in chart.keys():
+            print(key)
         assert chart.keys() == {
             "service-account",
             "sealed-secrets",
@@ -193,7 +195,7 @@ class TestKubernetesChart:
 
     def test_ingress_routes_placeholder_replacement(self):
         builder = self._get_builder(get_project_traefik())
-        ingress_routes = builder.to_ingress(builder.deployments[0])
+        ingress_routes = builder.to_ingress(builder.project.deployments[0])
         assert (
             ingress_routes.spec["routes"][0]["match"]
             == "placeholder-test-pr-1234-1234-test"
@@ -204,7 +206,10 @@ class TestKubernetesChart:
         )
 
     def test_middlewares_placeholder_replacement(self):
-        middlewares = self._get_builder(get_project_traefik()).to_middlewares()
+        traefik_project = get_project_traefik()
+        middlewares = self._get_builder(get_project_traefik()).to_middlewares(
+            traefik_project.deployments[0]
+        )
         assert "middleware-strip-prefix-dockertest" in middlewares
         assert middlewares["middleware-strip-prefix-dockertest"].spec["stripPrefix"][
             "prefixes"
@@ -215,7 +220,7 @@ class TestKubernetesChart:
     ):  # To test backward compatibility with old tags
         project = get_deployment_strategy_project()
         builder = self._get_builder(project)
-        chart = to_service_chart(builder)
+        chart = to_service_chart(builder, project.deployments[0])
         self._roundtrip(
             self.template_path / "deployment",
             "deployment-testDeploymentStrategyParameters",
@@ -225,22 +230,23 @@ class TestKubernetesChart:
     def test_deployments_strategy_roundtrip(self):
         project = get_deployments_strategy_project()
         builder = self._get_builder(project)
-        chart = to_service_chart(builder)
+        chart1 = to_service_chart(builder, project.deployments[0])
+        chart2 = to_service_chart(builder, project.deployments[1])
         self._roundtrip(
             self.template_path / "deployment",
             "deployment-testDeploymentsStrategyParameters1",
-            chart,
+            chart1,
         )
         self._roundtrip(
             self.template_path / "deployment",
             "deployment-testDeploymentsStrategyParameters2",
-            chart,
+            chart2,
         )
 
     def test_default_ingress(self):
         project = get_minimal_project()
         builder = self._get_builder(project)
-        chart = to_service_chart(builder)
+        chart = to_service_chart(builder, project.deployments[0])
         self._roundtrip(
             self.template_path / "ingress", "minimalService-ingress-0-https", chart
         )
@@ -257,7 +263,7 @@ class TestKubernetesChart:
         )
 
         builder = self._get_builder(project, run_properties_prod)
-        chart = to_service_chart(builder)
+        chart = to_service_chart(builder, project.deployments[0])
         self._roundtrip(
             self.template_path / "ingress-prod", "minimalService-ingress-0-https", chart
         )
@@ -267,9 +273,10 @@ class TestKubernetesChart:
         ["job-job", "service-account", "sealed-secrets", "prometheus-rule"],
     )
     def test_job_chart_roundtrip(self, template):
-        builder = self._get_builder(get_job_project())
-        chart = builder.to_common_chart() | to_job_chart(
-            builder, builder.deployments[0]
+        job_project = get_job_project()
+        builder = self._get_builder(job_project)
+        chart = builder.to_common_chart(job_project.deployments[0]) | to_job_chart(
+            builder, job_project.deployments[0]
         )
         self._roundtrip(self.template_path / "job", template, chart)
 
@@ -283,10 +290,11 @@ class TestKubernetesChart:
         ],
     )
     def test_cron_job_chart_roundtrip(self, template):
-        builder = self._get_builder(get_cron_job_project())
-        chart = builder.to_common_chart() | to_cron_job_chart(
-            builder, builder.deployments[0]
-        )
+        cron_job_project = get_cron_job_project()
+        builder = self._get_builder(cron_job_project)
+        chart = builder.to_common_chart(
+            cron_job_project.deployments[0]
+        ) | to_cron_job_chart(builder, cron_job_project.deployments[0])
         self._roundtrip(self.template_path / "cronjob", template, chart)
 
     def test_passed_deploy_image(self):
@@ -295,7 +303,7 @@ class TestKubernetesChart:
             stub_run_properties(deploy_image="test-image:latest"),
         )
         assert builder._get_image() == "test-image:latest"
-        chart = to_service_chart(builder)
+        chart = to_service_chart(builder, builder.project.deployments[0])
         assert (
             cast(V1DeploymentSpec, chart["deployment-minimalService"].spec)
             .template.spec.containers[0]
