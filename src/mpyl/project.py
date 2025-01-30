@@ -506,12 +506,6 @@ class Deployment:
 
 
 @dataclass(frozen=True)
-class ProjectName:
-    name: str
-    namespace: Optional[str]
-
-
-@dataclass(frozen=True)
 class Project:
     name: str
     description: str
@@ -540,12 +534,6 @@ class Project:
             self.kubernetes.namespace.get_value(target)
             if self.kubernetes
             else self.name
-        )
-
-    def to_name(self, target: Target) -> ProjectName:
-        return ProjectName(
-            name=self.name,
-            namespace=self.namespace(target),
         )
 
     @property

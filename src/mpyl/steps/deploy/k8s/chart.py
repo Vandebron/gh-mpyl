@@ -783,16 +783,14 @@ class ChartBuilder:
 
         processed_env_vars = substitute_namespaces(
             env_vars=raw_env_vars,
-            all_projects={
-                project.to_name(self.target)
-                for project in self.step_input.run_plan.all_known_projects
-            },
+            all_projects=self.step_input.run_plan.all_known_projects,
             projects_to_deploy={
-                project_execution.project.to_name(self.target)
+                project_execution.project
                 for project_execution in self.step_input.run_plan.get_executions_for_stage_name(
                     deploy.STAGE_NAME, use_full_plan=True
                 )
             },
+            target=self.target,
             pr_identifier=pr_identifier,
         )
         env_vars = [
