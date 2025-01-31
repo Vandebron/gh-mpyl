@@ -905,8 +905,7 @@ def to_service_chart(
     builder: ChartBuilder, deployment: Deployment
 ) -> dict[str, CustomResourceDefinition]:
     return (
-        builder.to_common_chart(deployment)
-        | {"service": builder.to_service(deployment)}
+        {"service": builder.to_service(deployment)}
         | {f"deployment-{deployment.name}": builder.to_deployment(deployment)}
         | _to_ingress_routes_charts(builder, deployment)
         | builder.to_middlewares(deployment)
