@@ -1,10 +1,39 @@
-from src.mpyl.steps.deploy.k8s import substitute_namespaces, ProjectName
+from src.mpyl.project import (
+    Dependencies,
+    KubernetesCommon,
+    Project,
+    Stages,
+    Target,
+    TargetProperty,
+)
+from src.mpyl.steps.deploy.k8s import substitute_namespaces
 
 
 class TestDeploySetLinkup:
-    project1 = ProjectName("energy-dashboard", "webapps")
-    project2 = ProjectName("nginx", "webapps")
-    project3 = ProjectName("main-website", "webapps")
+
+    @staticmethod
+    def _stub_project(name: str, namespace: str) -> Project:
+        return Project(
+            name=name,
+            description="",
+            path=f"path/to/{name}",
+            pipeline=None,
+            stages=Stages.from_config({}),
+            maintainer=[],
+            docker=None,
+            build=None,
+            deployments=[],  # pylint: disable=duplicate-code
+            dependencies=Dependencies({}),
+            kubernetes=KubernetesCommon(
+                project_id=TargetProperty.from_config({}),
+                namespace=TargetProperty.from_config({"all": namespace}),
+            ),
+            _dagster=None,
+        )
+
+    project1 = _stub_project("energy-dashboard", "webapps")
+    project2 = _stub_project("nginx", "webapps")
+    project3 = _stub_project("main-website", "webapps")
 
     projects_to_deploy = {project1, project2}
     all_projects = {project1, project2, project3}
@@ -25,7 +54,7 @@ class TestDeploySetLinkup:
         }
 
         replaced_envs = substitute_namespaces(
-            envs, self.all_projects, self.projects_to_deploy, 1234
+            envs, self.all_projects, self.projects_to_deploy, Target.PULL_REQUEST, 1234
         )
 
         assert replaced_envs == expected_envs
@@ -42,7 +71,7 @@ class TestDeploySetLinkup:
             "KEY_3": "abcd",
         }
         replaced_envs = substitute_namespaces(
-            envs, self.all_projects, self.projects_to_deploy, None
+            envs, self.all_projects, self.projects_to_deploy, Target.PRODUCTION, None
         )
 
         assert replaced_envs == expected_envs
