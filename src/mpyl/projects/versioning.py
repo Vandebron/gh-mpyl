@@ -85,7 +85,6 @@ class ProjectUpgraderThree(Upgrader):
         project_id = (
             deployment.get("kubernetes", {}).get("rancher", {}).get("projectId")
         )
-        dagster_config = deployment.get("dagster")
         new_kubernetes_config = previous_dict.get("kubernetes")
 
         # create new dict entry if needed
@@ -104,6 +103,7 @@ class ProjectUpgraderThree(Upgrader):
             previous_dict["kubernetes"]["projectId"] = project_id
 
         # move dagster config out of deployment since it's not related
+        dagster_config = deployment.get("dagster")
         if dagster_config:
             del deployment["dagster"]
             previous_dict["dagster"] = dagster_config

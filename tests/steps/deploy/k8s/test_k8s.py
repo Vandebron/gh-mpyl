@@ -1,9 +1,9 @@
 import dataclasses
 from pathlib import Path
-from typing import cast
+from typing import cast, Union
 
 import pytest
-from kubernetes.client import V1Probe, V1ObjectMeta, V1DeploymentSpec
+from kubernetes.client import V1Probe, V1ObjectMeta, V1DeploymentSpec, V1Job, V1CronJob
 from pyaml_env import parse_config
 
 from src.mpyl.constants import DEFAULT_CONFIG_FILE_NAME
@@ -33,6 +33,7 @@ from tests.test_resources.test_data import (
     get_project_traefik,
     get_deployment_strategy_project,
     get_deployments_strategy_project,
+    get_job_deployments_project,
 )
 
 
@@ -50,7 +51,7 @@ class TestKubernetesChart:
     def _roundtrip(
         file_name: Path,
         chart: str,
-        resources: dict[str, CustomResourceDefinition],
+        resources: dict[str, Union[CustomResourceDefinition, V1Job, V1CronJob]],
         overwrite: bool = False,
     ):
         name_chart = file_name / f"{chart}.yaml"
@@ -167,8 +168,11 @@ class TestKubernetesChart:
         ],
     )
     def test_service_chart_roundtrip(self, template):
-        builder = self._get_builder(get_project_traefik())
-        chart = to_service_chart(builder, builder.project.deployments[0])
+        traefik_project = get_project_traefik()
+        builder = self._get_builder(traefik_project)
+        chart = builder.to_common_chart(
+            traefik_project.deployments[0]
+        ) | to_service_chart(builder, builder.project.deployments[0])
         self._roundtrip(self.template_path / "service", template, chart)
         for key in chart.keys():
             print(key)
@@ -243,6 +247,20 @@ class TestKubernetesChart:
             chart2,
         )
 
+    def test_multiple_deployments(self):
+        project = get_job_deployments_project()
+        builder = self._get_builder(project)
+        job_chart = to_job_chart(builder, project.deployments[0])
+        cron_job_chart = to_cron_job_chart(builder, project.deployments[1])
+        self._roundtrip(
+            self.template_path / "deployments", "job-jobDeployment", job_chart
+        )
+        self._roundtrip(
+            self.template_path / "deployments",
+            "cronjob-cronJobDeployment",
+            cron_job_chart,
+        )
+
     def test_default_ingress(self):
         project = get_minimal_project()
         builder = self._get_builder(project)
@@ -282,12 +300,7 @@ class TestKubernetesChart:
 
     @pytest.mark.parametrize(
         "template",
-        [
-            "cronjob-cronjob",
-            "service-account",
-            "sealed-secrets",
-            "prometheus-rule",
-        ],
+        ["cronjob-cronjob", "service-account", "sealed-secrets", "prometheus-rule"],
     )
     def test_cron_job_chart_roundtrip(self, template):
         cron_job_project = get_cron_job_project()

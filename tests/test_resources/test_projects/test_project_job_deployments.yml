@@ -1,0 +1,40 @@
+name: deploymentsProject
+description: 'This is a test container. For testing the MPyL pipelines, not to be deployed anywhere.'
+stages:
+  build: Echo Build
+  test: Echo Test
+  deploy: Echo Deploy
+maintainer: [ 'MPyL' ]
+build:
+  args:
+    plain:
+      - key: SOME_ENV
+        test: "Test"
+        acceptance: "Acceptance"
+        production: "Production"
+dependencies:
+  build:
+    - 'test/docker/'
+kubernetes:
+  namespace:
+    all: "mpyl"
+  projectId:
+    all: test1234
+deployments:
+  - name: "jobDeployment"
+    kubernetes:
+      job:
+        activeDeadlineSeconds:
+          all: 864000
+        ttlSecondsAfterFinished:
+          all: 864000
+  - name: "cronJobDeployment"
+    kubernetes:
+      job:
+        activeDeadlineSeconds:
+          all: 86400
+        cron:
+          all:
+            schedule: 00 00 31 02 *
+            successfulJobsHistoryLimit: 3
+            failedJobsHistoryLimit: 3

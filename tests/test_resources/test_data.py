@@ -93,6 +93,12 @@ def get_deployments_strategy_project() -> Project:
     )
 
 
+def get_job_deployments_project() -> Project:
+    return safe_load_project(
+        f"{resource_path}/test_projects/test_project_job_deployments.yml"
+    )
+
+
 def get_minimal_project() -> Project:
     return safe_load_project(f"{resource_path}/test_projects/test_minimal_project.yml")
 

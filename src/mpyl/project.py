@@ -574,7 +574,6 @@ class Project:
     @staticmethod
     def from_config(values: dict, project_path: Path):
         docker_config = values.get("docker")
-        stages = Stages.from_config(values.get("stages", {}))
         deployment = values.get("deployment", {})  # Still needed for old tags
         if deployment:
             deployment["name"] = values["name"]
@@ -591,7 +590,7 @@ class Project:
             description=values["description"],
             path=str(project_path),
             pipeline=values.get("pipeline"),
-            stages=stages,
+            stages=Stages.from_config(values.get("stages", {})),
             maintainer=values.get("maintainer", []),
             docker=Docker.from_config(docker_config) if docker_config else None,
             build=Build.from_config(values.get("build", {})),
