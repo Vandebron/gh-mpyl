@@ -13,15 +13,6 @@ from ...output import Output
 from ....utilities.subprocess import custom_check_output
 
 
-def add_repo(logger: Logger, repo_name: str, repo_url: str) -> Output:
-    cmd_add = f"helm repo add {repo_name} {repo_url}"
-    return custom_check_output(logger, cmd_add)
-
-
-def update_repo(logger: Logger) -> Output:
-    return custom_check_output(logger, "helm repo update")
-
-
 def template_chart(
     logger: Logger,
     release_name: str,
@@ -78,34 +69,3 @@ def write_helm_chart(
     logger.info(f"Writing HELM chart to {chart_path}")
     write_chart(chart, chart_path, values={})
     return chart_path
-
-
-def __execute_install_cmd(
-    logger: Logger,
-    chart_name: str,
-    name_space: str,
-    kube_context: str,
-    additional_args: str = "",
-) -> Output:
-    cmd = f"helm upgrade -i {chart_name} -n {name_space} --kube-context {kube_context} {additional_args}"
-
-    return custom_check_output(logger, cmd)
-
-
-def install_chart_with_values(
-    logger: Logger,
-    values_path: Path,
-    release_name: str,
-    chart_version: str,
-    chart_name: str,
-    namespace: str,
-    kube_context: str,
-) -> Output:
-    values_path_arg = f"-f {values_path} --version {chart_version} {chart_name}"
-    return __execute_install_cmd(
-        logger,
-        release_name,
-        namespace,
-        kube_context,
-        additional_args=values_path_arg,
-    )
