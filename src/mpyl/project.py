@@ -527,7 +527,7 @@ class Project:
     def namespace(self, target: Target) -> str:
         return (
             self.kubernetes.namespace.get_value(target)
-            if self.kubernetes
+            if self.kubernetes and self.kubernetes.namespace
             else self.name
         )
 
