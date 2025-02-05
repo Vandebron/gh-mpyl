@@ -718,7 +718,7 @@ def merge_dicts(
         if root_level and key == "stages":
             merged[key] = value
         # combine the deployment lists
-        if key == "deployments":
+        if root_level and key == "deployments" and key in merged:
             merged[key] = merged[key] + value
         elif (
             key in merged and isinstance(merged[key], dict) and isinstance(value, dict)
