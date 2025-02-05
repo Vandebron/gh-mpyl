@@ -343,13 +343,11 @@ class Kubernetes:
 
 @dataclass(frozen=True)
 class KubernetesCommon:
-    project_id: TargetProperty[str]
     namespace: TargetProperty[str]
 
     @staticmethod
     def from_config(values: dict):
         return KubernetesCommon(
-            project_id=TargetProperty.from_config(values.get("projectId", {})),
             namespace=TargetProperty.from_config(values.get("namespace", {})),
         )
 
