@@ -651,7 +651,7 @@ def load_traefik_config(traefik_path: Path, loader: YAML) -> Optional[dict]:
         return loader.load(file)
 
 
-def load_project(
+def load_project(  # pylint: disable=too-many-locals
     project_path: Path,
     validate_project_yaml: bool,
     log: bool = True,
@@ -673,10 +673,19 @@ def load_project(
                 project_path, loader
             )
             yaml_values = merge_dicts(yaml_values, parent_yaml_values, True)
-            for deployment in yaml_values.get("deployments", []):
+            deployment_old = yaml_values.get(
+                "deployment"
+            )  # deprecated, can be removed in a month
+            deployments = (
+                [deployment_old]
+                if deployment_old
+                else yaml_values.get("deployments", [])
+            )
+            for deployment in deployments:
+                deployment_name = deployment.get("name") or yaml_values.get("name", "")
                 traefik_config = load_traefik_config(
                     project_path.parent
-                    / Project.traefik_yaml_file_name(deployment["name"]),
+                    / Project.traefik_yaml_file_name(deployment_name),
                     loader,
                 )
                 if traefik_config:
