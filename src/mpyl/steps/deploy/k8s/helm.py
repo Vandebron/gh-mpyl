@@ -5,6 +5,7 @@ step.
 import shutil
 from logging import Logger
 from pathlib import Path
+from typing import Optional
 
 import yaml
 
@@ -25,14 +26,16 @@ def update_repo(logger: Logger) -> Output:
 def template_chart(
     logger: Logger,
     release_name: str,
+    namespace: Optional[str],
     chart_name: str,
     chart_version: str,
     values_path: Path,
     output_path: Path,
 ) -> Output:
     cmd = (
-        f"helm template {release_name} "
-        f"{chart_name} "
+        f"helm template {release_name} " f"{chart_name} " f"--namespace {namespace}"
+        if namespace
+        else ""
         f"--version {chart_version} "
         f"-f {values_path} "
         f"--output-dir {output_path}"
