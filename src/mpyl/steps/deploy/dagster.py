@@ -69,6 +69,7 @@ class DagsterBase:
     def generate_kubernetes_manifests(
         logger: Logger,
         release_name: str,
+        namespace: Optional[str],
         chart_version: str,
         values_path: Path,
     ) -> Output:
@@ -76,6 +77,7 @@ class DagsterBase:
         template_chart_command = template_chart(
             logger=logger,
             release_name=release_name,
+            namespace=namespace,
             chart_name="dagster/dagster-user-deployments",
             chart_version=chart_version,
             values_path=values_path / Path("values.yaml"),
@@ -239,9 +241,14 @@ class HelmTemplateDagster(Step, DagsterBase):
 
         kubernetes_manifests_generation_result = self.generate_kubernetes_manifests(
             self._logger,
-            release_name,
-            dagster_config.user_code_helm_chart_version,
-            values_path,
+            release_name=release_name,
+            namespace=(
+                deployment.namespace
+                if (deployment := step_input.project_execution.project.deployment)
+                else None
+            ),
+            chart_version=dagster_config.user_code_helm_chart_version,
+            values_path=values_path,
         )
 
         self._logger.info("Kubernetes manifests written")
@@ -299,9 +306,14 @@ class TemplateDagster(Step, DagsterBase):
 
         kubernetes_manifests_generation_result = self.generate_kubernetes_manifests(
             self._logger,
-            release_name,
-            dagster_config.user_code_helm_chart_version,
-            values_path,
+            release_name=release_name,
+            namespace=(
+                deployment.namespace
+                if (deployment := step_input.project_execution.project.deployment)
+                else None
+            ),
+            chart_version=dagster_config.user_code_helm_chart_version,
+            values_path=values_path,
         )
 
         self._logger.info("Kubernetes manifests written")
