@@ -18,6 +18,8 @@ dependencies:
 kubernetes:
   namespace:
     all: "mpyl"
+  projectId:
+    all: test1234
 deployment:
   properties:
     env:

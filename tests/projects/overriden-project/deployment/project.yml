@@ -8,6 +8,8 @@ stages:
 kubernetes:
   namespace:
     all: ocpp
+  projectId:
+    all: test1234
 deployments:
   - name: ocpp
     properties:

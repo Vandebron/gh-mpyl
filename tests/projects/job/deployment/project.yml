@@ -21,3 +21,5 @@ dependencies:
 kubernetes:
   namespace:
     all: job
+  projectId:
+    all: "p-11111"

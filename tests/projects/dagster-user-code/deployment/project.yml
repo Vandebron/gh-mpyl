@@ -26,6 +26,8 @@ deployments:
 kubernetes:
   namespace:
     all: 'example-dagster-user-code'
+  projectId:
+    all: "p-11111"
 dagster:
   repo: "/tests/projects/dagster-user-code/main.py"
   secrets:

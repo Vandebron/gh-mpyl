@@ -82,10 +82,13 @@ class ProjectUpgraderThree(Upgrader):
             return previous_dict
 
         namespace = deployment.get("namespace")
+        project_id = (
+            deployment.get("kubernetes", {}).get("rancher", {}).get("projectId")
+        )
         new_kubernetes_config = previous_dict.get("kubernetes")
 
         # create new dict entry if needed
-        if namespace and not new_kubernetes_config:
+        if (namespace or project_id) and not new_kubernetes_config:
             previous_dict["kubernetes"] = {}
 
         # move namespace from deployment to common kubernetes config since it's shared between deployments
@@ -94,10 +97,10 @@ class ProjectUpgraderThree(Upgrader):
             previous_dict["kubernetes"]["namespace"] = {}
             previous_dict["kubernetes"]["namespace"]["all"] = namespace
 
-        # remove redundant rancher config
-        rancher_config = deployment.get("kubernetes", {}).get("rancher", {})
-        if rancher_config:
+        # same as namespace above
+        if project_id:
             del deployment["kubernetes"]["rancher"]
+            previous_dict["kubernetes"]["projectId"] = project_id
 
         # move dagster config out of deployment since it's not related
         dagster_config = deployment.get("dagster")

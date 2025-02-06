@@ -18,7 +18,7 @@ from tests.projects.find import load_projects
 from tests.test_resources.test_data import TestStage
 
 HASHED_CHANGES_OF_JOB = (
-    "2e3c09b183480c0dec0f3f47feed083b8e073ce2cfe230dc469f143c727a02a2"
+    "b69c96161a60d00b351593e66cfcfdd4b7e82685bab22a4f5d8bd161f89d2c96"
 )
 #  ^ this has to be updated if the test project.yml changes
 

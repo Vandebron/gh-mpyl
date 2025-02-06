@@ -83,11 +83,16 @@ properties:
     additionalProperties: false
     required:
       - namespace
+      - projectId
     properties:
       namespace:
         description: >-
           Corresponds to the namespace in Kubernetes to which the artifact will
           be deployed
+        $ref: '#/definitions/dtapValue'
+      projectId:
+        description: >-
+          The rancher project id that this project should be deployed to, required for rbac. Represents a domain in rancher.
         $ref: '#/definitions/dtapValue'
   dagster:
     description: Configuration for dagster projects

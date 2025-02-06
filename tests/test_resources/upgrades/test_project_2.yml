@@ -24,6 +24,8 @@ dependencies:
 kubernetes:
   namespace:
     all: 'dockertest'
+  projectId:
+    all: test1234
 deployments:
   - name: 'dockertest'
     cluster:
