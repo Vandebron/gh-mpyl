@@ -36,7 +36,7 @@ def template_chart(
         cmd = (
             f"helm template {release_name} "
             f"{chart_name} "
-            f"--namespace {namespace}"
+            f"--namespace {namespace} "
             f"--version {chart_version} "
             f"-f {values_path} "
             f"--output-dir {output_path}"
