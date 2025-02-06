@@ -48,21 +48,9 @@ extraManifests:
   metadata:
     annotations:
       sealedsecrets.bitnami.com/cluster-wide: 'true'
-    creationTimestamp:
-    deletionGracePeriodSeconds:
-    deletionTimestamp:
-    finalizers:
-    generateName:
-    generation:
     labels:
       chart: service-0.1.0
-    managedFields:
     name: example-dagster-user-code-pr-1234
-    namespace:
-    ownerReferences:
-    resourceVersion:
-    selfLink:
-    uid:
   spec:
     encryptedData:
       SOME_SEALED_SECRET: SUPER_SECRET
