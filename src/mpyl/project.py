@@ -572,17 +572,29 @@ class Project:
     @staticmethod
     def from_config(values: dict, project_path: Path):
         docker_config = values.get("docker")
-        deployment = values.get("deployment", {})  # Still needed for old tags
-        if deployment:
-            deployment["name"] = values["name"]
-            deployment_list = [deployment]
+        kubernetes_values = values.get("kubernetes", {})
+        dagster = values.get("dagster")
+        deployment_old = values.get("deployment", {})
+        if (
+            deployment_old
+        ):  # Deprecated, only used for old tags. Remove in a month or so after this commit
+            deployment_old["name"] = values["name"]
+            deployment_list = [deployment_old]
+
+            old_namespace = deployment_old.get("namespace")
+            if old_namespace:
+                kubernetes_values["namespace"]["all"] = old_namespace
+
+            dagster_old = deployment_old.get("dagster")
+            if dagster_old:
+                dagster = dagster_old
         else:
             deployment_list = values.get("deployments", [])
         deployments = [
             Deployment.from_config(deployment) for deployment in deployment_list
         ]
         dependencies = values.get("dependencies")
-        dagster = values.get("dagster")
+
         return Project(
             name=values["name"],
             description=values["description"],
@@ -597,7 +609,7 @@ class Project:
                 Dependencies.from_config(dependencies) if dependencies else None
             ),
             _dagster=Dagster.from_config(dagster) if dagster else None,
-            kubernetes=KubernetesCommon.from_config(values.get("kubernetes", {})),
+            kubernetes=KubernetesCommon.from_config(kubernetes_values),
         )
 
 
