@@ -585,6 +585,7 @@ class Project:
 
             old_namespace = deployment_old.get("namespace")
             if old_namespace:
+                kubernetes_values["namespace"] = {}
                 kubernetes_values["namespace"]["all"] = old_namespace
 
             dagster_old = deployment_old.get("dagster")
