@@ -48,7 +48,7 @@ def to_user_code_values(
     sealed_secret_manifest.metadata.name = release_name
 
     extra_manifests = (
-        {"extraManifests": [to_dict(sealed_secret_manifest)]}
+        {"extraManifests": [to_dict(sealed_secret_manifest, skip_none=True)]}
         if len(sealed_secret_refs) > 0
         else {}
     )
