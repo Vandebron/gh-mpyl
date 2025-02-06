@@ -93,6 +93,7 @@ properties:
       projectId:
         description: >-
           The rancher project id that this project should be deployed to, required for rbac. Represents a domain in rancher.
+          Used in .github/workflows/reusable-deploy-argocd.yaml. Can be removed after migration to scaleway is done.
         $ref: '#/definitions/dtapValue'
   dagster:
     description: Configuration for dagster projects
