@@ -734,9 +734,10 @@ def merge_dicts(
             "deployments",
             "name",
             "description",
+            "kubernetes",
         ):
             continue
-        # overriden project does not inherit stages
+        # overridden project does not inherit stages
         if root_level and key == "stages":
             merged[key] = value
         # combine the deployment lists

@@ -83,7 +83,6 @@ properties:
     additionalProperties: false
     required:
       - namespace
-      - projectId
     properties:
       namespace:
         description: >-
