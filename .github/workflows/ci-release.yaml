@@ -99,7 +99,7 @@ jobs:
           done
 
       - name: Generate token to commit to main
-        uses: actions/create-github-app-token@v1.11.2
+        uses: actions/create-github-app-token@v1.11.3
         id: commit-token
         with:
           repositories: gh-mpyl
