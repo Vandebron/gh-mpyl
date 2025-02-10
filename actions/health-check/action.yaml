@@ -7,7 +7,7 @@ inputs:
     required: false
 runs:
   using: docker
-  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v1.0.5
+  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v1.0.6
   args:
     - health
   env:
