@@ -543,7 +543,7 @@ class ChartBuilder:
             return None
 
         return V1AlphaIngressRoute.from_spec(
-            metadata=self._to_object_meta(name="ingress-routes"),
+            metadata=self._to_object_meta(name=f"ingress-routes-{self.release_name}"),
             spec=ingress_route_spec,
         )
 
