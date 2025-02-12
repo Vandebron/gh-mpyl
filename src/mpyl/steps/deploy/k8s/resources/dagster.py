@@ -16,11 +16,6 @@ from .....utilities.helm import shorten_name
 @dataclass(frozen=True)
 class Constants:
     HELM_CHART_REPO = "https://dagster-io.github.io/helm"
-    CHART_NAME = "dagster/dagster-user-deployments"
-
-
-def to_grpc_server_entry(host: str, location_name: str, port: int) -> dict:
-    return {"grpc_server": {"host": host, "location_name": location_name, "port": port}}
 
 
 def to_user_code_values(
