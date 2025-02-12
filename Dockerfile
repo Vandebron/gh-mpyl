@@ -4,7 +4,7 @@ FROM public.ecr.aws/vdb-public/python:${PYTHON_VERSION}-slim-bookworm
 
 USER root
 
-# install Helm (necessary only for legacy Dagster deployments, remove after they're on Argo CD)
+# install Helm (Dagster deployments generate the k8s manifests from the official Helm chart)
 RUN set -eux ; \
     apt-get update -y ; \
     apt-get install -y curl ; \
