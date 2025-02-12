@@ -741,8 +741,15 @@ def merge_dicts(
         if root_level and key == "stages":
             merged[key] = value
         # combine the deployment lists
-        if root_level and key == "deployments" and key in merged:
-            merged[key] = merged[key] + value
+        if (
+            root_level
+            and key == "deployments"
+            and key in merged
+            and isinstance(merged[key], list)
+            and isinstance(value, list)
+        ):
+            for index, deployment in enumerate(value):
+                merged[key][index] = merge_dicts(merged[key][index], deployment)
         elif (
             key in merged and isinstance(merged[key], dict) and isinstance(value, dict)
         ):
