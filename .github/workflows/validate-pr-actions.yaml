@@ -57,16 +57,16 @@ jobs:
           registry-type: public
 
       - name: Create repository in ECR
-        uses: int128/create-ecr-repository-action@v1.351.0
+        uses: int128/create-ecr-repository-action@v1.354.0
         with:
           repository: gh-mpyl
           public: true
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.3.0
+        uses: docker/setup-qemu-action@v3.4.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3.8.0
+        uses: docker/setup-buildx-action@v3.9.0
 
       - name: Compute Docker image
         run: |-
