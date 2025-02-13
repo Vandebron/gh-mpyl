@@ -150,10 +150,8 @@ class HelmTemplateDagster(Step, DagsterBase):
         kubernetes_manifests_generation_result = self.generate_kubernetes_manifests(
             self._logger,
             release_name=release_name,
-            namespace=(
-                deployment.namespace
-                if (deployment := step_input.project_execution.project.deployment)
-                else None
+            namespace=step_input.project_execution.project.namespace(
+                step_input.run_properties.target
             ),
             chart_version=dagster_config.user_code_helm_chart_version,
             values_path=values_path,

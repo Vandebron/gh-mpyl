@@ -77,6 +77,43 @@ properties:
           - Skip Postdeploy
         type: string
     minProperties: 1
+  kubernetes:
+    description: Shared kubernetes details for all deployments
+    type: object
+    additionalProperties: false
+    required:
+      - namespace
+    properties:
+      namespace:
+        description: >-
+          Corresponds to the namespace in Kubernetes to which the artifact will
+          be deployed
+        $ref: '#/definitions/dtapValue'
+      projectId:
+        description: >-
+          The rancher project id that this project should be deployed to, required for rbac. Represents a domain in rancher.
+          Used in .github/workflows/reusable-deploy-argocd.yaml. Can be removed after migration to scaleway is done.
+        $ref: '#/definitions/dtapValue'
+  dagster:
+    description: Configuration for dagster projects
+    additionalProperties: false
+    type: object
+    required:
+      - repo
+    properties:
+      secrets:
+        description: >-
+          List of k8s secrets that will be injected into the Dagster
+          configuration file as envSecrets.
+        type: array
+        additionalItems: false
+        items:
+          $ref: '#/definitions/envSecret'
+      repo:
+        description: Absolute path to Dagster repository py-file
+        type: string
+        examples:
+          - /python/my_project/dagster/repo.py
   docker:
     description: Defines docker repository and it's credentials
     type: object
@@ -126,6 +163,37 @@ properties:
                   type: string
     minProperties: 1
   deployment:
+    description: "DEPRECATED: will be removed soon. Please use 'deployments' from now on."
+    $ref: '#/definitions/deployment'
+  deployments:
+    type: array
+    description: >-
+      Defines multiple deployments for the same service.
+    required:
+      - name
+    properties:
+      name:
+        type: string
+        description: The name of this deployment
+    items:
+      $ref: '#/definitions/deployment'
+  postdeploy:
+    additionalProperties: false
+    type: object
+    required:
+      - specs
+      - recordKey
+    properties:
+      specs:
+        additionalProperties: false
+        type: array
+      recordKey:
+        additionalProperties: false
+        type: string
+  dependencies:
+    $ref: mpyl_stages.schema.yml#/definitions/dependencies
+definitions:
+  deployment:
     type: object
     properties:
       properties:
@@ -158,34 +226,10 @@ properties:
                   type: string
                 valueFrom:
                   $ref: k8s_api_core.schema.yml#/definitions/io.k8s.api.core.v1.EnvVarSource
-      namespace:
-        description: >-
-          Corresponds to the namespace in Kubernetes to which the artifact will
-          be deployed
-        type: string
       kubernetes:
         $ref: '#/definitions/kubernetes'
       traefik:
         $ref: '#/definitions/traefik'
-      dagster:
-        additionalProperties: false
-        type: object
-        required:
-          - repo
-        properties:
-          secrets:
-            description: >-
-              List of k8s secrets that will be injected into the Dagster
-              configuration file as envSecrets.
-            type: array
-            additionalItems: false
-            items:
-              $ref: '#/definitions/envSecret'
-          repo:
-            description: Absolute path to Dagster repository py-file
-            type: string
-            examples:
-              - /python/my_project/dagster/repo.py
       cluster:
         type: object
         additionalProperties: false
@@ -201,24 +245,6 @@ properties:
           all:
             type: string
     minProperties: 1
-    required:
-      - namespace
-  postdeploy:
-    additionalProperties: false
-    type: object
-    required:
-      - specs
-      - recordKey
-    properties:
-      specs:
-        additionalProperties: false
-        type: array
-      recordKey:
-        additionalProperties: false
-        type: string
-  dependencies:
-    $ref: mpyl_stages.schema.yml#/definitions/dependencies
-definitions:
   traefik:
     additionalProperties: true
     type: object
@@ -501,37 +527,6 @@ definitions:
         type: string
       all:
         type: string
-  vault:
-    type: object
-    additionalItems: false
-    required:
-      - key
-      - path
-    properties:
-      key:
-        type: string
-      path:
-        type: string
-  secret:
-    type: object
-    additionalItems: false
-    required:
-      - secretType
-      - name
-      - key
-      - value
-    properties:
-      secretType:
-        type: string
-        enum:
-          - Generic
-          - DockerSecret
-      name:
-        type: string
-      key:
-        type: string
-      value:
-        type: string
   requestResources:
     type: object
     additionalProperties: false
@@ -694,19 +689,8 @@ definitions:
         type: string
   kubernetes:
     type: object
-    required:
-      - rancher
-    additionalProperties: false
+    additionalProperties: true  # for old tags with "rancher" still defined
     properties:
-      rancher:
-        type: object
-        required:
-          - projectId
-        properties:
-          projectId:
-            description: >-
-              The rancher project id that this project should be deployed to, required for rbac. Represents a domain in rancher.
-            $ref: '#/definitions/dtapValue'
       secrets:
         type: array
         additionalItems: false

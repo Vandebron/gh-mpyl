@@ -58,22 +58,6 @@ def _assert_unique_project_names(console: Console, all_projects: list[Project]):
     return duplicates
 
 
-def _assert_project_ids(console: Console, all_projects: list[Project]):
-    console.print("")
-    console.print("Checking for missing project ids: ")
-    missing_ids = [
-        project.name
-        for project in all_projects
-        if project.stages.for_stage(STAGE_NAME) is not None
-        and "override" not in project.path
-        and project.deployment
-        and project.deployment.kubernetes
-        and project.kubernetes.rancher
-        and not project.kubernetes.rancher.project_id
-    ]
-    return missing_ids
-
-
 @dataclass
 class WrongLinkupPerProject:
     name: str
@@ -101,21 +85,26 @@ def __get_wrong_substitutions_per_project(
 ) -> list[WrongLinkupPerProject]:
     project_linkup: list[WrongLinkupPerProject] = []
     for project in projects:
-        if project.deployment and project.deployment.properties:
-            env = ChartBuilder.extract_raw_env(
-                target=target, env=project.deployment.properties.env
-            )
-            substituted: dict[str, str] = substitute_namespaces(
-                env_vars=env,
-                all_projects=set(map(lambda p: p.to_name, projects)),
-                projects_to_deploy=set(map(lambda p: p.to_name, projects)),
-                pr_identifier=pr_identifier,
-            )
-            wrong_subs = list(
-                filter(lambda x: "{namespace}" in x[1], substituted.items())
-            )
-            if len(wrong_subs) > 0:
-                project_linkup.append(WrongLinkupPerProject(project.name, wrong_subs))
+        if project.deployments:
+            for deployment in project.deployments:
+                if deployment.properties:
+                    env = ChartBuilder.extract_raw_env(
+                        target=target, env=deployment.properties.env
+                    )
+                    substituted: dict[str, str] = substitute_namespaces(
+                        env_vars=env,
+                        all_projects=set(projects),
+                        projects_to_deploy=set(projects),
+                        target=target,
+                        pr_identifier=pr_identifier,
+                    )
+                    wrong_subs = list(
+                        filter(lambda x: "{namespace}" in x[1], substituted.items())
+                    )
+                    if len(wrong_subs) > 0:
+                        project_linkup.append(
+                            WrongLinkupPerProject(project.name, wrong_subs)
+                        )
     return project_linkup
 
 
@@ -151,23 +140,24 @@ def _lint_whitelisting_rules(
     )
     wrong_whitelists: list[tuple[Project, set[str]]] = []
     for project in projects:
-        if project.deployment:
-            if traefik := project.deployment.traefik:
-                whitelists: set[str] = set(
-                    itertools.chain.from_iterable(
-                        [
-                            whitelist_property.get_value(target)
-                            for whitelist_property in [
-                                host.whitelists
-                                for host in traefik.hosts
-                                if host.whitelists is not None
+        if project.deployments:
+            for deployment in project.deployments:
+                if traefik := deployment.traefik:
+                    whitelists: set[str] = set(
+                        itertools.chain.from_iterable(
+                            [
+                                whitelist_property.get_value(target)
+                                for whitelist_property in [
+                                    host.whitelists
+                                    for host in traefik.hosts
+                                    if host.whitelists is not None
+                                ]
+                                if whitelist_property.get_value(target) is not None
                             ]
-                            if whitelist_property.get_value(target) is not None
-                        ]
+                        )
                     )
-                )
-                if diff := whitelists.difference(defined_whitelists):
-                    wrong_whitelists.append((project, diff))
+                    if diff := whitelists.difference(defined_whitelists):
+                        wrong_whitelists.append((project, diff))
 
     return wrong_whitelists
 
@@ -191,3 +181,16 @@ def _assert_no_self_dependencies(console: Console, all_projects: list[Project]):
                 projects_with_self_dependencies.append(project)
 
     return projects_with_self_dependencies
+
+
+def _find_projects_without_deployments(console: Console, all_projects: list[Project]):
+    console.print("")
+    console.print("Checking for deployments:")
+    projects_without_deployments = []
+
+    for project in all_projects:
+        if project.stages.for_stage(STAGE_NAME):
+            if not project.deployments:
+                projects_without_deployments.append(project)
+
+    return projects_without_deployments

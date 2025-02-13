@@ -25,8 +25,10 @@ def stub_execution(name: str, cached: bool = False) -> ProjectExecution:
         maintainer=[],
         docker=None,
         build=None,
-        deployment=None,
+        deployments=[],
         dependencies=None,
+        kubernetes=None,
+        _dagster=None,
     )
     if cached:
         return ProjectExecution.skip(project)

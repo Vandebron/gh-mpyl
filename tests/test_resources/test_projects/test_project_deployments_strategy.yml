@@ -1,4 +1,4 @@
-name: 'minimalService'
+name: 'testDeploymentsStrategyParameters'
 description: 'This is a test container. For testing the MPyL pipelines, not to be deployed anywhere.'
 stages:
   build: Echo Build
@@ -21,7 +21,7 @@ kubernetes:
   projectId:
     all: test1234
 deployments:
-  - name: 'minimalService'
+  - name: "testDeploymentsStrategyParameters1"
     properties:
       env:
         - key: SOME_ENV
@@ -30,23 +30,24 @@ deployments:
           acceptance: "Acceptance"
           production: "Production"
     kubernetes:
-      livenessProbe:
-        path:
-          all: /health
-        successThreshold: 0
-        failureThreshold: 99
-        grpc:
-          port: 123
-          service: 'grpcService'
+      deploymentStrategy:
+        rollingUpdate:
+          maxSurge: "100%"
+          maxUnavailable: "0%"
       portMappings:
         8080: 8080
-      metrics:
-        enabled: false
-      resources:
-        instances:
-          all: 1
-        limit:
-          cpus:
-            all: 0.5
-          mem:
-            all: 1024
+  - name: "testDeploymentsStrategyParameters2"
+    properties:
+      env:
+        - key: SOME_ENV
+          pr: "PullRequest"
+          test: "Test"
+          acceptance: "Acceptance"
+          production: "Production"
+    kubernetes:
+      deploymentStrategy:
+        rollingUpdate:
+          maxSurge: "100%"
+          maxUnavailable: "0%"
+      portMappings:
+        8080: 8080

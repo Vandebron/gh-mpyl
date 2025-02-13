@@ -1,0 +1,66 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  labels:
+    name: cronjob
+    app.kubernetes.io/version: pr-1234
+    app.kubernetes.io/name: cronjob
+    app.kubernetes.io/instance: cronjob
+    maintainers: MPyL
+    maintainer: MPyL
+    version: pr-1234
+    revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
+  name: cronjob
+spec:
+  concurrencyPolicy: Allow
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 10
+      template:
+        metadata:
+          annotations:
+            image: registry/image:123
+          labels:
+            name: cronjob
+            app.kubernetes.io/version: pr-1234
+            app.kubernetes.io/name: cronjob
+            app.kubernetes.io/instance: cronjob
+            maintainers: MPyL
+            maintainer: MPyL
+            version: pr-1234
+            revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
+          name: cronjob
+        spec:
+          containers:
+          - args:
+            - --env
+            - test
+            command:
+            - python
+            - run.py
+            env:
+            - name: SOME_SECRET_ENV
+              valueFrom:
+                secretKeyRef:
+                  key: SOME_SECRET_ENV
+                  name: cronjob
+                  optional: false
+            image: registry/image:123
+            imagePullPolicy: Always
+            name: cronjob
+            resources:
+              limits:
+                cpu: 500m
+                memory: 1024Mi
+              requests:
+                cpu: 100m
+                memory: 512Mi
+          restartPolicy: Never
+          serviceAccount: cronjob
+          serviceAccountName: cronjob
+      ttlSecondsAfterFinished: 3600
+  schedule: 0 22 * * *
+  successfulJobsHistoryLimit: 3
+  suspend: true
+  timeZone: Europe/Amsterdam

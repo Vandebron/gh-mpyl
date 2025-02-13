@@ -3,5 +3,8 @@ description: "A proxy server that handles requests"
 stages:
   build: "Docker Build"
   deploy: Kubernetes Deploy
-deployment:
-  namespace: "webapps"
+kubernetes:
+  projectId:
+    all: test1234
+  namespace:
+    all: "webapps"

@@ -1,0 +1,48 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-options: Force=true,Replace=true
+  labels:
+    name: deploymentsproject
+    app.kubernetes.io/version: pr-1234
+    app.kubernetes.io/name: deploymentsproject
+    app.kubernetes.io/instance: deploymentsproject
+    maintainers: MPyL
+    maintainer: MPyL
+    version: pr-1234
+    revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
+  name: deploymentsproject
+spec:
+  activeDeadlineSeconds: 864000
+  template:
+    metadata:
+      annotations:
+        image: registry/image:123
+      labels:
+        name: deploymentsproject
+        app.kubernetes.io/version: pr-1234
+        app.kubernetes.io/name: deploymentsproject
+        app.kubernetes.io/instance: deploymentsproject
+        maintainers: MPyL
+        maintainer: MPyL
+        version: pr-1234
+        revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
+      name: deploymentsproject
+    spec:
+      containers:
+      - env: []
+        image: registry/image:123
+        imagePullPolicy: Always
+        name: deploymentsproject
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1024Mi
+          requests:
+            cpu: 100m
+            memory: 512Mi
+      restartPolicy: Never
+      serviceAccount: deploymentsproject
+      serviceAccountName: deploymentsproject
+  ttlSecondsAfterFinished: 864000

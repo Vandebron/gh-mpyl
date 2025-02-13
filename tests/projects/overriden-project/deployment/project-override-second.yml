@@ -1,11 +1,14 @@
 name: ocpp-second
 maintainer: ['MPyL']
-projectYmlVersion: 1
+projectYmlVersion: 3
 stages:
   deploy: Echo Deploy
-deployment:
-  namespace: ocpp
-  properties:
-    env:
-      - key: INSTANCE
-        all: 'two'
+deployments:
+  - name: ocpp-second
+    properties:
+      env:
+        - key: INSTANCE
+          all: 'two'
+kubernetes:
+  namespace:
+    all: ocpp

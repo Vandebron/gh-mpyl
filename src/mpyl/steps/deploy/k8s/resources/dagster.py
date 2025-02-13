@@ -7,7 +7,7 @@ from typing import Optional
 
 from . import to_dict
 from ..chart import ChartBuilder
-from .....project import get_env_variables
+from .....project import Project, Target, KeyValueProperty
 from .....steps.models import RunProperties
 from .....utilities.docker import DockerConfig, registry_for_project
 from .....utilities.helm import shorten_name
@@ -16,11 +16,6 @@ from .....utilities.helm import shorten_name
 @dataclass(frozen=True)
 class Constants:
     HELM_CHART_REPO = "https://dagster-io.github.io/helm"
-    CHART_NAME = "dagster/dagster-user-deployments"
-
-
-def to_grpc_server_entry(host: str, location_name: str, port: int) -> dict:
-    return {"grpc_server": {"host": host, "location_name": location_name, "port": port}}
 
 
 def to_user_code_values(
@@ -35,16 +30,22 @@ def to_user_code_values(
     docker_registry = registry_for_project(docker_config, project)
 
     global_override = {}
-    create_local_service_account = service_account_override is None
-    if not create_local_service_account:
+    if not service_account_override is None:
         global_override = {"global": {"serviceAccountName": service_account_override}}
 
+    combined_sealed_secrets: list[KeyValueProperty] = []
+    for deployment in builder.project.deployments:
+        combined_sealed_secrets = combined_sealed_secrets + (
+            deployment.properties.sealed_secrets if deployment.properties else []
+        )
     sealed_secret_refs = []
-    for sealed_secret_env in builder.get_sealed_secret_as_env_vars():
+    for sealed_secret_env in builder.get_sealed_secret_as_env_vars(
+        combined_sealed_secrets
+    ):
         sealed_secret_env.value_from.secret_key_ref.name = release_name
         sealed_secret_refs.append(to_dict(sealed_secret_env, skip_none=True))
 
-    sealed_secret_manifest = builder.to_sealed_secrets()
+    sealed_secret_manifest = builder.to_sealed_secrets(combined_sealed_secrets)
     sealed_secret_manifest.metadata.name = release_name
 
     extra_manifests = (
@@ -56,7 +57,7 @@ def to_user_code_values(
     return (
         global_override
         | {
-            "serviceAccount": {"create": create_local_service_account},
+            "serviceAccount": {"create": service_account_override is None},
             # ucd, short for user-code-deployment
             "fullnameOverride": f"ucd-{shorten_name(project.name)}{name_suffix}",
             "imagePullSecrets": [
@@ -101,3 +102,14 @@ def to_user_code_values(
         }
         | extra_manifests
     )
+
+
+def get_env_variables(project: Project, target: Target) -> dict[str, str]:
+    env_variables: dict[str, str] = {
+        env_variable.key: env_variable.get_value(target)
+        for deployment in project.deployments
+        if deployment.properties
+        for env_variable in deployment.properties.env
+    }
+
+    return env_variables

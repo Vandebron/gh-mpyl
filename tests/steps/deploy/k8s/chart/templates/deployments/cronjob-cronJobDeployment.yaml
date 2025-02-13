@@ -2,53 +2,40 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   labels:
-    name: job
+    name: deploymentsproject
     app.kubernetes.io/version: pr-1234
-    app.kubernetes.io/name: job
-    app.kubernetes.io/instance: job
+    app.kubernetes.io/name: deploymentsproject
+    app.kubernetes.io/instance: deploymentsproject
     maintainers: MPyL
     maintainer: MPyL
     version: pr-1234
     revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-  name: job
+  name: deploymentsproject
 spec:
-  concurrencyPolicy: Allow
-  failedJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
   jobTemplate:
     spec:
-      activeDeadlineSeconds: 10
+      activeDeadlineSeconds: 86400
       template:
         metadata:
           annotations:
             image: registry/image:123
           labels:
-            name: job
+            name: deploymentsproject
             app.kubernetes.io/version: pr-1234
-            app.kubernetes.io/name: job
-            app.kubernetes.io/instance: job
+            app.kubernetes.io/name: deploymentsproject
+            app.kubernetes.io/instance: deploymentsproject
             maintainers: MPyL
             maintainer: MPyL
             version: pr-1234
             revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-          name: job
+          name: deploymentsproject
         spec:
           containers:
-          - args:
-            - --env
-            - test
-            command:
-            - python
-            - run.py
-            env:
-            - name: SOME_SECRET_ENV
-              valueFrom:
-                secretKeyRef:
-                  key: SOME_SECRET_ENV
-                  name: job
-                  optional: false
+          - env: []
             image: registry/image:123
             imagePullPolicy: Always
-            name: job
+            name: deploymentsproject
             resources:
               limits:
                 cpu: 500m
@@ -57,10 +44,8 @@ spec:
                 cpu: 100m
                 memory: 512Mi
           restartPolicy: Never
-          serviceAccount: job
-          serviceAccountName: job
+          serviceAccount: deploymentsproject
+          serviceAccountName: deploymentsproject
       ttlSecondsAfterFinished: 3600
-  schedule: 0 22 * * *
+  schedule: 00 00 31 02 *
   successfulJobsHistoryLimit: 3
-  suspend: true
-  timeZone: Europe/Amsterdam

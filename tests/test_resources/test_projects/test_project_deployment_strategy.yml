@@ -15,8 +15,12 @@ build:
 dependencies:
   build:
     - 'test/docker/'
+kubernetes:
+  namespace:
+    all: "mpyl"
+  projectId:
+    all: test1234
 deployment:
-  namespace: "mpyl"
   properties:
     env:
       - key: SOME_ENV
@@ -25,9 +29,6 @@ deployment:
         acceptance: "Acceptance"
         production: "Production"
   kubernetes:
-    rancher:
-      projectId:
-        all: test1234
     deploymentStrategy:
       rollingUpdate:
         maxSurge: "100%"
@@ -42,13 +43,3 @@ deployment:
         service: 'grpcService'
     portMappings:
       8080: 8080
-    metrics:
-      enabled: false
-    resources:
-      instances:
-        all: 1
-      limit:
-        cpus:
-          all: 0.5
-        mem:
-          all: 1024

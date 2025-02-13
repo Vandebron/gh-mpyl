@@ -18,7 +18,7 @@ from tests.projects.find import load_projects
 from tests.test_resources.test_data import TestStage
 
 HASHED_CHANGES_OF_JOB = (
-    "68e3693fbb81aeddbc90ed6101ce0cf7cf8c947b32b1a13ddc11a9fb374f2a51"
+    "b69c96161a60d00b351593e66cfcfdd4b7e82685bab22a4f5d8bd161f89d2c96"
 )
 #  ^ this has to be updated if the test project.yml changes
 
@@ -333,7 +333,9 @@ class TestDiscovery:
         assert len(projects_for_build) == 1
         assert len(projects_for_test) == 1
         assert len(projects_for_deploy) == 2
-        assert projects_for_deploy.pop().project.kubernetes.port_mappings == {
+        assert projects_for_deploy.pop().project.deployments[
+            0
+        ].kubernetes.port_mappings == {
             8088: 8088,
             8089: 8089,
         }

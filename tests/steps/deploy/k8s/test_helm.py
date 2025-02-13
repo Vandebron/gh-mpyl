@@ -21,7 +21,7 @@ class TestHelm:
         with tempfile.TemporaryDirectory() as tempdir:
             builder = ChartBuilder(step_input)
             write_chart(
-                to_service_chart(builder),
+                to_service_chart(builder, builder.project.deployments[0]),
                 Path(tempdir),
                 {},
             )

@@ -196,14 +196,14 @@ class Env:
 @dataclass(frozen=True)
 class Properties:
     env: list[KeyValueProperty]
-    sealed_secret: list[KeyValueProperty]
+    sealed_secrets: list[KeyValueProperty]
     kubernetes: list[KeyValueRef]
 
     @staticmethod
     def from_config(values: dict[Any, Any]):
         return Properties(
             env=list(map(KeyValueProperty.from_config, values.get("env", []))),
-            sealed_secret=list(
+            sealed_secrets=list(
                 map(KeyValueProperty.from_config, values.get("sealedSecret", []))
             ),
             kubernetes=list(map(KeyValueRef.from_config, values.get("kubernetes", []))),
@@ -309,19 +309,7 @@ class Job:
 
 
 @dataclass(frozen=True)
-class Rancher:
-    project_id: TargetProperty[dict]
-
-    @staticmethod
-    def from_config(values: dict):
-        return Rancher(
-            project_id=TargetProperty.from_config(values.get("projectId", {}))
-        )
-
-
-@dataclass(frozen=True)
 class Kubernetes:
-    rancher: Optional[Rancher]
     port_mappings: dict[int, int]
     liveness_probe: Optional[Probe]
     startup_probe: Optional[Probe]
@@ -338,7 +326,6 @@ class Kubernetes:
     @staticmethod
     def from_config(values: dict):
         return Kubernetes(
-            rancher=Rancher.from_config(values.get("rancher", {})),
             port_mappings=values.get("portMappings", {}),
             liveness_probe=Probe.from_config(values.get("livenessProbe", {})),
             startup_probe=Probe.from_config(values.get("startupProbe", {})),
@@ -351,6 +338,19 @@ class Kubernetes:
             args=TargetProperty.from_config(values.get("args", {})),
             labels=list(map(KeyValueProperty.from_config, values.get("labels", []))),
             deployment_strategy=values.get("deploymentStrategy", {}),
+        )
+
+
+@dataclass(frozen=True)
+class KubernetesCommon:
+    project_id: TargetProperty[str]
+    namespace: TargetProperty[str]
+
+    @staticmethod
+    def from_config(values: dict):
+        return KubernetesCommon(
+            project_id=TargetProperty.from_config(values.get("projectId", {})),
+            namespace=TargetProperty.from_config(values.get("namespace", {})),
         )
 
 
@@ -471,32 +471,35 @@ class Build:
 
 @dataclass(frozen=True)
 class Deployment:
-    namespace: Optional[str]
+    name: str
     properties: Optional[Properties]
-    kubernetes: Optional[Kubernetes]
-    dagster: Optional[Dagster]
+    _kubernetes: Optional[Kubernetes]
     traefik: Optional[Traefik]
 
     @staticmethod
     def from_config(values: dict):
         props = values.get("properties")
         kubernetes = values.get("kubernetes")
-        dagster = values.get("dagster")
         traefik = values.get("traefik")
 
         return Deployment(
-            namespace=values.get("namespace"),
+            name=values["name"],
             properties=Properties.from_config(props) if props else None,
-            kubernetes=Kubernetes.from_config(kubernetes) if kubernetes else None,
-            dagster=Dagster.from_config(dagster) if dagster else None,
+            _kubernetes=Kubernetes.from_config(kubernetes) if kubernetes else None,
             traefik=Traefik.from_config(traefik) if traefik else None,
         )
 
+    def has_kubernetes(self) -> bool:
+        return self._kubernetes is not None
 
-@dataclass(frozen=True)
-class ProjectName:
-    name: str
-    namespace: Optional[str]
+    @property
+    def kubernetes(self) -> Kubernetes:
+        if not self._kubernetes:
+            raise KeyError(
+                f"Deployment '{self.name}' does not have kubernetes configuration"
+            )
+
+        return self._kubernetes
 
 
 @dataclass(frozen=True)
@@ -509,8 +512,10 @@ class Project:
     maintainer: list[str]
     docker: Optional[Docker]
     build: Optional[Build]
-    deployment: Optional[Deployment]
+    deployments: list[Deployment]
     dependencies: Optional[Dependencies]
+    kubernetes: Optional[KubernetesCommon]
+    _dagster: Optional[Dagster]
 
     def __lt__(self, other):
         return self.path < other.path
@@ -521,42 +526,18 @@ class Project:
     def __hash__(self):
         return hash(self.path)
 
-    @property
-    def to_name(self) -> ProjectName:
-        return ProjectName(
-            name=self.name,
-            namespace=(
-                self.deployment.namespace
-                if self.deployment and self.deployment.namespace
-                else None
-            ),
+    def namespace(self, target: Target) -> str:
+        return (
+            self.kubernetes.namespace.get_value(target)
+            if self.kubernetes and self.kubernetes.namespace
+            else self.name
         )
 
     @property
-    def kubernetes(self) -> Kubernetes:
-        if self.deployment is None or self.deployment.kubernetes is None:
-            raise KeyError(
-                f"Project '{self.name}' does not have kubernetes configuration"
-            )
-        return self.deployment.kubernetes
-
-    @property
     def dagster(self) -> Dagster:
-        if self.deployment is None or self.deployment.dagster is None:
+        if self._dagster is None:
             raise KeyError(f"Project '{self.name}' does not have dagster configuration")
-        return self.deployment.dagster
-
-    @property
-    def resources(self) -> Resources:
-        return self.kubernetes.resources
-
-    @property
-    def job(self) -> Job:
-        if self.kubernetes.job is None:
-            raise KeyError(
-                f"Project '{self.name}' does not have kubernetes.job configuration"
-            )
-        return self.kubernetes.job
+        return self._dagster
 
     @staticmethod
     def project_yaml_file_name() -> str:
@@ -593,8 +574,30 @@ class Project:
     @staticmethod
     def from_config(values: dict, project_path: Path):
         docker_config = values.get("docker")
-        deployment = values.get("deployment")
+        kubernetes_values = values.get("kubernetes", {})
+        dagster = values.get("dagster")
+        deployment_old = values.get("deployment", {})
+        if (
+            deployment_old
+        ):  # Deprecated, only used for old tags. Remove in a month or so after this commit
+            deployment_old["name"] = values["name"]
+            deployment_list = [deployment_old]
+
+            old_namespace = deployment_old.get("namespace")
+            if old_namespace:
+                kubernetes_values["namespace"] = {}
+                kubernetes_values["namespace"]["all"] = old_namespace
+
+            dagster_old = deployment_old.get("dagster")
+            if dagster_old:
+                dagster = dagster_old
+        else:
+            deployment_list = values.get("deployments", [])
+        deployments = [
+            Deployment.from_config(deployment) for deployment in deployment_list
+        ]
         dependencies = values.get("dependencies")
+
         return Project(
             name=values["name"],
             description=values["description"],
@@ -604,10 +607,12 @@ class Project:
             maintainer=values.get("maintainer", []),
             docker=Docker.from_config(docker_config) if docker_config else None,
             build=Build.from_config(values.get("build", {})),
-            deployment=Deployment.from_config(deployment) if deployment else None,
+            deployments=deployments,
             dependencies=(
                 Dependencies.from_config(dependencies) if dependencies else None
             ),
+            _dagster=Dagster.from_config(dagster) if dagster else None,
+            kubernetes=KubernetesCommon.from_config(kubernetes_values),
         )
 
 
@@ -647,7 +652,7 @@ def load_traefik_config(traefik_path: Path, loader: YAML) -> Optional[dict]:
         return loader.load(file)
 
 
-def load_project(
+def load_project(  # pylint: disable=too-many-locals
     project_path: Path,
     validate_project_yaml: bool,
     log: bool = True,
@@ -669,13 +674,23 @@ def load_project(
                 project_path, loader
             )
             yaml_values = merge_dicts(yaml_values, parent_yaml_values, True)
-            traefik_config = load_traefik_config(
-                project_path.parent
-                / Project.traefik_yaml_file_name(yaml_values["name"]),
-                loader,
+            deployment_old = yaml_values.get(
+                "deployment"
+            )  # deprecated, can be removed in a month
+            deployments = (
+                [deployment_old]
+                if deployment_old
+                else yaml_values.get("deployments", [])
             )
-            if traefik_config:
-                yaml_values["deployment"]["traefik"] = traefik_config["traefik"]
+            for deployment in deployments:
+                deployment_name = deployment.get("name") or yaml_values.get("name", "")
+                traefik_config = load_traefik_config(
+                    project_path.parent
+                    / Project.traefik_yaml_file_name(deployment_name),
+                    loader,
+                )
+                if traefik_config:
+                    deployment["traefik"] = traefik_config["traefik"]
             if validate_project_yaml:
                 validate_project(yaml_values)
             project = Project.from_config(yaml_values, project_path)
@@ -713,11 +728,28 @@ def merge_dicts(
     merged = parent_yaml_values.copy()
     for key, value in yaml_values.items():
         # ignore all keys that are not allowed to be overridden
-        if root_level and key not in ("stages", "deployment", "name", "description"):
+        if root_level and key not in (
+            "stages",
+            "deployment",
+            "deployments",
+            "name",
+            "description",
+            "kubernetes",
+        ):
             continue
-        # overriden project does not inherit stages
+        # overridden project does not inherit stages
         if root_level and key == "stages":
             merged[key] = value
+        # combine the deployment lists
+        if (
+            root_level
+            and key == "deployments"
+            and key in merged
+            and isinstance(merged[key], list)
+            and isinstance(value, list)
+        ):
+            for index, deployment in enumerate(value):
+                merged[key][index] = merge_dicts(merged[key][index], deployment)
         elif (
             key in merged and isinstance(merged[key], dict) and isinstance(value, dict)
         ):
@@ -725,23 +757,3 @@ def merge_dicts(
         else:
             merged[key] = value
     return merged
-
-
-def get_env_variables(project: Project, target: Target) -> dict[str, str]:
-    if project.deployment is None:
-        raise KeyError(
-            f"No deployment information was found for project: {project.name}"
-        )
-    if project.deployment.properties is None:
-        raise KeyError(
-            f"No properties information was found for project: {project.name}"
-        )
-    if len(project.deployment.properties.env) == 0:
-        raise KeyError(f"No properties.env is defined for project: {project.name}")
-
-    env_variables: dict[str, str] = {
-        env_variable.key: env_variable.get_value(target)
-        for env_variable in project.deployment.properties.env
-    }
-
-    return env_variables
