@@ -689,7 +689,7 @@ definitions:
         type: string
   kubernetes:
     type: object
-    additionalProperties: false
+    additionalProperties: true  # for old tags with "rancher" still defined
     properties:
       secrets:
         type: array
