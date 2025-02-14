@@ -161,7 +161,7 @@ class TestKubernetesChart:
             "ingress-routes-dockertest",
             "middleware-strip-prefix",
             "middleware-strip-prefix-dockertest",
-            "prometheus-rule",
+            "prometheus-rule-dockertest",
             "service-monitor",
             "role",
             "rolebinding",
@@ -191,7 +191,7 @@ class TestKubernetesChart:
             "ingress-routes-dockertest",
             "middleware-strip-prefix",
             "middleware-strip-prefix-dockertest",
-            "prometheus-rule",
+            "prometheus-rule-dockertest",
             "service-monitor",
             "role",
             "rolebinding",
@@ -288,7 +288,7 @@ class TestKubernetesChart:
 
     @pytest.mark.parametrize(
         "template",
-        ["job-job", "service-account", "sealed-secrets", "prometheus-rule"],
+        ["job-job", "service-account", "sealed-secrets", "prometheus-rule-job"],
     )
     def test_job_chart_roundtrip(self, template):
         job_project = get_job_project()
@@ -300,7 +300,12 @@ class TestKubernetesChart:
 
     @pytest.mark.parametrize(
         "template",
-        ["cronjob-cronjob", "service-account", "sealed-secrets", "prometheus-rule"],
+        [
+            "cronjob-cronjob",
+            "service-account",
+            "sealed-secrets",
+            "prometheus-rule-cronjob",
+        ],
     )
     def test_cron_job_chart_roundtrip(self, template):
         cron_job_project = get_cron_job_project()
