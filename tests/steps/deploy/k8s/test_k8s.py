@@ -148,7 +148,7 @@ class TestKubernetesChart:
         "template",
         [
             "deployment-dockertest",
-            "service",
+            "service-dockertest",
             "service-account",
             "sealed-secrets",
             "dockertest-ingress-0-https",
@@ -180,7 +180,7 @@ class TestKubernetesChart:
             "service-account",
             "sealed-secrets",
             "deployment-dockertest",
-            "service",
+            "service-dockertest",
             "dockertest-ingress-0-https",
             "dockertest-ingress-0-http",
             "dockertest-ingress-1-https",
