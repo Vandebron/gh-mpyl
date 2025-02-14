@@ -869,14 +869,16 @@ class ChartBuilder:
     def to_common_chart(
         self, deployment: Deployment
     ) -> dict[str, CustomResourceDefinition]:
-        chart = {"service-account": self.to_service_account(deployment)}
+        chart = {
+            "service-account": self.to_service_account(deployment)
+        }  # should move out of Deployment?
 
         if deployment.properties and len(deployment.properties.sealed_secrets) > 0:
             chart["sealed-secrets"] = self.to_sealed_secrets(
                 deployment.properties.sealed_secrets
-            )
+            )  # should move out of Deployment?
 
-        role = deployment.kubernetes.role or {}
+        role = deployment.kubernetes.role or {}  # should move out of Deployment?
         if role:
             chart["role"] = self.to_role(role)
             chart["rolebinding"] = self.to_role_binding()
@@ -937,7 +939,9 @@ def _to_prometheus_chart(builder: ChartBuilder, deployment: Deployment):
     metrics = deployment.kubernetes.metrics
     prometheus_chart = (
         {
-            "prometheus-rule": builder.to_prometheus_rule(alerts=metrics.alerts),
+            f"prometheus-rule-{deployment.name}": builder.to_prometheus_rule(
+                alerts=metrics.alerts
+            ),
         }
         if metrics and metrics.enabled
         else {}
