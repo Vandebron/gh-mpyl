@@ -8,7 +8,6 @@ from pyaml_env import parse_config
 
 from src.mpyl.constants import DEFAULT_CONFIG_FILE_NAME
 from src.mpyl.project import Target, Project
-from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps.deploy.k8s.chart import (
     ChartBuilder,
@@ -60,18 +59,16 @@ class TestKubernetesChart:
 
     @staticmethod
     def _get_builder(project: Project, run_properties=None):
-        project_execution = ProjectExecution.run(project)
-
         if not run_properties:
             run_properties = stub_run_properties(deploy_image="registry/image:123")
 
         return ChartBuilder(
             step_input=Input(
-                project_execution=project_execution,
+                project=project,
                 run_properties=run_properties,
                 run_plan=RunPlan.create(
                     all_known_projects={project, get_minimal_project()},
-                    plan={TestStage.deploy(): {project_execution}},
+                    plan={TestStage.deploy(): {project}},
                 ),
             ),
         )

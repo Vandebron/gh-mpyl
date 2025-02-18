@@ -8,7 +8,6 @@ from ruamel.yaml import YAML
 
 from src.mpyl.constants import DEFAULT_CONFIG_FILE_NAME, RUN_ARTIFACTS_FOLDER
 from src.mpyl.project import Project, Stages, Target
-from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.projects.versioning import yaml_to_string
 from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps.collection import StepsCollection
@@ -34,11 +33,7 @@ class TestSteps:
         steps_collection=StepsCollection(logging.getLogger()),
     )
 
-    docker_image = Output(
-        success=True,
-        message="build success",
-        hash="a generated hash",
-    )
+    docker_image = Output(success=True, message="build success")
 
     build_project = test_data.get_project_with_stages(
         {"build": "Echo Build"}, path=str(resource_path / "deployment" / "project.yml")
@@ -61,11 +56,7 @@ class TestSteps:
         )
 
     def test_write_deploy_output(self):
-        output = Output(
-            success=True,
-            message="deploy success  success",
-            hash="a generated hash",
-        )
+        output = Output(success=True, message="deploy success  success")
 
         assert_roundtrip(
             test_resource_path / "deployment" / RUN_ARTIFACTS_FOLDER / "deploy.yml",
@@ -97,7 +88,7 @@ class TestSteps:
         )
         output = steps.execute(
             stage=TestStage.deploy(),
-            project_execution=ProjectExecution.run(project),
+            project=project,
         ).output
         assert not output.success
         assert output.message == "Stage 'deploy' not defined on project 'test'"
@@ -127,7 +118,7 @@ class TestSteps:
         )
         result = self.executor.execute(
             stage=TestStage.deploy(),
-            project_execution=ProjectExecution.run(project),
+            project=project,
         )
         assert result.output.success
         assert result.output.message == "Deployed project test"
@@ -136,7 +127,7 @@ class TestSteps:
         project = test_data.get_project_with_stages({"deploy": "Unknown Deploy"})
         result = self.executor.execute(
             stage=TestStage.deploy(),
-            project_execution=ProjectExecution.run(project),
+            project=project,
         )
         assert not result.output.success
         assert (
@@ -153,7 +144,7 @@ class TestSteps:
 
         result = self.executor.execute(
             stage=TestStage.deploy(),
-            project_execution=ProjectExecution.run(project),
+            project=project,
         )
         assert not result.output.success
         assert (
@@ -165,7 +156,7 @@ class TestSteps:
         project = test_data.get_project_with_stages(stage_config={"test": "Some Test"})
         result = self.executor.execute(
             stage=TestStage.build(),
-            project_execution=ProjectExecution.run(project),
+            project=project,
         )
         assert not result.output.success
         assert result.output.message == "Stage 'build' not defined on project 'test'"

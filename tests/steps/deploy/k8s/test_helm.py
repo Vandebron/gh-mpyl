@@ -6,7 +6,7 @@ from src.mpyl.steps.input import Input
 from src.mpyl.steps.deploy.k8s.chart import ChartBuilder, to_service_chart
 from src.mpyl.steps.deploy.k8s.helm import write_chart
 from tests.test_resources.test_data import (
-    get_project_execution,
+    get_project,
     stub_run_properties,
 )
 
@@ -14,7 +14,7 @@ from tests.test_resources.test_data import (
 class TestHelm:
     def test_write_chart(self):
         step_input = Input(
-            project_execution=get_project_execution(),
+            project=get_project(),
             run_properties=stub_run_properties(deploy_image="some image"),
             run_plan=RunPlan.empty(),
         )

@@ -10,7 +10,6 @@ from src.mpyl.constants import (
     DEFAULT_RUN_PROPERTIES_FILE_NAME,
 )
 from src.mpyl.project import load_project, Target, Project, Stages, Stage
-from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.steps.models import RunProperties
 from src.mpyl.utilities.pyaml_env import parse_config
 from tests import root_test_path
@@ -75,10 +74,6 @@ def get_project_traefik() -> Project:
     return safe_load_project(
         f"{resource_path}/test_projects/traefik/test_project_traefik.yml"
     )
-
-
-def get_project_execution() -> ProjectExecution:
-    return ProjectExecution.run(get_project())
 
 
 def get_deployment_strategy_project() -> Project:

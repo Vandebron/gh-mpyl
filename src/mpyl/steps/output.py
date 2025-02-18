@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 from ruamel.yaml import yaml_object, YAML
 
@@ -15,7 +14,6 @@ yaml = YAML()
 class Output:
     success: bool
     message: str
-    hash: Optional[str] = None
 
     @staticmethod
     def path(target_path: Path, stage: str):
