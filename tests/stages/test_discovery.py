@@ -110,6 +110,15 @@ class TestDiscovery:
             == 0
         )
 
+    def test_stage_with_files_changed(self):
+        projects = self._helper_find_projects_to_execute(
+            files_touched={
+                "tests/projects/job/deployment/project.yml": "M",
+            },
+        )
+        assert len(projects) == 1
+        assert next(p for p in projects if p.name == "job")
+
     def test_stage_with_files_changed_but_filtered(self):
         projects = self._helper_find_projects_to_execute(
             files_touched={

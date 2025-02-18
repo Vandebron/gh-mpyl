@@ -96,9 +96,6 @@ class TestEmptyPlan:
     def test_get_all_stages(self, use_full_plan):
         assert not self.run_plan._get_all_stages(use_full_plan=use_full_plan)
 
-    def test_has_projects_to_run(self):
-        assert not self.run_plan._has_projects_to_run()
-
     def test_get_project_to_execute(self):
         with pytest.raises(ValueError):
             self.run_plan.get_project_to_execute(

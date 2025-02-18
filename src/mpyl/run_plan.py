@@ -63,9 +63,6 @@ class RunPlan:
             _selected_plan=selected_plan,
         )
 
-    def _has_projects_to_run(self) -> bool:
-        return len(self._get_all_projects()) > 0
-
     def _get_all_stages(self, use_full_plan: bool = False) -> list[Stage]:
         if use_full_plan:
             return list(self._full_plan.keys())
@@ -215,7 +212,7 @@ class RunPlan:
 
     def to_markdown(self) -> str:
         lines = ["**Execution plan:**"]
-        if self._has_projects_to_run():
+        if len(self._get_all_projects()) > 0:
             for stage in self._get_all_stages():
                 lines.append(f"{stage.to_markdown()}:")
                 if projects := self._get_projects_for_stage(stage):
