@@ -5,9 +5,8 @@ import logging
 from .run_plan import RunPlan
 from .steps import deploy
 from .steps.collection import StepsCollection
-from .steps.executor import ExecutionException, ExecutionResult, Executor
+from .steps.executor import ExecutionException, Executor
 from .steps.models import RunProperties
-from .steps.output import Output
 from .steps.run import RunResult
 
 FORMAT = "%(name)s  %(message)s"
@@ -21,7 +20,7 @@ def run_deploy_stage(
 ) -> RunResult:
     try:
         stage = run_properties.to_stage(deploy.STAGE_NAME)
-        project_execution = run_plan.get_project_to_execute(
+        project = run_plan.get_project_to_execute(
             stage_name=deploy.STAGE_NAME, project_name=project_name_to_run
         )
 
@@ -32,20 +31,10 @@ def run_deploy_stage(
             steps_collection=StepsCollection(logger=logger),
         )
 
-        if project_execution.cached:
-            logger.info(
-                f"Skipping {project_execution.name} for stage {stage.name} because it is cached"
-            )
-            execution_result = ExecutionResult(
-                stage=stage,
-                project=project_execution,
-                output=Output(success=True, message="This step was cached"),
-            )
-        else:
-            execution_result = executor.execute(stage, project_execution)
+        execution_result = executor.execute(stage, project)
 
         if not execution_result.output.success:
-            logger.warning(f"{stage} failed for {project_execution.name}")
+            logger.warning(f"{stage} failed for {project.name}")
 
         return RunResult.with_result(execution_result)
 

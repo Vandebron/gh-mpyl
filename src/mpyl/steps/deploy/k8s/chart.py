@@ -217,20 +217,19 @@ class ChartBuilder:
 
     def __init__(self, step_input: Input):
         self.step_input = step_input
-        project = self.step_input.project_execution.project
-        self.project = project
+        self.project = self.step_input.project
         self.config_defaults = DeploymentDefaults.from_config(
             step_input.run_properties.config
         )
 
-        if len(project.deployments) == 0:
+        if len(self.project.deployments) == 0:
             raise AttributeError("Deployments field should be set")
         self.target = step_input.run_properties.target
         self.release_name = self.project.name.lower()
         self.namespace = (
             step_input.run_properties.versioning.identifier
             if step_input.run_properties.target == Target.PULL_REQUEST
-            else project.namespace(step_input.run_properties.target)
+            else self.project.namespace(step_input.run_properties.target)
         )
 
     def to_labels(self, deployment_name: Optional[str] = None) -> dict:
@@ -776,12 +775,9 @@ class ChartBuilder:
         processed_env_vars = substitute_namespaces(
             env_vars=raw_env_vars,
             all_projects=self.step_input.run_plan.all_known_projects,
-            projects_to_deploy={
-                project_execution.project
-                for project_execution in self.step_input.run_plan.get_executions_for_stage_name(
-                    deploy.STAGE_NAME, use_full_plan=True
-                )
-            },
+            projects_to_deploy=self.step_input.run_plan.get_projects_for_stage_name(
+                deploy.STAGE_NAME, use_full_plan=True
+            ),
             target=self.target,
             pr_identifier=pr_identifier,
         )

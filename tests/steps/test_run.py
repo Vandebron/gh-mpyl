@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from src.mpyl.project import Project, Stages, Stage
-from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps.executor import ExecutionException, ExecutionResult
 from src.mpyl.steps.output import Output
@@ -11,7 +10,7 @@ from tests.test_resources import test_data
 from tests.test_resources.test_data import assert_roundtrip, TestStage
 
 
-def stub_execution_result(stage: Stage, project: ProjectExecution, success: bool):
+def stub_execution_result(stage: Stage, project: Project, success: bool):
     return ExecutionResult(
         stage=stage,
         project=project,
@@ -23,22 +22,20 @@ def stub_execution_result(stage: Stage, project: ProjectExecution, success: bool
 class TestRunResult:
     expected_markdown_files_path = test_resource_path / "run-result-markdown"
 
-    project_a = ProjectExecution.run(test_data.get_project())
-    project_b = ProjectExecution.run(
-        Project(
-            "test",
-            "Test project",
-            "",
-            None,
-            Stages({}),
-            [],
-            None,
-            None,
-            [],
-            None,
-            None,
-            None,
-        )
+    project_a = test_data.get_project()
+    project_b = Project(
+        "test",
+        "Test project",
+        "",
+        None,
+        Stages({}),
+        [],
+        None,
+        None,
+        [],
+        None,
+        None,
+        None,
     )
 
     run_plan = RunPlan.create(

@@ -10,7 +10,6 @@ from pathlib import Path
 
 from .constants import RUN_ARTIFACTS_FOLDER
 from .project import Project, Stage, load_project
-from .project_execution import ProjectExecution
 from .plan.discovery import find_projects_to_execute, find_projects
 from .utilities.repo import Changeset
 
@@ -22,8 +21,8 @@ RUN_PLAN_SUMMARY_FILE = Path(RUN_ARTIFACTS_FOLDER) / "run_plan_summary.md"
 @dataclass(frozen=True)
 class RunPlan:
     all_known_projects: set[Project]
-    _full_plan: dict[Stage, set[ProjectExecution]]
-    _selected_plan: dict[Stage, set[ProjectExecution]]
+    _full_plan: dict[Stage, set[Project]]
+    _selected_plan: dict[Stage, set[Project]]
 
     @classmethod
     def empty(cls) -> "RunPlan":
@@ -31,7 +30,7 @@ class RunPlan:
 
     @classmethod
     def create(
-        cls, all_known_projects: set[Project], plan: dict[Stage, set[ProjectExecution]]
+        cls, all_known_projects: set[Project], plan: dict[Stage, set[Project]]
     ) -> "RunPlan":
         return cls(
             all_known_projects=all_known_projects, _full_plan=plan, _selected_plan=plan
@@ -39,7 +38,7 @@ class RunPlan:
 
     def select_project(self, project_name: str) -> "RunPlan":
         selected_project = None
-        for project in self._get_all_executions():
+        for project in self._get_all_projects():
             if project.name == project_name:
                 selected_project = project
                 break
@@ -52,7 +51,7 @@ class RunPlan:
         for stage in self._get_all_stages():
             filtered = {
                 project
-                for project in self._get_executions_for_stage(stage)
+                for project in self._get_projects_for_stage(stage)
                 if project.name == project_name
             }
             if filtered:
@@ -64,47 +63,32 @@ class RunPlan:
             _selected_plan=selected_plan,
         )
 
-    def _has_projects_to_run(self, include_cached_projects: bool) -> bool:
-        return any(
-            include_cached_projects or not project_execution.cached
-            for project_execution in self._get_all_executions()
-        )
-
     def _get_all_stages(self, use_full_plan: bool = False) -> list[Stage]:
         if use_full_plan:
             return list(self._full_plan.keys())
         return list(self._selected_plan.keys())
 
-    def _get_all_executions(self, use_full_plan: bool = False) -> set[ProjectExecution]:
-        def flatten(plan: dict[Stage, set[ProjectExecution]]):
-            return {
-                project_execution
-                for project_executions in plan.values()
-                for project_execution in project_executions
-            }
+    def _get_all_projects(self, use_full_plan: bool = False) -> set[Project]:
+        def flatten(plan: dict[Stage, set[Project]]):
+            return {p for projects_in_stage in plan.values() for p in projects_in_stage}
 
         if use_full_plan:
             return flatten(self._full_plan)
         return flatten(self._selected_plan)
 
-    def _get_all_projects(self, use_full_plan: bool = False) -> set[Project]:
-        return {p.project for p in self._get_all_executions(use_full_plan)}
-
-    def _get_executions_for_stage(
+    def _get_projects_for_stage(
         self, stage: Stage, use_full_plan: bool = False
-    ) -> set[ProjectExecution]:
+    ) -> set[Project]:
         if use_full_plan:
             return self._full_plan.get(stage, set())
         return self._selected_plan.get(stage, set())
 
-    def get_executions_for_stage_name(
+    def get_projects_for_stage_name(
         self, stage_name: str, use_full_plan: bool = False
-    ) -> set[ProjectExecution]:
-        def find_stage(plan: dict[Stage, set[ProjectExecution]]):
+    ) -> set[Project]:
+        def find_stage(plan: dict[Stage, set[Project]]):
             iterator = (
-                project_executions
-                for stage, project_executions in plan.items()
-                if stage.name == stage_name
+                projects for stage, projects in plan.items() if stage.name == stage_name
             )
             return next(iterator, set())
 
@@ -112,15 +96,13 @@ class RunPlan:
             return find_stage(self._full_plan)
         return find_stage(self._selected_plan)
 
-    def get_project_to_execute(
-        self, stage_name: str, project_name: str
-    ) -> ProjectExecution:
+    def get_project_to_execute(self, stage_name: str, project_name: str) -> Project:
         selected_stage = None
         selected_project = None
         for stage in self._get_all_stages():
             if stage.name == stage_name:
                 selected_stage = stage
-                for project in self._get_executions_for_stage(stage):
+                for project in self._get_projects_for_stage(stage):
                     if project.name == project_name:
                         selected_project = project
                         break
@@ -147,37 +129,29 @@ class RunPlan:
             if project.pipeline == "docker":
                 return "🐳"
             if project.pipeline == "sbt":
-                executions_for_stage = self.get_executions_for_stage_name(stage_name)
-                execution_for_stage = next(
-                    (
-                        execution_for_stage
-                        for execution_for_stage in executions_for_stage
-                        if execution_for_stage.name == project.name
-                    ),
+                projects_for_stage = self.get_projects_for_stage_name(stage_name)
+                project_for_stage = next(
+                    (p for p in projects_for_stage if p.name == project.name),
                     None,
                 )
-                if execution_for_stage:
-                    return "💾" if execution_for_stage.cached else "☕️"
+                if project_for_stage:
+                    return "☕️"
             return ""
 
         def is_project_in_stage(project: Project, stage_name: str):
             return any(
-                project.name == execution_for_stage.name
-                for execution_for_stage in self.get_executions_for_stage_name(
-                    stage_name
-                )
+                project.name == project_for_stage.name
+                for project_for_stage in self.get_projects_for_stage_name(stage_name)
             )
 
         summary = "| 👷 Project | 🏗 Build | 🧪 Test | 🚀 Deploy | 🦺 Post-deploy |\n"
         summary += "| ---------- | :------: | :-----: | :-------: | :------------: |\n"
 
-        all_executions = self._get_all_executions()
-        if len(all_executions) == 0:
+        all_projects = self._get_all_projects()
+        if len(all_projects) == 0:
             summary = "Nothing to do 🤷\n"
 
-        for project in sorted(
-            self._get_all_projects(), key=operator.attrgetter("name")
-        ):
+        for project in sorted(all_projects, key=operator.attrgetter("name")):
             build_plan = get_icon(project, "build")
             test_plan = get_icon(project, "test")
             deploy_plan = "🚀" if is_project_in_stage(project, "deploy") else ""
@@ -196,25 +170,21 @@ class RunPlan:
     def write_to_json_file(self):
         run_plan: dict = {}
 
-        for executions in self._selected_plan.values():
-            for execution in executions:
+        for projects in self._selected_plan.values():
+            for project in projects:
                 stages = {
-                    stage.name: (
-                        not execution.cached
-                        if execution in self._get_executions_for_stage(stage)
-                        else False
-                    )
+                    stage.name: project in self._get_projects_for_stage(stage)
                     for stage in self._selected_plan.keys()
                 }
                 run_plan.update(
                     {
-                        execution.project.name: {
-                            "service": execution.project.name,
-                            "path": execution.project.path,
-                            "artifacts_path": str(execution.project.target_path),
-                            "base_path": str(execution.project.root_path),
-                            "maintainers": execution.project.maintainer,
-                            "pipeline": execution.project.pipeline,
+                        project.name: {
+                            "service": project.name,
+                            "path": project.path,
+                            "artifacts_path": str(project.target_path),
+                            "base_path": str(project.root_path),
+                            "maintainers": project.maintainer,
+                            "pipeline": project.pipeline,
                         }
                         | stages
                     }
@@ -242,18 +212,14 @@ class RunPlan:
 
     def to_markdown(self) -> str:
         lines = ["**Execution plan:**"]
-        if self._has_projects_to_run(include_cached_projects=True):
+        if len(self._get_all_projects()) > 0:
             for stage in self._get_all_stages():
                 lines.append(f"{stage.to_markdown()}:")
-                executions = self._get_executions_for_stage(stage)
-                if executions:
+                if projects := self._get_projects_for_stage(stage):
                     project_names = [
-                        execution.to_markdown()
-                        for execution in sorted(
-                            executions, key=operator.attrgetter("name")
-                        )
+                        project.name
+                        for project in sorted(projects, key=operator.attrgetter("name"))
                     ]
-
                     lines.append(", ".join(project_names))
                 else:
                     lines.append("")
@@ -265,7 +231,6 @@ class RunPlan:
 
 def discover_run_plan(
     logger: logging.Logger,
-    revision: str,
     all_stages: list[Stage],
     changed_files_path: Path,
 ) -> RunPlan:
@@ -281,22 +246,22 @@ def discover_run_plan(
     )
 
     changeset = Changeset.from_files(
-        logger=logger, sha=revision, changed_files_path=changed_files_path
+        logger=logger, changed_files_path=changed_files_path
     )
 
     plan = {}
     for stage in all_stages:
-        project_executions = find_projects_to_execute(
+        projects = find_projects_to_execute(
             logger=logger,
             all_projects=all_projects,
             stage=stage.name,
             changeset=changeset,
         )
 
-        if project_executions:
+        if projects:
             logger.debug(
-                f"Will execute projects for stage {stage.name}: {[p.name for p in project_executions]}"
+                f"Will execute projects for stage {stage.name}: {[p.name for p in projects]}"
             )
-            plan.update({stage: project_executions})
+            plan.update({stage: projects})
 
     return RunPlan.create(all_projects, plan)

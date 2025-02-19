@@ -8,8 +8,6 @@ from .helm import write_helm_chart
 from ...deploy.k8s.resources import CustomResourceDefinition
 from ...input import Input
 from ...output import Output
-from ....steps.deploy.k8s import helm
-from ....steps.deploy.k8s.resources import to_yaml
 from ....project import Project, Target
 from ....utilities import replace_pr_number
 
@@ -17,9 +15,7 @@ from ....utilities import replace_pr_number
 def generate_helm_charts(
     logger: Logger, chart: dict[str, CustomResourceDefinition], step_input: Input
 ) -> Output:
-    chart_path = write_helm_chart(
-        logger, chart, Path(step_input.project_execution.project.target_path)
-    )
+    chart_path = write_helm_chart(logger, chart, Path(step_input.project.target_path))
 
     return Output(
         success=True,

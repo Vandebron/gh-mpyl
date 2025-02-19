@@ -4,7 +4,6 @@ from ruamel.yaml import YAML
 
 from src.mpyl import parse_config
 from src.mpyl.project import load_project
-from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps.deploy.k8s.chart import ChartBuilder
 from src.mpyl.steps.deploy.k8s.resources.dagster import to_user_code_values
@@ -41,10 +40,8 @@ class TestDagster:
 
     def test_generate_correct_values_yaml_with_service_account_override(self):
         step_input = Input(
-            ProjectExecution.run(
-                project=load_project(
-                    self.resource_path / "project.yml", validate_project_yaml=True
-                )
+            project=load_project(
+                self.resource_path / "project.yml", validate_project_yaml=True
             ),
             run_properties=test_data.RUN_PROPERTIES,
             run_plan=RunPlan.empty(),
@@ -67,10 +64,8 @@ class TestDagster:
 
     def test_generate_correct_values_yaml_with_production_target(self):
         step_input = Input(
-            ProjectExecution.run(
-                project=load_project(
-                    Path(self.resource_path, "project.yml"), validate_project_yaml=True
-                )
+            project=load_project(
+                Path(self.resource_path, "project.yml"), validate_project_yaml=True
             ),
             run_properties=test_data.RUN_PROPERTIES_PROD,
             run_plan=RunPlan.empty(),
@@ -91,10 +86,8 @@ class TestDagster:
 
     def test_generate_correct_values_yaml_without_service_account_override(self):
         step_input = Input(
-            ProjectExecution.run(
-                project=load_project(
-                    Path(self.resource_path, "project.yml"), validate_project_yaml=True
-                )
+            project=load_project(
+                Path(self.resource_path, "project.yml"), validate_project_yaml=True
             ),
             run_properties=test_data.RUN_PROPERTIES,
             run_plan=RunPlan.empty(),
@@ -117,11 +110,9 @@ class TestDagster:
 
     def test_generate_with_sealed_secret_as_extra_manifest(self):
         step_input = Input(
-            ProjectExecution.run(
-                project=load_project(
-                    self.dagster_project_folder / "project_with_sealed_secret.yml",
-                    validate_project_yaml=True,
-                )
+            project=load_project(
+                self.dagster_project_folder / "project_with_sealed_secret.yml",
+                validate_project_yaml=True,
             ),
             run_properties=test_data.RUN_PROPERTIES,
             run_plan=RunPlan.empty(),

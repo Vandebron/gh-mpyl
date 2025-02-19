@@ -11,8 +11,6 @@ from typing import Optional
 
 @dataclass(frozen=True)
 class Changeset:
-    sha: str
-    """Git hash for this revision"""
     _files_touched: dict[str, str]
 
     def files_touched(self, status: Optional[set[str]] = None):
@@ -22,7 +20,7 @@ class Changeset:
         return {file for file, s in self._files_touched.items() if s in status}
 
     @staticmethod
-    def from_files(logger: logging.Logger, sha: str, changed_files_path: Path):
+    def from_files(logger: logging.Logger, changed_files_path: Path):
         logger.debug(
             f"Creating Changeset based on changed files in {changed_files_path}"
         )
@@ -46,4 +44,4 @@ class Changeset:
         add_changed_files("modified", "M")
         add_changed_files("renamed", "R")
 
-        return Changeset(sha=sha, _files_touched=changed_files)
+        return Changeset(_files_touched=changed_files)
