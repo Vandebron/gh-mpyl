@@ -71,7 +71,8 @@ def substitute_namespaces(
         replace_value = service_name + "." + namespace
         replaced_namespace = original_value.replace(search_value, replace_value)
         updated_pr = replace_pr_number(replaced_namespace, pr_identifier)
-        env[key] = updated_pr
+        if updated_pr != original_value:
+            env[key] = updated_pr
 
     for project in all_projects:
         linked_project_namespace = get_namespace_for_linked_project(project)
