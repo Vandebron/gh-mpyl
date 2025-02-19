@@ -513,7 +513,7 @@ class ChartBuilder:
             for idx, host in enumerate(hosts)
         ]
 
-    def _replace_placeholders(self, traefik_object: dict | list):
+    def _replace_traefik_placeholders(self, traefik_object: dict | list):
         traefik_object = replace_item(
             traefik_object,
             PR_NUMBER_PLACEHOLDER,
@@ -530,7 +530,7 @@ class ChartBuilder:
     def to_ingress(self, deployment: Deployment) -> Optional[V1AlphaIngressRoute]:
         """Converts the deployment traefik ingress routes configuration to a V1AlphaIngressRoute object."""
         ingress_route_spec = (
-            self._replace_placeholders(
+            self._replace_traefik_placeholders(
                 deployment.traefik.ingress_routes.get_value(self.target)
             )
             if deployment.traefik and deployment.traefik.ingress_routes
@@ -592,7 +592,7 @@ class ChartBuilder:
     def to_middlewares(self, deployment: Deployment) -> dict[str, V1AlphaMiddleware]:
         hosts: list[HostWrapper] = self.create_host_wrappers(deployment)
         middlewares = (
-            self._replace_placeholders(
+            self._replace_traefik_placeholders(
                 deployment.traefik.middlewares.get_value(self.target)
             )
             if deployment.traefik and deployment.traefik.middlewares

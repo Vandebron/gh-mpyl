@@ -66,18 +66,31 @@ def substitute_namespaces(
             return f"pr-{pr_identifier}"
         return project.namespace(target)
 
-    def replace_namespace(env_value: str, project_name: str, namespace: str) -> str:
-        search_value = project_name + ".{namespace}"
-        replace_value = project_name + "." + namespace
-        return env_value.replace(search_value, replace_value)
+    def replace_namespace(
+        original_value: str,
+        service_name: str,
+        namespace: str,
+    ):
+        search_value = service_name + ".{namespace}"
+        replace_value = service_name + "." + namespace
+        replaced_namespace = original_value.replace(search_value, replace_value)
+        updated_pr = replace_pr_number(replaced_namespace, pr_identifier)
+        env[key] = updated_pr
 
     for project in all_projects:
         linked_project_namespace = get_namespace_for_linked_project(project)
         for key, value in env.items():
-            replaced_namespace = replace_namespace(
-                value, project.name, linked_project_namespace
+            replace_namespace(
+                original_value=value,
+                service_name=project.name,
+                namespace=linked_project_namespace,
             )
-            updated_pr = replace_pr_number(replaced_namespace, pr_identifier)
-            env[key] = updated_pr
+
+            for deployment in project.deployments:
+                replace_namespace(
+                    original_value=value,
+                    service_name=deployment.name,
+                    namespace=linked_project_namespace,
+                )
 
     return env
