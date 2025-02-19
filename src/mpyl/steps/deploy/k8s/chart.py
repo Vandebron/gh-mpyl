@@ -725,14 +725,14 @@ class ChartBuilder:
         return ChartBuilder._to_resource_requirements(resources, defaults, self.target)
 
     def _create_sealed_secret_env_vars(
-        self, secret_list: list[KeyValueProperty]
+        self, secret_list: list[KeyValueProperty], secret_name: str
     ) -> list[V1EnvVar]:
         return [
             V1EnvVar(
                 name=e.key,
                 value_from=V1EnvVarSource(
                     secret_key_ref=V1SecretKeySelector(
-                        key=e.key, name=self.release_name, optional=False
+                        key=e.key, name=secret_name.lower(), optional=False
                     )
                 ),
             )
@@ -755,12 +755,16 @@ class ChartBuilder:
         return raw_env_vars
 
     def get_sealed_secret_as_env_vars(
-        self, sealed_secrets: list[KeyValueProperty]
+        self,
+        sealed_secrets: list[KeyValueProperty],
+        secret_name: str,
     ) -> list[V1EnvVar]:
         sealed_secrets_for_target = list(
             filter(lambda v: v.get_value(self.target) is not None, sealed_secrets)
         )
-        return self._create_sealed_secret_env_vars(sealed_secrets_for_target)
+        return self._create_sealed_secret_env_vars(
+            sealed_secrets_for_target, secret_name
+        )
 
     def _get_env_vars(self, deployment: Deployment) -> list[V1EnvVar]:
         raw_env_vars = (
@@ -792,7 +796,9 @@ class ChartBuilder:
             else []
         )
         sealed_secrets = (
-            self.get_sealed_secret_as_env_vars(deployment.properties.sealed_secrets)
+            self.get_sealed_secret_as_env_vars(
+                deployment.properties.sealed_secrets, deployment.name
+            )
             if deployment.properties
             else []
         )

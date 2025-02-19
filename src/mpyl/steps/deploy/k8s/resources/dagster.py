@@ -40,7 +40,7 @@ def to_user_code_values(
         )
     sealed_secret_refs = []
     for sealed_secret_env in builder.get_sealed_secret_as_env_vars(
-        combined_sealed_secrets
+        combined_sealed_secrets, builder.release_name
     ):
         sealed_secret_env.value_from.secret_key_ref.name = release_name
         sealed_secret_refs.append(to_dict(sealed_secret_env, skip_none=True))
