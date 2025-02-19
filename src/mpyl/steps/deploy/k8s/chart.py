@@ -353,7 +353,7 @@ class ChartBuilder:
             kind="Service",
             metadata=V1ObjectMeta(
                 annotations=self._to_annotations(),
-                name=deployment.name,
+                name=deployment.name.lower(),
                 labels=self.to_labels(),
             ),
             spec=V1ServiceSpec(
