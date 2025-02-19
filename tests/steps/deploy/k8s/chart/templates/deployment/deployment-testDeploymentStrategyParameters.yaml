@@ -20,7 +20,7 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: testdeploymentstrategyparameters
       app.kubernetes.io/name: testdeploymentstrategyparameters
-      vandebron.nl/deployment: testDeploymentStrategyParameters
+      vandebron.nl/deployment: testdeploymentstrategyparameters
   strategy:
     rollingUpdate:
       maxSurge: 100%
@@ -33,7 +33,7 @@ spec:
         app.kubernetes.io/version: pr-1234
         app.kubernetes.io/name: testdeploymentstrategyparameters
         app.kubernetes.io/instance: testdeploymentstrategyparameters
-        vandebron.nl/deployment: testDeploymentStrategyParameters
+        vandebron.nl/deployment: testdeploymentstrategyparameters
         maintainers: MPyL
         maintainer: MPyL
         version: pr-1234

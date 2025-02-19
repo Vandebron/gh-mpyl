@@ -233,7 +233,6 @@ class TestKubernetesChart:
         builder = self._get_builder(project)
         chart1 = to_service_chart(builder, project.deployments[0])
         chart2 = to_service_chart(builder, project.deployments[1])
-        print("chart1: ", chart1["service-testDeploymentsStrategyParameters1"])
         self._roundtrip(
             self.template_path / "deployment",
             "deployment-testDeploymentsStrategyParameters1",

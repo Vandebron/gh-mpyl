@@ -243,7 +243,7 @@ class ChartBuilder:
         }
 
         if deployment_name:
-            app_labels.update({"vandebron.nl/deployment": deployment_name})
+            app_labels.update({"vandebron.nl/deployment": deployment_name.lower()})
 
         if len(self.project.maintainer) > 0:
             app_labels["maintainers"] = ".".join(self.project.maintainer).replace(
@@ -281,7 +281,7 @@ class ChartBuilder:
             match_labels={
                 "app.kubernetes.io/instance": self.release_name,
                 "app.kubernetes.io/name": self.release_name,
-                "vandebron.nl/deployment": deployment.name,
+                "vandebron.nl/deployment": deployment.name.lower(),
             }
         )
 
@@ -431,10 +431,12 @@ class ChartBuilder:
             spec=v1_cron_job_spec,
         )
 
-    def to_prometheus_rule(self, alerts: list[Alert]) -> V1PrometheusRule:
+    def to_prometheus_rule(
+        self, alerts: list[Alert], deployment_name: str
+    ) -> V1PrometheusRule:
         return V1PrometheusRule(
             metadata=self._to_object_meta(
-                name=f"{self.project.name.lower()}-prometheus-rule"
+                name=f"{deployment_name.lower()}-prometheus-rule"
             ),
             alerts=alerts,
         )
@@ -664,13 +666,13 @@ class ChartBuilder:
         )
 
     def to_sealed_secrets(
-        self, sealed_secrets: list[KeyValueProperty]
+        self, sealed_secrets: list[KeyValueProperty], name: str
     ) -> V1SealedSecret:
         secrets: dict[str, str] = {}
         for secret in sealed_secrets:
             secrets[secret.key] = secret.get_value(self.target)
 
-        return V1SealedSecret(name=self.release_name, secrets=secrets)
+        return V1SealedSecret(name=name.lower(), secrets=secrets)
 
     @staticmethod
     def _to_resource_requirements(
@@ -845,7 +847,7 @@ class ChartBuilder:
             kind="Deployment",
             metadata=V1ObjectMeta(
                 annotations=self._to_annotations(),
-                name=self.release_name,
+                name=deployment.name.lower(),
                 labels=self.to_labels(),
             ),
             spec=V1DeploymentSpec(
@@ -870,7 +872,7 @@ class ChartBuilder:
 
         if deployment.properties and len(deployment.properties.sealed_secrets) > 0:
             chart[f"sealed-secrets-{deployment.name}"] = self.to_sealed_secrets(
-                deployment.properties.sealed_secrets
+                deployment.properties.sealed_secrets, deployment.name
             )
 
         # role is only used for Keycloak which only has 1 deployment, can be removed soon
@@ -936,7 +938,8 @@ def _to_prometheus_chart(builder: ChartBuilder, deployment: Deployment):
     prometheus_chart = (
         {
             f"prometheus-rule-{deployment.name}": builder.to_prometheus_rule(
-                alerts=metrics.alerts
+                alerts=metrics.alerts,
+                deployment_name=deployment.name,
             ),
         }
         if metrics and metrics.enabled
