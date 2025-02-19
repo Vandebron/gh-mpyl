@@ -81,7 +81,7 @@ class DagsterBase:
 
         name_suffix = get_name_suffix(properties)
         release_name = convert_to_helm_release_name(
-            step_input.project_execution.name, name_suffix
+            step_input.project.name, name_suffix
         )
 
         user_code_deployment = to_user_code_values(
@@ -93,7 +93,7 @@ class DagsterBase:
             docker_config=DockerConfig.from_dict(properties.config),
         )
 
-        values_path = Path(step_input.project_execution.project.target_path)
+        values_path = Path(step_input.project.target_path)
 
         write_chart(
             chart={},
@@ -150,9 +150,7 @@ class HelmTemplateDagster(Step, DagsterBase):
         kubernetes_manifests_generation_result = self.generate_kubernetes_manifests(
             self._logger,
             release_name=release_name,
-            namespace=step_input.project_execution.project.namespace(
-                step_input.run_properties.target
-            ),
+            namespace=step_input.project.namespace(step_input.run_properties.target),
             chart_version=dagster_config.user_code_helm_chart_version,
             values_path=values_path,
         )

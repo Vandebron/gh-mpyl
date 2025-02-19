@@ -2,16 +2,12 @@
 discovered projects have to be run due to changes in the source code since the last build of the project's
 output."""
 
-import hashlib
 import logging
 import subprocess
 from pathlib import Path
 from typing import Optional
 
 from ..project import Project
-from ..project_execution import ProjectExecution
-from ..steps import deploy
-from ..steps.output import Output
 from ..utilities.repo import Changeset
 
 
@@ -39,12 +35,8 @@ def find_projects() -> list[Path]:
     return list(map(Path, sorted(files)))
 
 
-def file_belongs_to_project(project: Project, path: str) -> bool:
-    return path.startswith(str(project.root_path) + "/")
-
-
 def is_file_in_project(logger: logging.Logger, project: Project, path: str) -> bool:
-    if file_belongs_to_project(project, path):
+    if path.startswith(str(project.root_path) + "/"):
         logger.debug(
             f"Project {project.name} added to the run plan because project file was modified: {path}"
         )
@@ -77,87 +69,13 @@ def is_file_a_dependency(
     return False
 
 
-def is_project_cached_for_stage(
-    logger: logging.Logger,
-    project: str,
-    stage: str,
-    output: Optional[Output],
-    hashed_changes: Optional[str],
-) -> bool:
-    cached = False
-
-    if stage == deploy.STAGE_NAME:
-        logger.debug(
-            f"Project {project} will execute stage {stage} because this stage is never cached"
-        )
-    elif output is None:
-        logger.debug(
-            f"Project {project} will execute stage {stage} because there is no previous run"
-        )
-    elif not output.success:
-        logger.debug(
-            f"Project {project} will execute stage {stage} because the previous run was not successful"
-        )
-    elif not output.hash:
-        logger.debug(
-            f"Project {project} will execute stage {stage} because there are no hashed changes for the previous run"
-        )
-    elif not hashed_changes:
-        logger.debug(
-            f"Project {project} will execute stage {stage} because there are no hashed changes for the current run"
-        )
-    elif output.hash != hashed_changes:
-        logger.debug(
-            f"Project {project} will execute stage {stage} because its content changed since the previous run"
-        )
-        logger.debug(f"Hashed changes for the previous run: {output.hash}")
-        logger.debug(f"Hashed changes for the current run:  {hashed_changes}")
-    else:
-        logger.debug(
-            f"Project {project} will skip stage {stage} because its content did not change since the previous run"
-        )
-        logger.debug(f"Hashed changes for the current run: {hashed_changes}")
-        cached = True
-
-    return cached
-
-
-def _hash_changes_in_project(
-    project: Project,
-    changeset: Changeset,
-) -> Optional[str]:
-    files_to_hash = set(
-        filter(
-            lambda changed_file: file_belongs_to_project(project, changed_file),
-            changeset.files_touched(status={"A", "M", "R", "C"}),
-        )
-    )
-
-    if len(files_to_hash) == 0:
-        return None
-
-    sha256 = hashlib.sha256()
-
-    for changed_file in sorted(files_to_hash):
-        with open(changed_file, "rb") as file:
-            while True:
-                data = file.read(65536)
-                if not data:
-                    break
-                sha256.update(data)
-
-    return sha256.hexdigest()
-
-
 def find_projects_to_execute(
     logger: logging.Logger,
     all_projects: set[Project],
     stage: str,
     changeset: Changeset,
-) -> set[ProjectExecution]:
-    def build_project_execution(
-        project: Project,
-    ) -> Optional[ProjectExecution]:
+) -> set[Project]:
+    def find_projects_that_should_execute(project: Project) -> Optional[Project]:
         if project.stages.for_stage(stage) is None:
             return None
 
@@ -175,37 +93,18 @@ def find_projects_to_execute(
                 f"Project {project.name} will execute stage {stage} because (at least) one of its dependencies was "
                 f"modified"
             )
-
-            if is_project_modified:
-                hashed_changes = _hash_changes_in_project(
-                    project=project, changeset=changeset
-                )
-            else:
-                hashed_changes = None
-
-            return ProjectExecution.run(project, hashed_changes)
+            return project
 
         if is_project_modified:
-            hashed_changes = _hash_changes_in_project(
-                project=project, changeset=changeset
+            logger.debug(
+                f"Project {project} will execute stage {stage} because its content changed since the previous run"
             )
-
-            return ProjectExecution.create(
-                project=project,
-                cached=is_project_cached_for_stage(
-                    logger=logger,
-                    project=project.name,
-                    stage=stage,
-                    output=Output.try_read(project.target_path, stage),
-                    hashed_changes=hashed_changes,
-                ),
-                hashed_changes=hashed_changes,
-            )
+            return project
 
         return None
 
     return {
-        project_execution
-        for project_execution in map(build_project_execution, all_projects)
-        if project_execution is not None
+        project
+        for project in map(find_projects_that_should_execute, all_projects)
+        if project is not None
     }

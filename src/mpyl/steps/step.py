@@ -121,5 +121,5 @@ class Step(metaclass=IPluginRegistry):
         """
         return Output(
             success=False,
-            message=f"Not implemented for {step_input.project_execution.name}",
+            message=f"Not implemented for {step_input.project.name}",
         )

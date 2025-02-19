@@ -21,8 +21,8 @@ class DeployEcho(Step):
         )
 
     def execute(self, step_input: Input) -> Output:
-        self._logger.info(f"Deploying project {step_input.project_execution.name}")
+        self._logger.info(f"Deploying project {step_input.project.name}")
         return Output(
             success=True,
-            message=f"Deployed project {step_input.project_execution.name}",
+            message=f"Deployed project {step_input.project.name}",
         )
