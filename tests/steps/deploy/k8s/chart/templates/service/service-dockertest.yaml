@@ -23,4 +23,5 @@ spec:
   selector:
     app.kubernetes.io/instance: dockertest
     app.kubernetes.io/name: dockertest
+    vandebron.nl/deployment: dockertest
   type: ClusterIP

@@ -20,6 +20,7 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: dockertest
       app.kubernetes.io/name: dockertest
+      vandebron.nl/deployment: dockertest
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -32,6 +33,7 @@ spec:
         app.kubernetes.io/version: pr-1234
         app.kubernetes.io/name: dockertest
         app.kubernetes.io/instance: dockertest
+        vandebron.nl/deployment: dockertest
         maintainers: MPyL
         maintainer: MPyL
         version: pr-1234

@@ -233,14 +233,18 @@ class ChartBuilder:
             else project.namespace(step_input.run_properties.target)
         )
 
-    def to_labels(self) -> dict:
+    def to_labels(self, deployment_name: Optional[str] = None) -> dict:
         run_properties = self.step_input.run_properties
+
         app_labels = {
             "name": self.release_name,
             "app.kubernetes.io/version": run_properties.versioning.identifier,
             "app.kubernetes.io/name": self.release_name,
             "app.kubernetes.io/instance": self.release_name,
         }
+
+        if deployment_name:
+            app_labels.update({"vandebron.nl/deployment": deployment_name})
 
         if len(self.project.maintainer) > 0:
             app_labels["maintainers"] = ".".join(self.project.maintainer).replace(
@@ -262,19 +266,23 @@ class ChartBuilder:
         return {"image": self._get_image()}
 
     def _to_object_meta(
-        self, name: Optional[str] = None, annotations: Optional[dict] = None
+        self,
+        name: Optional[str] = None,
+        annotations: Optional[dict] = None,
+        deployment_name: Optional[str] = None,
     ) -> V1ObjectMeta:
         return V1ObjectMeta(
             name=name if name else self.release_name,
-            labels=self.to_labels(),
+            labels=self.to_labels(deployment_name=deployment_name),
             annotations=annotations,
         )
 
-    def _to_selector(self):
+    def _to_selector(self, deployment: Deployment):
         return V1LabelSelector(
             match_labels={
                 "app.kubernetes.io/instance": self.release_name,
                 "app.kubernetes.io/name": self.release_name,
+                "vandebron.nl/deployment": deployment.name,
             }
         )
 
@@ -346,13 +354,13 @@ class ChartBuilder:
             kind="Service",
             metadata=V1ObjectMeta(
                 annotations=self._to_annotations(),
-                name=self.release_name,
+                name=deployment.name,
                 labels=self.to_labels(),
             ),
             spec=V1ServiceSpec(
                 type="ClusterIP",
                 ports=service_ports,
-                selector=self._to_selector().match_labels,
+                selector=self._to_selector(deployment).match_labels,
             ),
         )
 
@@ -847,7 +855,7 @@ class ChartBuilder:
             spec=V1DeploymentSpec(
                 replicas=instances.get_value(target=self.target),
                 template=V1PodTemplateSpec(
-                    metadata=self._to_object_meta(),
+                    metadata=self._to_object_meta(deployment_name=deployment.name),
                     spec=V1PodSpec(
                         containers=[container],
                         service_account=self.release_name,
@@ -855,7 +863,7 @@ class ChartBuilder:
                     ),
                 ),
                 strategy=strategy,
-                selector=self._to_selector(),
+                selector=self._to_selector(deployment),
             ),
         )
 
