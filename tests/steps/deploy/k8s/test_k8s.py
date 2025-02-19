@@ -150,7 +150,7 @@ class TestKubernetesChart:
             "deployment-dockertest",
             "service-dockertest",
             "service-account",
-            "sealed-secrets",
+            "sealed-secrets-dockertest",
             "dockertest-ingress-0-https",
             "dockertest-ingress-0-http",
             "dockertest-ingress-1-https",
@@ -178,7 +178,7 @@ class TestKubernetesChart:
             print(key)
         assert chart.keys() == {
             "service-account",
-            "sealed-secrets",
+            "sealed-secrets-dockertest",
             "deployment-dockertest",
             "service-dockertest",
             "dockertest-ingress-0-https",
@@ -288,7 +288,7 @@ class TestKubernetesChart:
 
     @pytest.mark.parametrize(
         "template",
-        ["job-job", "service-account", "sealed-secrets", "prometheus-rule-job"],
+        ["job-job", "service-account", "sealed-secrets-job", "prometheus-rule-job"],
     )
     def test_job_chart_roundtrip(self, template):
         job_project = get_job_project()
@@ -303,7 +303,7 @@ class TestKubernetesChart:
         [
             "cronjob-cronjob",
             "service-account",
-            "sealed-secrets",
+            "sealed-secrets-cronjob",
             "prometheus-rule-cronjob",
         ],
     )
