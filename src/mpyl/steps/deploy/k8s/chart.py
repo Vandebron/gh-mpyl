@@ -177,7 +177,6 @@ class DeploymentDefaults:
     job_defaults: dict
     traefik_defaults: Traefik
     white_lists: DefaultWhitelists
-    image_pull_secrets: dict
     deployment_strategy: dict
     additional_routes: list[TraefikAdditionalRoute]
     traefik_config: TraefikConfig
@@ -199,7 +198,6 @@ class DeploymentDefaults:
             job_defaults=kubernetes.get("job", {}),
             traefik_defaults=Traefik.from_config(deployment_values.get("traefik", {})),
             white_lists=DefaultWhitelists.from_config(config.get("whiteLists", {})),
-            image_pull_secrets=kubernetes.get("imagePullSecrets", {}),
             deployment_strategy=config["kubernetes"]["deploymentStrategy"],
             additional_routes=list(
                 map(TraefikAdditionalRoute.from_config, additional_routes)
@@ -615,17 +613,12 @@ class ChartBuilder:
             for host in hosts
         } | adjusted_middlewares
 
-    def to_service_account(self, deployment: Deployment) -> V1ServiceAccount:
-        image_pull_secrets_config = (
-            deployment.kubernetes.image_pull_secrets
-            or self.config_defaults.image_pull_secrets
-        )
+    def to_service_account(self) -> V1ServiceAccount:
         secrets = [
             ChartBuilder._to_k8s_model(
-                secret,
+                {"name": "aws-ecr"},
                 V1LocalObjectReference,
             )
-            for secret in image_pull_secrets_config
         ]
         return V1ServiceAccount(
             api_version="v1",
@@ -869,16 +862,15 @@ class ChartBuilder:
     def to_common_chart(
         self, deployment: Deployment
     ) -> dict[str, CustomResourceDefinition]:
-        chart = {
-            "service-account": self.to_service_account(deployment)
-        }  # should move out of Deployment?
+        chart = {"service-account": self.to_service_account()}
 
         if deployment.properties and len(deployment.properties.sealed_secrets) > 0:
-            chart["sealed-secrets"] = self.to_sealed_secrets(
+            chart[f"sealed-secrets-{deployment.name}"] = self.to_sealed_secrets(
                 deployment.properties.sealed_secrets
-            )  # should move out of Deployment?
+            )
 
-        role = deployment.kubernetes.role or {}  # should move out of Deployment?
+        # role is only used for Keycloak which only has 1 deployment, can be removed soon
+        role = deployment.kubernetes.role or {}
         if role:
             chart["role"] = self.to_role(role)
             chart["rolebinding"] = self.to_role_binding()
