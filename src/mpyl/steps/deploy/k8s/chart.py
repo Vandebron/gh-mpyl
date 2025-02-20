@@ -276,15 +276,6 @@ class ChartBuilder:
             annotations=annotations,
         )
 
-    def _to_selector(self, deployment: Deployment):
-        return V1LabelSelector(
-            match_labels={
-                "app.kubernetes.io/instance": self.release_name,
-                "app.kubernetes.io/name": self.release_name,
-                "vandebron.nl/deployment": deployment.name.lower(),
-            }
-        )
-
     @staticmethod
     def _to_k8s_model(values: dict, model_type):
         return ApiClient()._ApiClient__deserialize(  # pylint: disable=protected-access
@@ -359,7 +350,16 @@ class ChartBuilder:
             spec=V1ServiceSpec(
                 type="ClusterIP",
                 ports=service_ports,
-                selector=self._to_selector(deployment).match_labels,
+                selector=V1LabelSelector(
+                    match_labels={
+                        "app.kubernetes.io/instance": self.release_name,
+                        "app.kubernetes.io/name": self.release_name,
+                        "vandebron.nl/deployment": deployment.name.lower(),
+                    }
+                    # Use the Deployment name as a label selector so that this Service points only to the Pods
+                    # created by it, and not to all Pods in the application.
+                    # Required for applications with multiple deployments.
+                ).match_labels,
             ),
         )
 
@@ -867,7 +867,12 @@ class ChartBuilder:
                     ),
                 ),
                 strategy=strategy,
-                selector=self._to_selector(deployment),
+                selector=V1LabelSelector(
+                    match_labels={
+                        "app.kubernetes.io/instance": self.release_name,
+                        "app.kubernetes.io/name": self.release_name,
+                    }
+                ),
             ),
         )
 
