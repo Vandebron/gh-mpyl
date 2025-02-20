@@ -29,7 +29,7 @@ class DeployKubernetesJob(Step):
         builder = ChartBuilder(step_input)
         chart: dict[str, CustomResourceDefinition | V1Job | V1CronJob] = {}
 
-        for deployment in step_input.project_execution.project.deployments:
+        for deployment in step_input.project.deployments:
             chart.update(builder.to_common_chart(deployment))
             chart.update(
                 to_cron_job_chart(builder, deployment)

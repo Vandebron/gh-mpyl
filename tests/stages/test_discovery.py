@@ -1,43 +1,14 @@
-import contextlib
 import logging
-import os
-import shutil
 from pathlib import Path
 
-from src.mpyl.constants import RUN_ARTIFACTS_FOLDER
 from src.mpyl.plan.discovery import (
     find_projects_to_execute,
-    is_project_cached_for_stage,
     is_file_a_dependency,
 )
 from src.mpyl.project import load_project
-from src.mpyl.steps.output import Output
 from src.mpyl.utilities.repo import Changeset
-from tests import test_resource_path
 from tests.projects.find import load_projects
 from tests.test_resources.test_data import TestStage
-
-HASHED_CHANGES_OF_JOB = (
-    "b69c96161a60d00b351593e66cfcfdd4b7e82685bab22a4f5d8bd161f89d2c96"
-)
-#  ^ this has to be updated if the test project.yml changes
-
-
-@contextlib.contextmanager
-def _cache_build_job():
-    path = f"tests/projects/job/deployment/{RUN_ARTIFACTS_FOLDER}"
-
-    if not os.path.isdir(path):
-        os.makedirs(path)
-
-    try:
-        Output(success=True, message="a test output", hash=HASHED_CHANGES_OF_JOB).write(
-            target_path=Path(path),
-            stage=TestStage.build().name,
-        )
-        yield path
-    finally:
-        shutil.rmtree(path)
 
 
 class TestDiscovery:
@@ -58,16 +29,12 @@ class TestDiscovery:
             logger=self.logger,
             all_projects=self.projects,
             stage=stage_name,
-            changeset=Changeset(
-                sha="a git SHA",
-                _files_touched=files_touched,
-            ),
+            changeset=Changeset(files_touched),
         )
 
     def test_changeset_from_files(self):
         changeset = Changeset.from_files(
             self.logger,
-            sha="a git commit",
             changed_files_path=Path("tests/test_resources/changed-files/"),
         )
         assert len(changeset.files_touched()) == 12
@@ -92,11 +59,10 @@ class TestDiscovery:
 
     def test_find_projects_to_execute_for_each_stage(self):
         changeset = Changeset(
-            sha="revision",
-            _files_touched={
+            {
                 "tests/projects/service/file.py": "A",
                 "tests/some_file.txt": "A",
-            },
+            }
         )
         projects = load_projects()
         assert (
@@ -145,93 +111,56 @@ class TestDiscovery:
         )
 
     def test_stage_with_files_changed(self):
-        project_executions = self._helper_find_projects_to_execute(
+        projects = self._helper_find_projects_to_execute(
             files_touched={
                 "tests/projects/job/deployment/project.yml": "M",
             },
         )
-        assert len(project_executions) == 1
-        job_execution = next(p for p in project_executions if p.project.name == "job")
-        assert not job_execution.cached
-        assert job_execution.hashed_changes == HASHED_CHANGES_OF_JOB
-
-    def test_stage_with_files_changed_and_existing_cache(self):
-        with _cache_build_job():
-            project_executions = self._helper_find_projects_to_execute(
-                files_touched={
-                    "tests/projects/job/deployment/project.yml": "M",
-                },
-            )
-            assert len(project_executions) == 1
-            job_execution = next(
-                p for p in project_executions if p.project.name == "job"
-            )
-            assert job_execution.cached
-            assert job_execution.hashed_changes == HASHED_CHANGES_OF_JOB
+        assert len(projects) == 1
+        assert next(p for p in projects if p.name == "job")
 
     def test_stage_with_files_changed_but_filtered(self):
-        with _cache_build_job():
-            project_executions = self._helper_find_projects_to_execute(
-                files_touched={
-                    "tests/projects/job/deployment/project.yml": "D",
-                },
-            )
-            assert len(project_executions) == 1
-            job_execution = next(
-                p for p in project_executions if p.project.name == "job"
-            )
-            assert not job_execution.cached
-            # all modified files are filtered out, no hash in current run
-            assert not job_execution.hashed_changes
+        projects = self._helper_find_projects_to_execute(
+            files_touched={
+                "tests/projects/job/deployment/project.yml": "D",
+            },
+        )
+        assert len(projects) == 1
+        assert next(p for p in projects if p.name == "job")
 
     def test_stage_with_build_dependency_changed(self):
-        with _cache_build_job():
-            project_executions = self._helper_find_projects_to_execute(
-                files_touched={
-                    "tests/projects/sbt-service/src/main/scala/vandebron/mpyl/Main.scala": "M"
-                },
-            )
+        projects = self._helper_find_projects_to_execute(
+            files_touched={
+                "tests/projects/sbt-service/src/main/scala/vandebron/mpyl/Main.scala": "M"
+            },
+        )
 
-            # both job and sbt-service should be executed
-            assert len(project_executions) == 2
-
-            job_execution = next(
-                p for p in project_executions if p.project.name == "job"
-            )
-
-            # a build dependency changed, so this project should always run
-            assert not job_execution.cached
-            # no files changes in the current run
-            assert not job_execution.hashed_changes
+        # both job and sbt-service should be executed
+        assert len(projects) == 2
+        assert next(p for p in projects if p.name == "job")
+        assert next(p for p in projects if p.name == "sbtservice")
 
     def test_stage_with_test_dependency_changed(self):
-        project_executions = self._helper_find_projects_to_execute(
+        projects = self._helper_find_projects_to_execute(
             files_touched={"tests/projects/service/file.py": "M"},
         )
 
         # job should not be executed because it wasn't modified and service is only a test dependency
-        assert len(project_executions) == 1
-        assert not {p for p in project_executions if p.project.name == "job"}
+        assert len(projects) == 1
+        assert not {p for p in projects if p.name == "job"}
 
     def test_stage_with_files_changed_and_dependency_changed(self):
-        with _cache_build_job():
-            project_executions = self._helper_find_projects_to_execute(
-                files_touched={
-                    "tests/projects/job/deployment/project.yml": "M",
-                    "tests/projects/sbt-service/src/main/scala/vandebron/mpyl/Main.scala": "M",
-                },
-            )
+        projects = self._helper_find_projects_to_execute(
+            files_touched={
+                "tests/projects/job/deployment/project.yml": "M",
+                "tests/projects/sbt-service/src/main/scala/vandebron/mpyl/Main.scala": "M",
+            },
+        )
 
-            # both job and sbt-service should be executed
-            assert len(project_executions) == 2
-
-            job_execution = next(
-                p for p in project_executions if p.project.name == "job"
-            )
-
-            # a build dependency changed, so this project should always run even if there's a cached version available
-            assert not job_execution.cached
-            assert job_execution.hashed_changes == HASHED_CHANGES_OF_JOB
+        # both job and sbt-service should be executed
+        assert len(projects) == 2
+        assert next(p for p in projects if p.name == "job")
+        assert next(p for p in projects if p.name == "sbtservice")
 
     def test_should_correctly_check_root_path(self):
         assert not is_file_a_dependency(
@@ -244,71 +173,6 @@ class TestDiscovery:
             path="tests/projects/sbt-service-other/file.py",
         )
 
-    def test_is_stage_cached(self):
-        hashed_changes = "a generated test hash"
-
-        def create_test_output(success: bool = True):
-            return Output(
-                success=success, message="an output message", hash=hashed_changes
-            )
-
-        assert not is_project_cached_for_stage(
-            logger=self.logger,
-            project="a test project",
-            stage="deploy",
-            output=create_test_output(),
-            hashed_changes=hashed_changes,
-        ), "should not be cached if the stage is deploy"
-
-        assert not is_project_cached_for_stage(
-            logger=self.logger,
-            project="a test project",
-            stage="a test stage",
-            output=None,
-            hashed_changes=hashed_changes,
-        ), "should not be cached if no output"
-
-        assert not is_project_cached_for_stage(
-            logger=self.logger,
-            project="a test project",
-            stage="a test stage",
-            output=create_test_output(success=False),
-            hashed_changes=hashed_changes,
-        ), "should not be cached if output is not successful"
-
-        assert not is_project_cached_for_stage(
-            logger=self.logger,
-            project="a test project",
-            stage="a test stage",
-            output=create_test_output(),
-            hashed_changes=None,
-        ), "should not be cached if there are no changes in the current run"
-
-        assert not is_project_cached_for_stage(
-            logger=self.logger,
-            project="a test project",
-            stage="a test stage",
-            output=create_test_output(),
-            hashed_changes="a hash that doesn't match",
-        ), "should not be cached if hash doesn't match"
-
-        assert is_project_cached_for_stage(
-            logger=self.logger,
-            project="a test project",
-            stage="a test stage",
-            output=create_test_output(),
-            hashed_changes=hashed_changes,
-        ), "should be cached if hash matches"
-
-    def test_read_output_with_old_artifact_spec(self):
-        assert not is_project_cached_for_stage(
-            logger=self.logger,
-            project="a test project",
-            stage="a test stage",
-            output=Output.try_read(test_resource_path, "output-with-legacy-artifact"),
-            hashed_changes="a generated hash",
-        ), "should not be cached, but it shouldn't explode"
-
     def test_listing_override_files(self):
         touched_files = {"tests/projects/overriden-project/file.py": "A"}
         projects = load_projects()
@@ -316,26 +180,24 @@ class TestDiscovery:
             self.logger,
             projects,
             TestStage.build().name,
-            Changeset("revision", touched_files),
+            Changeset(touched_files),
         )
         projects_for_test = find_projects_to_execute(
             self.logger,
             projects,
             TestStage.test().name,
-            Changeset("revision", touched_files),
+            Changeset(touched_files),
         )
         projects_for_deploy = find_projects_to_execute(
             self.logger,
             projects,
             TestStage.deploy().name,
-            Changeset("revision", touched_files),
+            Changeset(touched_files),
         )
         assert len(projects_for_build) == 1
         assert len(projects_for_test) == 1
         assert len(projects_for_deploy) == 2
-        assert projects_for_deploy.pop().project.deployments[
-            0
-        ].kubernetes.port_mappings == {
+        assert projects_for_deploy.pop().deployments[0].kubernetes.port_mappings == {
             8088: 8088,
             8089: 8089,
         }

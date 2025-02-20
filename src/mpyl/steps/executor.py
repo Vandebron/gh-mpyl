@@ -14,7 +14,6 @@ from .models import RunProperties
 from .output import Output
 from .step import Step
 from ..project import Project, Stage
-from ..project_execution import ProjectExecution
 from ..run_plan import RunPlan
 from ..validation import validate
 
@@ -41,7 +40,7 @@ class ExecutionException(Exception):
 @dataclass(frozen=True)
 class ExecutionResult:
     stage: Stage
-    project: ProjectExecution
+    project: Project
     output: Output
     timestamp: datetime = datetime.now()
 
@@ -74,23 +73,23 @@ class Executor:
     def _execute(
         self,
         step: Step,
-        project_execution: ProjectExecution,
+        project: Project,
     ) -> Output:
-        self._logger.info(f"Executing {step.meta.name} for '{project_execution.name}'")
+        self._logger.info(f"Executing {step.meta.name} for '{project.name}'")
         result = step.execute(
             Input(
-                project_execution=project_execution,
+                project=project,
                 run_properties=self._run_properties,
                 run_plan=self._run_plan,
             )
         )
         if result.success:
             self._logger.info(
-                f"Execution of {step.meta.name} succeeded for '{project_execution.name}' with outcome '{result.message}'"  # pylint: disable=line-too-long
+                f"Execution of {step.meta.name} succeeded for '{project.name}' with outcome '{result.message}'"  # pylint: disable=line-too-long
             )
         else:
             self._logger.warning(
-                f"Execution of {step.meta.name} failed for '{project_execution.name}' with outcome '{result.message}'"  # pylint: disable=line-too-long
+                f"Execution of {step.meta.name} failed for '{project.name}' with outcome '{result.message}'"  # pylint: disable=line-too-long
             )
         return result
 
@@ -98,15 +97,15 @@ class Executor:
         self,
         main_result: Output,
         step: Step,
-        project_execution: ProjectExecution,
+        project: Project,
         stage: Stage,
     ) -> Output:
         after_result = self._execute(
             step=step,
-            project_execution=project_execution,
+            project=project,
         )
 
-        after_result.write(project_execution.project.target_path, stage.name)
+        after_result.write(project.target_path, stage.name)
 
         return Output(
             success=main_result.success and after_result.success,
@@ -125,19 +124,15 @@ class Executor:
             )
         return None
 
-    def _execute_stage(
-        self, stage: Stage, project_execution: ProjectExecution
-    ) -> Output:
-        step_name = project_execution.project.stages.for_stage(stage.name)
+    def _execute_stage(self, stage: Stage, project: Project) -> Output:
+        step_name = project.stages.for_stage(stage.name)
         if step_name is None:
             return Output(
                 success=False,
-                message=f"Stage '{stage.name}' not defined on project '{project_execution.name}'",
+                message=f"Stage '{stage.name}' not defined on project '{project.name}'",
             )
 
-        invalid_maintainers = self._validate_project_against_config(
-            project_execution.project
-        )
+        invalid_maintainers = self._validate_project_against_config(project)
         if invalid_maintainers:
             return invalid_maintainers
 
@@ -153,54 +148,46 @@ class Executor:
             )
 
         try:
-            self._logger.info(
-                f"Executing {stage.to_markdown()} for {project_execution.name}"
-            )
+            self._logger.info(f"Executing {stage.to_markdown()} for {project.name}")
             if step.before:
                 before_result = self._execute(
                     step=step.before,
-                    project_execution=project_execution,
+                    project=project,
                 )
                 if not before_result.success:
                     return before_result
 
             result = self._execute(
                 step=step,
-                project_execution=project_execution,
+                project=project,
             )
-            result.write(project_execution.project.target_path, stage.name)
+            result.write(project.target_path, stage.name)
 
             if step.after and result.success:
-                return self._execute_after_(
-                    result, step.after, project_execution, stage
-                )
+                return self._execute_after_(result, step.after, project, stage)
 
             return result
         except Exception as exc:
             message = str(exc)
             self._logger.warning(
-                f"Execution of '{step.meta.name}' for project '{project_execution.name}' in stage {stage.name} "
+                f"Execution of '{step.meta.name}' for project '{project.name}' in stage {stage.name} "
                 f"failed with exception: {message}",
                 exc_info=True,
             )
             raise ExecutionException(
-                project_execution.name, step.meta.name, stage.name, message
+                project.name, step.meta.name, stage.name, message
             ) from exc
 
-    def execute(
-        self, stage: Stage, project_execution: ProjectExecution
-    ) -> ExecutionResult:
+    def execute(self, stage: Stage, project: Project) -> ExecutionResult:
         """
         :param stage: the stage to execute
-        :param project_execution: the project execution information
+        :param project: the project to execute
         :return: StepResult
         :raise ExecutionException
         """
-        step_output = self._execute_stage(
-            stage=stage, project_execution=project_execution
-        )
+        step_output = self._execute_stage(stage=stage, project=project)
         return ExecutionResult(
             stage=stage,
-            project=project_execution,
+            project=project,
             output=step_output,
         )

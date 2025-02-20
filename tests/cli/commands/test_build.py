@@ -3,7 +3,6 @@ import logging
 import pytest
 
 from src.mpyl.build import run_deploy_stage
-from src.mpyl.project_execution import ProjectExecution
 from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps.executor import ExecutionException
 from src.mpyl.steps.input import Input
@@ -53,7 +52,7 @@ class TestBuildCli:
         run_plan = RunPlan.create(
             all_known_projects={project},
             plan={
-                TestStage.deploy(): {(ProjectExecution.run(project))},
+                TestStage.deploy(): {project},
             },
         )
         result = run_deploy_stage(
@@ -70,7 +69,7 @@ class TestBuildCli:
         project = get_project_with_stages({"deploy": "Throwing Deploy"})
         run_plan = RunPlan.create(
             all_known_projects={project},
-            plan={TestStage.deploy(): {ProjectExecution.run(project)}},
+            plan={TestStage.deploy(): {project}},
         )
 
         result = run_deploy_stage(

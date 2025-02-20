@@ -82,7 +82,6 @@ def discover_plan(ctx: Context, project: Optional[str]):
     logger = logging.getLogger("mpyl")
     run_plan = discover_run_plan(
         logger=logger,
-        revision=ctx.run_properties["build"]["versioning"]["revision"],
         all_stages=[
             Stage(stage["name"], stage["icon"])
             for stage in ctx.run_properties["stages"]
