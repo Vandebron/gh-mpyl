@@ -20,7 +20,6 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: dockertest
       app.kubernetes.io/name: dockertest
-      vandebron.nl/deployment: dockertest
   strategy:
     rollingUpdate:
       maxSurge: 25%
