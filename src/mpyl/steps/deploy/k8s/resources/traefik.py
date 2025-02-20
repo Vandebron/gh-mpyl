@@ -29,7 +29,7 @@ class HostWrapper:
 
     @property
     def full_name(self) -> str:
-        return f"{self.name}-ingress-{self.index}-whitelist"
+        return f"ingress-{self.name}-whitelist-{self.index}"
 
 
 class V1AlphaIngressRoute(CustomResourceDefinition):

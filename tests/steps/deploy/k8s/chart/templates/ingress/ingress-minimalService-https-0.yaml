@@ -2,28 +2,26 @@ apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   labels:
-    name: dockertest
+    name: minimalservice
     app.kubernetes.io/version: pr-1234
-    app.kubernetes.io/name: dockertest
-    app.kubernetes.io/instance: dockertest
+    app.kubernetes.io/name: minimalservice
+    app.kubernetes.io/instance: minimalservice
     maintainers: MPyL
     maintainer: MPyL
     version: pr-1234
     revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-  name: dockertest-ingress-1-https
+  name: ingress-minimalservice-https-0
 spec:
   routes:
   - kind: Rule
-    match: Host(`some.other.host.com`)
+    match: Host(`minimalservice-1234.test-backend.nl`)
     services:
-    - name: dockertest
+    - name: minimalservice
       kind: Service
-      port: 4091
+      port: 8080
     middlewares:
-    - name: dockertest-ingress-1-whitelist
-    syntax: v3
-    priority: 1000
+    - name: ingress-minimalservice-whitelist-0
   entryPoints:
   - websecure
   tls:
-    secretName: le-other-prod-wildcard-cert
+    secretName: le-custom-prod-wildcard-cert

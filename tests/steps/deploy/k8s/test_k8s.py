@@ -148,13 +148,13 @@ class TestKubernetesChart:
             "service-dockertest",
             "service-account",
             "sealed-secrets-dockertest",
-            "dockertest-ingress-0-https",
-            "dockertest-ingress-0-http",
-            "dockertest-ingress-1-https",
-            "dockertest-ingress-1-http",
-            "dockertest-ingress-intracloud-https-0",
-            "dockertest-ingress-0-whitelist",
-            "dockertest-ingress-1-whitelist",
+            "ingress-dockertest-https-0",
+            "ingress-dockertest-http-0",
+            "ingress-dockertest-https-1",
+            "ingress-dockertest-http-1",
+            "ingress-intracloud-https-dockertest-0",
+            "ingress-dockertest-whitelist-0",
+            "ingress-dockertest-whitelist-1",
             "ingress-routes-dockertest",
             "middleware-strip-prefix",
             "middleware-strip-prefix-dockertest",
@@ -178,13 +178,13 @@ class TestKubernetesChart:
             "sealed-secrets-dockertest",
             "deployment-dockertest",
             "service-dockertest",
-            "dockertest-ingress-0-https",
-            "dockertest-ingress-0-http",
-            "dockertest-ingress-1-https",
-            "dockertest-ingress-1-http",
-            "dockertest-ingress-intracloud-https-0",
-            "dockertest-ingress-0-whitelist",
-            "dockertest-ingress-1-whitelist",
+            "ingress-dockertest-https-0",
+            "ingress-dockertest-http-0",
+            "ingress-dockertest-https-1",
+            "ingress-dockertest-http-1",
+            "ingress-intracloud-https-dockertest-0",
+            "ingress-dockertest-whitelist-0",
+            "ingress-dockertest-whitelist-1",
             "ingress-routes-dockertest",
             "middleware-strip-prefix",
             "middleware-strip-prefix-dockertest",
@@ -263,7 +263,7 @@ class TestKubernetesChart:
         builder = self._get_builder(project)
         chart = to_service_chart(builder, project.deployments[0])
         self._roundtrip(
-            self.template_path / "ingress", "minimalService-ingress-0-https", chart
+            self.template_path / "ingress", "ingress-minimalService-https-0", chart
         )
 
     def test_production_ingress(self):
@@ -280,7 +280,7 @@ class TestKubernetesChart:
         builder = self._get_builder(project, run_properties_prod)
         chart = to_service_chart(builder, project.deployments[0])
         self._roundtrip(
-            self.template_path / "ingress-prod", "minimalService-ingress-0-https", chart
+            self.template_path / "ingress-prod", "ingress-minimalService-https-0", chart
         )
 
     @pytest.mark.parametrize(

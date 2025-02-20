@@ -486,7 +486,7 @@ class ChartBuilder:
         return [
             HostWrapper(
                 traefik_host=host,
-                name=self.release_name,
+                name=deployment.name.lower(),
                 index=idx,
                 service_port=(
                     host.service_port
@@ -542,7 +542,9 @@ class ChartBuilder:
             return None
 
         return V1AlphaIngressRoute.from_spec(
-            metadata=self._to_object_meta(name=f"ingress-routes-{self.release_name}"),
+            metadata=self._to_object_meta(
+                name=f"ingress-routes-{deployment.name.lower()}"
+            ),
             spec=ingress_route_spec,
         )
 
@@ -553,8 +555,7 @@ class ChartBuilder:
         return [
             V1AlphaIngressRoute.from_hosts(
                 metadata=self._to_object_meta(
-                    name=f"{self.release_name}-ingress-{i}-http"
-                    + ("s" if https else "")
+                    name=f"ingress-{deployment.name.lower()}-http{("s" if https else "")}-{i}"
                 ),
                 host=host,
                 target=self.target,
@@ -574,7 +575,7 @@ class ChartBuilder:
         return [
             V1AlphaIngressRoute.from_hosts(
                 metadata=self._to_object_meta(
-                    name=f"{self.release_name}-{host.additional_route.name}-{i}"
+                    name=f"{host.additional_route.name}-{deployment.name}-{i}"
                 ),
                 host=host,
                 target=self.target,
@@ -924,11 +925,11 @@ def to_service_chart(
 
 def _to_ingress_routes_charts(builder: ChartBuilder, deployment: Deployment):
     ingress_https = {
-        f"{builder.project.name}-ingress-{i}-https": route
+        f"ingress-{deployment.name}-https-{i}": route
         for i, route in enumerate(builder.to_ingress_routes(deployment, https=True))
     }
     ingress_http = {
-        f"{builder.project.name}-ingress-{i}-http": route
+        f"ingress-{deployment.name}-http-{i}": route
         for i, route in enumerate(builder.to_ingress_routes(deployment, https=False))
     }
     ingress_routes = (

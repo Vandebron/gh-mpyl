@@ -10,22 +10,19 @@ metadata:
     maintainer: MPyL
     version: pr-1234
     revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-  name: dockertest-ingress-intracloud-https-0
+  name: ingress-dockertest-http-1
 spec:
   routes:
   - kind: Rule
-    match: Host(`payments-1234.test.nl`)
+    match: Host(`some.other.host.com`)
     services:
     - name: dockertest
       kind: Service
-      port: 8080
+      port: 4091
     middlewares:
-    - name: intracloud-middleware@kubernetescrd
-    syntax: v2
+    - name: traefik-https-redirect@kubernetescrd
+    - name: ingress-dockertest-whitelist-1
+    syntax: v3
+    priority: 1000
   entryPoints:
-  - intracloud
-  tls:
-    secretName: le-custom-prod-wildcard-cert
-    options:
-      name: insecure-ciphers
-      namespace: traefik
+  - web

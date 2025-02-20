@@ -10,19 +10,18 @@ metadata:
     maintainer: MPyL
     version: pr-1234
     revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-  name: dockertest-ingress-1-http
+  name: ingress-dockertest-http-0
 spec:
   routes:
   - kind: Rule
-    match: Host(`some.other.host.com`)
+    match: Host(`payments-1234.test.nl`)
     services:
     - name: dockertest
       kind: Service
-      port: 4091
+      port: 8080
     middlewares:
     - name: traefik-https-redirect@kubernetescrd
-    - name: dockertest-ingress-1-whitelist
-    syntax: v3
-    priority: 1000
+    - name: ingress-dockertest-whitelist-0
+    syntax: v2
   entryPoints:
   - web
