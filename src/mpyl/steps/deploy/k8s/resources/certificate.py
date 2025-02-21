@@ -24,9 +24,8 @@ class V1Certificate(CustomResourceDefinition):
                         "encoding": "PKCS1",
                         "size": 2048,
                     },
-                    "duration": "2160h",  # 90d
-                    "renewBefore": "360h",  # 15d
-                    "isCA": False,
+                    "duration": "2160h0m0s",  # 90d
+                    "renewBefore": "360h0m0s",  # 15d
                     "usages": ["server auth", "client auth"],
                     "subject": {
                         "organizations": ["Vandebron Energie B.V."],
