@@ -557,7 +557,7 @@ class ChartBuilder:
                 middlewares_override=[],
                 entrypoints_override=[],
                 http_middleware=self.config_defaults.traefik_config.http_middleware,
-                default_tls=self.config_defaults.traefik_config.http_middleware,
+                default_tls=self.config_defaults.traefik_config.tls,
             )
             for i, host in enumerate(hosts)
         ]
