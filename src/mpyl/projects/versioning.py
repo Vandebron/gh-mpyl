@@ -159,7 +159,7 @@ def upgrade_to_latest(project_file: Path) -> ordereddict:
     loaded, _ = load_for_roundtrip(project_file)
     to_upgrade = copy.deepcopy(loaded)
     is_traefik_file = "-traefik" in project_file.name
-    upgraders = (
+    upgraders: list[Upgrader] = (
         [TraefikUpgrader()]
         if is_traefik_file
         else [
