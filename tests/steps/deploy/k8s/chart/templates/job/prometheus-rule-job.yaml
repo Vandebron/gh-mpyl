@@ -10,10 +10,10 @@ metadata:
     maintainer: MPyL
     version: pr-1234
     revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-  name: job-prometheus-rule
+  name: job-job
 spec:
   groups:
-  - name: job-prometheus-rule-group
+  - name: job-job-group
     rules:
     - alert: JobError
       annotations:

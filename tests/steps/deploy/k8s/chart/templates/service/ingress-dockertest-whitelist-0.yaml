@@ -12,7 +12,7 @@ metadata:
     maintainer: MPyL
     version: pr-1234
     revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-  name: ingress-dockertest-whitelist-0
+  name: dockertest-dockertest-whitelist-0
 spec:
   ipAllowList:
     sourceRange:

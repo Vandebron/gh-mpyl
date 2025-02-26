@@ -344,7 +344,7 @@ class ChartBuilder:
             kind="Service",
             metadata=V1ObjectMeta(
                 annotations=self._to_annotations(),
-                name=deployment.name.lower(),
+                name=f"{self.release_name}-{deployment.name.lower()}",
                 labels=self.to_labels(),
             ),
             spec=V1ServiceSpec(
@@ -364,8 +364,9 @@ class ChartBuilder:
         )
 
     def to_job(self, deployment: Deployment) -> V1Job:
+        job_name = f"{self.release_name}-{deployment.name.lower()}"
         job_container = V1Container(
-            name=self.release_name,
+            name=job_name,
             image=self._get_image(),
             env=self._get_env_vars(deployment),
             image_pull_policy="Always",
@@ -383,7 +384,9 @@ class ChartBuilder:
         )
 
         pod_template = V1PodTemplateSpec(
-            metadata=self._to_object_meta(annotations=self._to_image_annotation()),
+            metadata=self._to_object_meta(
+                annotations=self._to_image_annotation(), name=job_name
+            ),
             spec=V1PodSpec(
                 containers=[job_container],
                 service_account=self.release_name,
@@ -427,7 +430,9 @@ class ChartBuilder:
         return V1CronJob(
             api_version="batch/v1",
             kind="CronJob",
-            metadata=self._to_object_meta(),
+            metadata=self._to_object_meta(
+                name=f"{self.release_name}-{deployment.name.lower()}"
+            ),
             spec=v1_cron_job_spec,
         )
 
@@ -436,17 +441,17 @@ class ChartBuilder:
     ) -> V1PrometheusRule:
         return V1PrometheusRule(
             metadata=self._to_object_meta(
-                name=f"{deployment_name.lower()}-prometheus-rule"
+                name=f"{self.release_name}-{deployment_name.lower()}"
             ),
             alerts=alerts,
         )
 
     def to_service_monitor(
-        self, metrics: Metrics, default_port: int
+        self, metrics: Metrics, default_port: int, deployment_name: str
     ) -> V1ServiceMonitor:
         return V1ServiceMonitor(
             metadata=self._to_object_meta(
-                name=f"{self.project.name.lower()}-service-monitor"
+                name=f"{self.release_name}-{deployment_name.lower()}"
             ),
             metrics=metrics,
             default_port=default_port,
@@ -543,7 +548,7 @@ class ChartBuilder:
 
         return V1AlphaIngressRoute.from_spec(
             metadata=self._to_object_meta(
-                name=f"ingress-routes-{deployment.name.lower()}"
+                name=f"{self.release_name}-{deployment.name.lower()}"
             ),
             spec=ingress_route_spec,
         )
@@ -555,7 +560,7 @@ class ChartBuilder:
         return [
             V1AlphaIngressRoute.from_hosts(
                 metadata=self._to_object_meta(
-                    name=f"ingress-{deployment.name.lower()}-http{("s" if https else "")}-{i}"
+                    name=f"{deployment.name.lower()}-{host.name.lower()}-http{("s" if https else "")}-{i}"
                 ),
                 host=host,
                 target=self.target,
@@ -575,7 +580,7 @@ class ChartBuilder:
         return [
             V1AlphaIngressRoute.from_hosts(
                 metadata=self._to_object_meta(
-                    name=f"{host.additional_route.name}-{deployment.name}-{i}"
+                    name=f"{deployment.name.lower()}-{host.additional_route.name}-{i}"
                 ),
                 host=host,
                 target=self.target,
@@ -602,21 +607,25 @@ class ChartBuilder:
         )
         adjusted_middlewares = {
             f'middleware-{middleware["metadata"]["name"]}': V1AlphaMiddleware.from_spec(
-                metadata=self._to_object_meta(name=middleware["metadata"]["name"]),
+                metadata=self._to_object_meta(
+                    name=f"{self.release_name}-{deployment.name.lower()}-{middleware["metadata"]["name"]}"
+                ),
                 spec=middleware["spec"],
             )
             for middleware in middlewares
         }
 
         def to_metadata(host: HostWrapper) -> V1ObjectMeta:
-            metadata = self._to_object_meta(name=host.full_name)
+            metadata = self._to_object_meta(
+                name=f"{deployment.name.lower()}-{host.name}-whitelist-{host.index}"
+            )
             metadata.annotations = {
                 k: ", ".join(v) for k, v in host.white_lists.items()
             }
             return metadata
 
         return {
-            host.full_name: V1AlphaMiddleware.from_source_ranges(
+            f"ingress-{host.name}-whitelist-{host.index}": V1AlphaMiddleware.from_source_ranges(
                 metadata=to_metadata(host),
                 source_ranges=list(itertools.chain(*host.white_lists.values())),
             )
@@ -821,7 +830,7 @@ class ChartBuilder:
         liveness_probe, startup_probe = self._construct_probes(deployment)
 
         container = V1Container(
-            name="service",
+            name=f"{self.release_name}-{deployment.name.lower()}",
             image=self._get_image(),
             env=self._get_env_vars(deployment),
             ports=ports,
@@ -854,13 +863,15 @@ class ChartBuilder:
             kind="Deployment",
             metadata=V1ObjectMeta(
                 annotations=self._to_annotations(),
-                name=deployment.name.lower(),
+                name=f"{self.release_name}-{deployment.name.lower()}",
                 labels=self.to_labels(),
             ),
             spec=V1DeploymentSpec(
                 replicas=instances.get_value(target=self.target),
                 template=V1PodTemplateSpec(
-                    metadata=self._to_object_meta(deployment_name=deployment.name),
+                    metadata=self._to_object_meta(
+                        deployment_name=f"{self.release_name}-{deployment.name.lower()}"
+                    ),
                     spec=V1PodSpec(
                         containers=[container],
                         service_account=self.release_name,
@@ -884,7 +895,8 @@ class ChartBuilder:
 
         if deployment.properties and len(deployment.properties.sealed_secrets) > 0:
             chart[f"sealed-secrets-{deployment.name}"] = self.to_sealed_secrets(
-                deployment.properties.sealed_secrets, deployment.name
+                deployment.properties.sealed_secrets,
+                f"{self.release_name}-{deployment.name.lower()}",
             )
 
         # role is only used for Keycloak which only has 1 deployment, can be removed soon
@@ -903,7 +915,9 @@ def to_metrics(builder: ChartBuilder, deployment: Deployment):
     metrics = deployment.kubernetes.metrics
     service_monitor = (
         {
-            "service-monitor": builder.to_service_monitor(metrics, default_port),
+            f"service-monitor-{deployment.name}": builder.to_service_monitor(
+                metrics, default_port, deployment.name.lower()
+            ),
         }
         if metrics and metrics.enabled
         else {}
@@ -938,7 +952,7 @@ def _to_ingress_routes_charts(builder: ChartBuilder, deployment: Deployment):
         else {}
     )
     additional_routes = {
-        route.metadata.name: route
+        f"ingress-{route.metadata.name}": route
         for i, route in enumerate(builder.to_additional_routes(deployment))
     }
 
@@ -951,7 +965,7 @@ def _to_prometheus_chart(builder: ChartBuilder, deployment: Deployment):
         {
             f"prometheus-rule-{deployment.name}": builder.to_prometheus_rule(
                 alerts=metrics.alerts,
-                deployment_name=deployment.name,
+                deployment_name=deployment.name.lower(),
             ),
         }
         if metrics and metrics.enabled

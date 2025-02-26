@@ -10,7 +10,7 @@ metadata:
     maintainer: MPyL
     version: pr-1234
     revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-  name: cronjob
+  name: cronjob-cronjob
 spec:
   concurrencyPolicy: Allow
   failedJobsHistoryLimit: 1
@@ -30,7 +30,7 @@ spec:
             maintainer: MPyL
             version: pr-1234
             revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-          name: cronjob
+          name: cronjob-cronjob
         spec:
           containers:
           - args:
@@ -48,7 +48,7 @@ spec:
                   optional: false
             image: registry/image:123
             imagePullPolicy: Always
-            name: cronjob
+            name: cronjob-cronjob
             resources:
               limits:
                 cpu: 500m

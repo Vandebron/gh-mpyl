@@ -546,8 +546,8 @@ class Project:
         return "project-override-*.yml"
 
     @staticmethod
-    def traefik_yaml_file_name(service_name: str) -> str:
-        return f"{service_name}-traefik.yml"
+    def traefik_yaml_file_name(deployment_name: str) -> str:
+        return f"{deployment_name}-traefik.yml"
 
     @property
     def root_path(self) -> Path:
