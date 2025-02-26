@@ -383,30 +383,6 @@ definitions:
         type: number
       hasSwagger:
         type: boolean
-      whitelists:
-        type: object
-        additionalProperties: false
-        properties:
-          all:
-            type: array
-            items:
-              type: string
-          pr:
-            type: array
-            items:
-              type: string
-          test:
-            type: array
-            items:
-              type: string
-          acceptance:
-            type: array
-            items:
-              type: string
-          production:
-            type: array
-            items:
-              type: string
       tls:
         description: ''
         $ref: '#/definitions/dtapValue'

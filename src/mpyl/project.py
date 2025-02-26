@@ -377,7 +377,6 @@ class TraefikHost:
     service_port: Optional[int]
     has_swagger: bool
     tls: Optional[TargetProperty[str]]
-    whitelists: TargetProperty[list[str]]
     priority: Optional[TargetProperty[int]]
     insecure: bool
     additional_route: Optional[str]
@@ -390,7 +389,6 @@ class TraefikHost:
             service_port=values.get("servicePort"),
             has_swagger=values.get("hasSwagger", True),
             tls=TargetProperty.from_config(values.get("tls", {})),
-            whitelists=TargetProperty.from_config(values.get("whitelists", {})),
             priority=TargetProperty.from_config(values.get("priority", {})),
             insecure=values.get("insecure", False),
             additional_route=values.get("additionalRoute", None),

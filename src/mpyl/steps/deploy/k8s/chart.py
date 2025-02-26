@@ -3,7 +3,6 @@ Data classes for the composition of Custom Resource Definitions.
 More info: https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/
 """
 
-import itertools
 from dataclasses import dataclass
 from typing import Optional
 
@@ -138,24 +137,6 @@ class DefaultWhitelistAddress:
 
 
 @dataclass(frozen=True)
-class DefaultWhitelists:
-    default: list[str]
-    addresses: list[DefaultWhitelistAddress]
-
-    @staticmethod
-    def from_config(values: Optional[dict]):
-        if values is None:
-            return None
-        return DefaultWhitelists(
-            default=values["default"],
-            addresses=[
-                DefaultWhitelistAddress.from_config(address)
-                for address in values["addresses"]
-            ],
-        )
-
-
-@dataclass(frozen=True)
 class TraefikConfig:
     http_middleware: str
     tls: str
@@ -177,7 +158,6 @@ class DeploymentDefaults:
     startup_probe_defaults: dict
     job_defaults: dict
     traefik_defaults: Traefik
-    white_lists: DefaultWhitelists
     image_pull_secrets: dict
     deployment_strategy: dict
     additional_routes: list[TraefikAdditionalRoute]
@@ -199,7 +179,6 @@ class DeploymentDefaults:
             startup_probe_defaults=kubernetes["startupProbe"],
             job_defaults=kubernetes.get("job", {}),
             traefik_defaults=Traefik.from_config(deployment_values.get("traefik", {})),
-            white_lists=DefaultWhitelists.from_config(config.get("whiteLists", {})),
             image_pull_secrets=kubernetes.get("imagePullSecrets", {}),
             deployment_strategy=config["kubernetes"]["deploymentStrategy"],
             additional_routes=list(
@@ -460,21 +439,6 @@ class ChartBuilder:
             if deployment.traefik and deployment.traefik.hosts
             else self.config_defaults.traefik_defaults.hosts
         )
-        address_dictionary = {
-            address.name: address.host.get_value(self.target)
-            for address in self.config_defaults.white_lists.addresses
-        }
-
-        def to_white_list(
-            configured: Optional[TargetProperty[list[str]]],
-        ) -> dict[str, list[str]]:
-            white_lists = self.config_defaults.white_lists.default
-            if configured and configured.get_value(self.target):
-                white_lists = white_lists + configured.get_value(self.target)
-
-            return dict(
-                filter(lambda x: x[0] in white_lists, address_dictionary.items())
-            )
 
         return [
             HostWrapper(
@@ -488,7 +452,6 @@ class ChartBuilder:
                         deployment.kubernetes.port_mappings
                     )
                 ),
-                white_lists=to_white_list(host.whitelists),
                 tls=host.tls.get_value(self.target) if host.tls else None,
                 insecure=host.insecure,
                 additional_route=(
@@ -584,7 +547,6 @@ class ChartBuilder:
         ]
 
     def to_middlewares(self, deployment: Deployment) -> dict[str, V1AlphaMiddleware]:
-        hosts: list[HostWrapper] = self.create_host_wrappers(deployment)
         middlewares = (
             self._replace_placeholders(
                 deployment.traefik.middlewares.get_value(self.target)
@@ -600,20 +562,7 @@ class ChartBuilder:
             for middleware in middlewares
         }
 
-        def to_metadata(host: HostWrapper) -> V1ObjectMeta:
-            metadata = self._to_object_meta(name=host.full_name)
-            metadata.annotations = {
-                k: ", ".join(v) for k, v in host.white_lists.items()
-            }
-            return metadata
-
-        return {
-            host.full_name: V1AlphaMiddleware.from_source_ranges(
-                metadata=to_metadata(host),
-                source_ranges=list(itertools.chain(*host.white_lists.values())),
-            )
-            for host in hosts
-        } | adjusted_middlewares
+        return adjusted_middlewares
 
     def to_service_account(self, deployment: Deployment) -> V1ServiceAccount:
         image_pull_secrets_config = (

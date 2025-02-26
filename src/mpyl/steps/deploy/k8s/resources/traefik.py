@@ -22,7 +22,6 @@ class HostWrapper:
     name: str
     index: int
     service_port: int
-    white_lists: dict[str, list[str]]
     tls: Optional[str]
     additional_route: Optional[TraefikAdditionalRoute]
     insecure: bool = False
@@ -119,16 +118,6 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
 
 
 class V1AlphaMiddleware(CustomResourceDefinition):
-    @classmethod
-    def from_source_ranges(cls, metadata: V1ObjectMeta, source_ranges: list[str]):
-        return cls(
-            api_version="traefik.io/v1alpha1",
-            kind="Middleware",
-            metadata=metadata,
-            spec={"ipAllowList": {"sourceRange": source_ranges}},
-            schema="traefik.middleware.schema.yml",
-        )
-
     @classmethod
     def from_spec(cls, metadata: V1ObjectMeta, spec: dict):
         return cls(

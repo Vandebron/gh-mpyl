@@ -18,20 +18,6 @@ sbt:
   verbose: true
   javaOpts: '-Xmx4G -Xms4G -XX:+UseG1GC -XX:+CMSClassUnloadingEnabled -Xss2M'
   sbtOpts: 'user.timezone=GMT jline.terminal=jline.UnixTerminal'
-whiteLists:
-  default: [ "VPN" ]
-  addresses:
-    - name: "VPN"
-      all: [ "10.0.0.1" ]
-    - name: 'Outside-World'
-      all: [ '0.0.0.0/0' ]
-    - name: 'K8s-Test'
-      all: [ '1.2.3.0', '1.2.3.1' ]
-    - name: 'TargetSpecificWhitelist'
-      pr: [ '1.2.3.4' ]
-      test: [ '1.2.3.4' ]
-      acceptance: [ '2.3.4.5' ]
-      production: [ '3.4.5.6' ]
 kubernetes:
   deploymentStrategy:
     rollingUpdate:
@@ -71,8 +57,6 @@ project: # default values
             production: "Host(`{namespace}-{SERVICE-NAME}.prod-backend.nl`)"
           tls:
             all: "le-custom-prod-wildcard-cert"
-          whitelists:
-            all: [ "VPN" ]
           insecure: false
     additionalTraefikRoutes:
       - name: "ingress-intracloud-https"
