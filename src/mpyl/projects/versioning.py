@@ -8,7 +8,7 @@ list in this module.
 """
 
 import copy
-from abc import ABC
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Generator
 from typing import Optional
@@ -27,13 +27,35 @@ class Upgrader(ABC):
     """Base class for upgrade scripts"""
 
     target_version: int
+    version_field_position: int
+
+    @abstractmethod
+    def works_with(self, project_file: Path):
+        pass
 
     def upgrade(self, previous_dict: ordereddict) -> ordereddict:
         return previous_dict
 
 
-class TraefikUpgrader(Upgrader):
-    target_version = 1
+class TraefikYamlUpgrader(Upgrader):
+    version_field_position = 0
+
+    def works_with(self, project_file: Path):
+        return project_file.name.endswith("-traefik.yml")
+
+
+class ProjectYamlUpgrader(Upgrader):
+    version_field_position = 2
+
+    def works_with(self, project_file: Path):
+        return (
+            project_file.name == Project.project_yaml_file_name()
+            or project_file.name.startswith("project-override-")
+        )
+
+
+class TraefikUpgraderFour(TraefikYamlUpgrader):
+    target_version = 4
 
     def upgrade(self, previous_dict: ordereddict) -> ordereddict:
         middlewares = previous_dict["traefik"].get("middlewares", [])
@@ -51,7 +73,7 @@ class TraefikUpgrader(Upgrader):
         return previous_dict
 
 
-class ProjectUpgraderOne(Upgrader):
+class ProjectUpgraderOne(ProjectYamlUpgrader):
     target_version = 1
 
     def upgrade(self, previous_dict: ordereddict) -> ordereddict:
@@ -61,13 +83,12 @@ class ProjectUpgraderOne(Upgrader):
         return previous_dict
 
 
-class ProjectUpgraderTwo(Upgrader):
+class ProjectUpgraderTwo(ProjectYamlUpgrader):
+    target_version = 2
     project_yml_path: Path
 
     def __init__(self, project_yml_path: Path):
         self.project_yml_path = project_yml_path
-
-    target_version = 2
 
     def upgrade(self, previous_dict: ordereddict) -> ordereddict:
         traefik = previous_dict.get("deployment", {}).get("traefik", {})
@@ -90,7 +111,7 @@ class ProjectUpgraderTwo(Upgrader):
         return previous_dict
 
 
-class ProjectUpgraderThree(Upgrader):
+class ProjectUpgraderThree(ProjectYamlUpgrader):
     target_version = 3
 
     def upgrade(self, previous_dict: ordereddict) -> ordereddict:
@@ -158,15 +179,14 @@ def __get_version(project: dict) -> int:
 def upgrade_to_latest(project_file: Path) -> ordereddict:
     loaded, _ = load_for_roundtrip(project_file)
     to_upgrade = copy.deepcopy(loaded)
-    is_traefik_file = "-traefik" in project_file.name
-    upgraders: list[Upgrader] = (
-        [TraefikUpgrader()]
-        if is_traefik_file
-        else [
-            ProjectUpgraderOne(),
-            ProjectUpgraderTwo(project_file),
-            ProjectUpgraderThree(),
-        ]
+    all_existing_upgraders = (
+        ProjectUpgraderOne(),
+        ProjectUpgraderTwo(project_file),
+        ProjectUpgraderThree(),
+        TraefikUpgraderFour(),
+    )
+    upgraders = list(
+        filter(lambda u: u.works_with(project_file), all_existing_upgraders)
     )
 
     upgrade_index = get_entry_upgrader_index(__get_version(to_upgrade), upgraders)
@@ -181,7 +201,7 @@ def upgrade_to_latest(project_file: Path) -> ordereddict:
         diff = DeepDiff(before_upgrade, upgraded, ignore_order=True, view="tree")
         if diff:
             upgraded.insert(
-                0 if is_traefik_file else 2, VERSION_FIELD, upgrader.target_version
+                upgrader.version_field_position, VERSION_FIELD, upgrader.target_version
             )
     return upgraded
 
@@ -212,7 +232,12 @@ def pretty_print(diff: DeepDiff) -> str:
 def check_upgrades_needed(
     file_path: list[Path],
 ) -> Generator[tuple[Path, DeepDiff | None], None, None]:
+    all_paths = []
+    all_paths += file_path
     for path in file_path:
+        all_paths += list(path.parent.glob(Project.traefik_yaml_file_pattern()))
+
+    for path in all_paths:
         yield check_upgrade_needed(path)
 
 

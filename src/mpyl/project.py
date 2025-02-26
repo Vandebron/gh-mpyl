@@ -549,6 +549,10 @@ class Project:
     def traefik_yaml_file_name(service_name: str) -> str:
         return f"{service_name}-traefik.yml"
 
+    @staticmethod
+    def traefik_yaml_file_pattern() -> str:
+        return "*-traefik.yml"
+
     @property
     def root_path(self) -> Path:
         return Path(self.path).parent.parent
