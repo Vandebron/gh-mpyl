@@ -162,7 +162,6 @@ class TestKubernetesChart:
             "service-monitor",
             "role",
             "rolebinding",
-            "pr-certificate",
         ],
     )
     def test_service_chart_roundtrip(self, template):
@@ -193,7 +192,6 @@ class TestKubernetesChart:
             "service-monitor",
             "role",
             "rolebinding",
-            "pr-certificate",
         }
 
     def test_ingress_routes_placeholder_replacement(self):
