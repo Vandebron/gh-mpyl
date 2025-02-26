@@ -146,6 +146,9 @@ def lint(ctx: Context):
 @click.pass_obj
 def upgrade(ctx: Context, apply: bool):
     paths = find_projects()
+    for path in paths:
+        traefik_ymls: list[Path] = list(path.parent.glob("*-traefik.yml"))
+        paths = paths + traefik_ymls
     candidates = check_upgrades_needed(paths)
     console = ctx.console
     if not apply:
@@ -160,7 +163,7 @@ def upgrade(ctx: Context, apply: bool):
         need_upgrade = [path for path, diff in materialized if diff is not None]
         number_of_upgrades = len(need_upgrade)
         status.console.print(
-            f"Found {len(materialized)} projects, of which {number_of_upgrades} need to be upgraded"
+            f"Found {len(materialized)} project or traefik files, of which {number_of_upgrades} need to be upgraded"
         )
         status.stop()
         if number_of_upgrades > 0 and Confirm.ask("Upgrade all?"):

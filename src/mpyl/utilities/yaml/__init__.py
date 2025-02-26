@@ -7,8 +7,11 @@ from ruamel.yaml import YAML
 from ruamel.yaml.compat import ordereddict
 
 
-def yaml_to_string(serializable: object, yaml: YAML) -> str:
+def yaml_to_string(
+    serializable: object, yaml: YAML, explicit_start: bool = False
+) -> str:
     with StringIO() as stream:
+        yaml.explicit_start = explicit_start
         yaml.dump(serializable, stream)
         return stream.getvalue()
 

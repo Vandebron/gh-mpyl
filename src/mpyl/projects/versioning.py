@@ -32,6 +32,25 @@ class Upgrader(ABC):
         return previous_dict
 
 
+class TraefikUpgrader(Upgrader):
+    target_version = 1
+
+    def upgrade(self, previous_dict: ordereddict) -> ordereddict:
+        middlewares = previous_dict["traefik"].get("middlewares", [])
+        for target in middlewares:
+            for middleware in middlewares[target]:
+                spec = middleware["spec"]
+                if "ipAllowList" in spec:
+                    middlewares[target].remove(middleware)
+
+        hosts = previous_dict["traefik"].get("hosts", [])
+        for host in hosts:
+            if "whitelists" in host:
+                del host["whitelists"]
+
+        return previous_dict
+
+
 class ProjectUpgraderOne(Upgrader):
     target_version = 1
 
@@ -139,11 +158,16 @@ def __get_version(project: dict) -> int:
 def upgrade_to_latest(project_file: Path) -> ordereddict:
     loaded, _ = load_for_roundtrip(project_file)
     to_upgrade = copy.deepcopy(loaded)
-    upgraders = [
-        ProjectUpgraderOne(),
-        ProjectUpgraderTwo(project_file),
-        ProjectUpgraderThree(),
-    ]
+    is_traefik_file = "-traefik" in project_file.name
+    upgraders = (
+        [TraefikUpgrader()]
+        if is_traefik_file
+        else [
+            ProjectUpgraderOne(),
+            ProjectUpgraderTwo(project_file),
+            ProjectUpgraderThree(),
+        ]
+    )
 
     upgrade_index = get_entry_upgrader_index(__get_version(to_upgrade), upgraders)
     if upgrade_index is None:
@@ -156,7 +180,9 @@ def upgrade_to_latest(project_file: Path) -> ordereddict:
         upgraded = upgrader.upgrade(copy.deepcopy(before_upgrade))
         diff = DeepDiff(before_upgrade, upgraded, ignore_order=True, view="tree")
         if diff:
-            upgraded.insert(2, VERSION_FIELD, upgrader.target_version)
+            upgraded.insert(
+                0 if is_traefik_file else 2, VERSION_FIELD, upgrader.target_version
+            )
     return upgraded
 
 
@@ -202,4 +228,4 @@ def check_upgrade_needed(file_path: Path) -> tuple[Path, Optional[DeepDiff]]:
 def upgrade_file(project_file: Path) -> Optional[str]:
     _, yaml = load_for_roundtrip(project_file)
     upgraded = upgrade_to_latest(project_file)
-    return yaml_to_string(upgraded, yaml)
+    return yaml_to_string(upgraded, yaml, True)
