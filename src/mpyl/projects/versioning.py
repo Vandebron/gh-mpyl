@@ -228,4 +228,4 @@ def check_upgrade_needed(file_path: Path) -> tuple[Path, Optional[DeepDiff]]:
 def upgrade_file(project_file: Path) -> Optional[str]:
     _, yaml = load_for_roundtrip(project_file)
     upgraded = upgrade_to_latest(project_file)
-    return yaml_to_string(upgraded, yaml, True)
+    return yaml_to_string(upgraded, yaml, explicit_start=True)
