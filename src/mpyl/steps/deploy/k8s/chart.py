@@ -807,7 +807,8 @@ class ChartBuilder:
         )
         sealed_secrets = (
             self.get_sealed_secret_as_env_vars(
-                deployment.properties.sealed_secrets, deployment.name
+                deployment.properties.sealed_secrets,
+                f"{self.release_name}-{deployment.name.lower()}",
             )
             if deployment.properties
             else []
