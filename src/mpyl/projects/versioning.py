@@ -54,8 +54,8 @@ class ProjectYamlUpgrader(Upgrader):
         )
 
 
-class TraefikUpgraderFour(TraefikYamlUpgrader):
-    target_version = 4
+class TraefikUpgraderOne(TraefikYamlUpgrader):
+    target_version = 1
 
     def upgrade(self, previous_dict: ordereddict) -> ordereddict:
         middlewares = previous_dict["traefik"].get("middlewares", [])
@@ -69,6 +69,32 @@ class TraefikUpgraderFour(TraefikYamlUpgrader):
         for host in hosts:
             if "whitelists" in host:
                 del host["whitelists"]
+
+        return previous_dict
+
+
+class TraefikUpgraderTwo(TraefikYamlUpgrader):
+    target_version = 2
+
+    def upgrade(self, previous_dict: ordereddict) -> ordereddict:
+        middlewares = previous_dict["traefik"].get("middlewares", [])
+
+        if middlewares:
+            for target in middlewares:
+                for middleware in middlewares[target]:
+                    spec = middleware["spec"]
+                    if "rateLimit" in spec:
+                        middlewares[target].remove(middleware)
+
+                if not middlewares[target]:
+                    del middlewares[
+                        target
+                    ]  # remove middlewares entries if they are empty now
+
+            if not previous_dict["traefik"]["middlewares"]:
+                del previous_dict["traefik"][
+                    "middlewares"
+                ]  # remove middlewares section if it's empty now
 
         return previous_dict
 
@@ -183,7 +209,8 @@ def upgrade_to_latest(project_file: Path) -> ordereddict:
         ProjectUpgraderOne(),
         ProjectUpgraderTwo(project_file),
         ProjectUpgraderThree(),
-        TraefikUpgraderFour(),
+        TraefikUpgraderOne(),
+        TraefikUpgraderTwo(),
     )
     upgraders = list(
         filter(lambda u: u.works_with(project_file), all_existing_upgraders)
