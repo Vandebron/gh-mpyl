@@ -44,6 +44,9 @@ def _check_and_load_projects(
             f"Validated {len(projects)} projects. {len(valid_projects)} valid, {num_invalid} invalid"
         )
     if num_invalid > 0:
+        console.print(
+            "Note: the validation error(s) can also come from the *-traefik.yml file(s)"
+        )
         click.get_current_context().exit(1)
     return valid_projects
 
