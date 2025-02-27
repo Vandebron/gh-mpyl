@@ -120,6 +120,7 @@ class TestKubernetesChart:
             host=wrappers[0],
             target=Target.PRODUCTION,
             pr_number=1234,
+            release_name="dockertest",
             namespace="pr-1234",
             middlewares_override=[],
             entrypoints_override=[],

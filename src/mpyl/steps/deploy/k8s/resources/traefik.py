@@ -39,6 +39,7 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
         metadata: V1ObjectMeta,
         host: HostWrapper,
         target: Target,
+        release_name: str,
         namespace: str,
         pr_number: Optional[int],
         middlewares_override: list[str],
@@ -47,8 +48,8 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
         default_tls: str,
         https: bool = True,
     ):
-        def _interpolate_names(host: str, name: str) -> str:
-            host = host.replace(SERVICE_NAME_PLACEHOLDER, name)
+        def _interpolate_names(host: str) -> str:
+            host = host.replace(SERVICE_NAME_PLACEHOLDER, release_name)
             host = host.replace(NAMESPACE_PLACEHOLDER, namespace)
             host = replace_pr_number(host, pr_number)
             return host
@@ -66,7 +67,6 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
             "kind": "Rule",
             "match": _interpolate_names(
                 host=host.traefik_host.host.get_value(target),
-                name=host.name,
             ),
             "services": [
                 {"name": host.name, "kind": "Service", "port": host.service_port}
