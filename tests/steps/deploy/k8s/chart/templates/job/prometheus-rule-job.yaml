@@ -6,6 +6,7 @@ metadata:
     app.kubernetes.io/version: pr-1234
     app.kubernetes.io/name: job
     app.kubernetes.io/instance: job
+    vandebron.nl/deployment: job
     maintainers: MPyL
     maintainer: MPyL
     version: pr-1234

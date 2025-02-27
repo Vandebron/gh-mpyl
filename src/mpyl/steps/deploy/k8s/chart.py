@@ -234,7 +234,6 @@ class ChartBuilder:
 
     def to_labels(self, deployment_name: Optional[str] = None) -> dict:
         run_properties = self.step_input.run_properties
-
         app_labels = {
             "name": self.release_name,
             "app.kubernetes.io/version": run_properties.versioning.identifier,
@@ -345,7 +344,7 @@ class ChartBuilder:
             metadata=V1ObjectMeta(
                 annotations=self._to_annotations(),
                 name=f"{self.release_name}-{deployment.name.lower()}",
-                labels=self.to_labels(),
+                labels=self.to_labels(deployment_name=deployment.name.lower()),
             ),
             spec=V1ServiceSpec(
                 type="ClusterIP",
@@ -441,7 +440,8 @@ class ChartBuilder:
     ) -> V1PrometheusRule:
         return V1PrometheusRule(
             metadata=self._to_object_meta(
-                name=f"{self.release_name}-{deployment_name.lower()}"
+                name=f"{self.release_name}-{deployment_name.lower()}",
+                deployment_name=deployment_name.lower(),
             ),
             alerts=alerts,
         )
@@ -451,7 +451,8 @@ class ChartBuilder:
     ) -> V1ServiceMonitor:
         return V1ServiceMonitor(
             metadata=self._to_object_meta(
-                name=f"{self.release_name}-{deployment_name.lower()}"
+                name=f"{self.release_name}-{deployment_name.lower()}",
+                deployment_name=deployment_name.lower(),
             ),
             metrics=metrics,
             default_port=default_port,
@@ -548,7 +549,8 @@ class ChartBuilder:
 
         return V1AlphaIngressRoute.from_spec(
             metadata=self._to_object_meta(
-                name=f"{self.release_name}-{deployment.name.lower()}"
+                name=f"{self.release_name}-{deployment.name.lower()}",
+                deployment_name=deployment.name.lower(),
             ),
             spec=ingress_route_spec,
         )
@@ -560,7 +562,8 @@ class ChartBuilder:
         return [
             V1AlphaIngressRoute.from_hosts(
                 metadata=self._to_object_meta(
-                    name=f"{host.name.lower()}-http{("s" if https else "")}-{i}"
+                    name=f"{host.name.lower()}-http{("s" if https else "")}-{i}",
+                    deployment_name=deployment.name.lower(),
                 ),
                 host=host,
                 target=self.target,
@@ -581,7 +584,8 @@ class ChartBuilder:
         return [
             V1AlphaIngressRoute.from_hosts(
                 metadata=self._to_object_meta(
-                    name=f"{deployment.name.lower()}-{host.additional_route.name}-{i}"
+                    name=f"{deployment.name.lower()}-{host.additional_route.name}-{i}",
+                    deployment_name=deployment.name.lower(),
                 ),
                 host=host,
                 target=self.target,
@@ -610,15 +614,19 @@ class ChartBuilder:
         adjusted_middlewares = {
             f'middleware-{middleware["metadata"]["name"]}': V1AlphaMiddleware.from_spec(
                 metadata=self._to_object_meta(
-                    name=f"{self.release_name}-{deployment.name.lower()}-{middleware["metadata"]["name"]}"
+                    name=f"{self.release_name}-{deployment.name.lower()}-{middleware["metadata"]["name"]}",
+                    deployment_name=deployment.name.lower(),
                 ),
                 spec=middleware["spec"],
             )
             for middleware in middlewares
         }
 
-        def to_metadata(host: HostWrapper) -> V1ObjectMeta:
-            metadata = self._to_object_meta(name=f"{host.name}-whitelist-{host.index}")
+        def to_metadata(deployment: Deployment, host: HostWrapper) -> V1ObjectMeta:
+            metadata = self._to_object_meta(
+                name=f"{host.name}-whitelist-{host.index}",
+                deployment_name=deployment.name.lower(),
+            )
             metadata.annotations = {
                 k: ", ".join(v) for k, v in host.white_lists.items()
             }
@@ -626,7 +634,7 @@ class ChartBuilder:
 
         return {
             f"ingress-{deployment.name}-whitelist-{host.index}": V1AlphaMiddleware.from_source_ranges(
-                metadata=to_metadata(host),
+                metadata=to_metadata(deployment, host),
                 source_ranges=list(itertools.chain(*host.white_lists.values())),
             )
             for host in hosts
@@ -871,7 +879,7 @@ class ChartBuilder:
                 replicas=instances.get_value(target=self.target),
                 template=V1PodTemplateSpec(
                     metadata=self._to_object_meta(
-                        deployment_name=f"{self.release_name}-{deployment.name.lower()}"
+                        deployment_name=deployment.name.lower()
                     ),
                     spec=V1PodSpec(
                         containers=[container],

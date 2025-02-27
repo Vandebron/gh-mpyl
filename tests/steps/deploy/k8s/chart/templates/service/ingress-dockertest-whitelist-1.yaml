@@ -1,6 +1,10 @@
 apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
+kind: Middleware
 metadata:
+  annotations:
+    VPN: 10.0.0.1
+    K8s-Test: 1.2.3.0, 1.2.3.1
+    TargetSpecificWhitelist: 1.2.3.4
   labels:
     name: dockertest
     app.kubernetes.io/version: pr-1234
@@ -11,12 +15,11 @@ metadata:
     maintainer: MPyL
     version: pr-1234
     revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-  name: dockertest-dockertest
+  name: dockertest-dockertest-whitelist-1
 spec:
-  entryPoints:
-  - web
-  routes:
-  - kind: Rule
-    match: placeholder-test-pr-1234-1234-test
-    middlewares:
-    - name: strip-prefix-dockertest
+  ipAllowList:
+    sourceRange:
+    - 10.0.0.1
+    - 1.2.3.0
+    - 1.2.3.1
+    - 1.2.3.4

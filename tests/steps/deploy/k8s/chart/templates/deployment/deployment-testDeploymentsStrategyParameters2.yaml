@@ -32,7 +32,7 @@ spec:
         app.kubernetes.io/version: pr-1234
         app.kubernetes.io/name: testdeploymentsstrategyparameters
         app.kubernetes.io/instance: testdeploymentsstrategyparameters
-        vandebron.nl/deployment: testdeploymentsstrategyparameters-testdeploymentsstrategyparameters2
+        vandebron.nl/deployment: testdeploymentsstrategyparameters2
         maintainers: MPyL
         maintainer: MPyL
         version: pr-1234
