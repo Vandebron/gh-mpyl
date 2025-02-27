@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from src.mpyl.projects.versioning import (
+    Upgrader,
     upgrade_file,
     get_entry_upgrader_index,
     load_for_roundtrip,
@@ -16,7 +17,7 @@ class TestVersioning:
     test_resources_path = root_test_path / "test_resources"
     upgrades_path = test_resources_path / "upgrades"
     diff_path = upgrades_path / "diff"
-    latest_release_file = "test_project_2.yml"
+    latest_release_file = upgrades_path / "test_project_2" / "project.yml"
 
     @staticmethod
     def __roundtrip(source: Path, target: Path, overwrite: bool = False):
@@ -25,7 +26,7 @@ class TestVersioning:
         assert_roundtrip(target, upgraded, overwrite)
 
     def test_get_upgrader_index(self):
-        upgraders = [
+        upgraders: list[Upgrader] = [
             ProjectUpgraderOne(),
             ProjectUpgraderTwo(Path("")),
         ]
@@ -36,13 +37,13 @@ class TestVersioning:
 
     def test_full_upgrade(self):
         self.__roundtrip(
-            self.upgrades_path / "test_project_1.yml",
-            self.upgrades_path / self.latest_release_file,
+            self.upgrades_path / "test_project_1" / "project.yml",
+            self.latest_release_file,
         )
 
     def test_upgraded_should_match_test_project(self):
         assert_roundtrip(
-            self.upgrades_path / self.latest_release_file,
+            self.latest_release_file,
             (
                 self.test_resources_path
                 / "test_projects"
