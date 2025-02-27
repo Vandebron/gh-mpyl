@@ -45,7 +45,6 @@ from .resources import (
     CustomResourceDefinition,
     to_dict,
 )
-from .resources.certificate import V1Certificate
 from .resources.prometheus import V1PrometheusRule, V1ServiceMonitor
 from .resources.sealed_secret import V1SealedSecret
 from .resources.traefik import (
@@ -828,11 +827,6 @@ class ChartBuilder:
             chart["rolebinding"] = self.to_role_binding()
 
         prometheus = _to_prometheus_chart(self, deployment)
-
-        if self.target == Target.PULL_REQUEST:
-            chart["pr-certificate"] = V1Certificate(
-                str(self.step_input.run_properties.versioning.pr_number)
-            )
 
         return chart | prometheus
 
