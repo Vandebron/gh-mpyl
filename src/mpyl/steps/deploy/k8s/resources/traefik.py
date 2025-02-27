@@ -27,10 +27,6 @@ class HostWrapper:
     additional_route: Optional[TraefikAdditionalRoute]
     insecure: bool = False
 
-    @property
-    def full_name(self) -> str:
-        return f"ingress-{self.name}-whitelist-{self.index}"
-
 
 class V1AlphaIngressRoute(CustomResourceDefinition):
     @classmethod
@@ -57,7 +53,7 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
         combined_middlewares = (
             [
                 {"name": http_middleware} if not https else None,
-                {"name": host.full_name},
+                {"name": f"ingress-{host.name}-whitelist-{host.index}"},
             ]
             if len(middlewares_override) == 0
             else [{"name": m for m in middlewares_override}]

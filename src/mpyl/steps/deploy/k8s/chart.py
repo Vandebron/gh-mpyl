@@ -625,7 +625,7 @@ class ChartBuilder:
             return metadata
 
         return {
-            f"ingress-{host.name}-whitelist-{host.index}": V1AlphaMiddleware.from_source_ranges(
+            f"ingress-{deployment.name}-whitelist-{host.index}": V1AlphaMiddleware.from_source_ranges(
                 metadata=to_metadata(host),
                 source_ranges=list(itertools.chain(*host.white_lists.values())),
             )
