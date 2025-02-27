@@ -42,7 +42,7 @@ spec:
           valueFrom:
             secretKeyRef:
               key: SOME_SECRET_ENV
-              name: job
+              name: job-job
               optional: false
         image: registry/image:123
         imagePullPolicy: Always

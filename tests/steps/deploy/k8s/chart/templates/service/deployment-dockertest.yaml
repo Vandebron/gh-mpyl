@@ -52,7 +52,7 @@ spec:
           valueFrom:
             secretKeyRef:
               key: SOME_SEALED_SECRET_ENV
-              name: dockertest
+              name: dockertest-dockertest
               optional: false
         - name: SOME_SECRET_ENV
           valueFrom:

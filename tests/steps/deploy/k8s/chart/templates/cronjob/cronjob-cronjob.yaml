@@ -44,7 +44,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   key: SOME_SECRET_ENV
-                  name: cronjob
+                  name: cronjob-cronjob
                   optional: false
             image: registry/image:123
             imagePullPolicy: Always
