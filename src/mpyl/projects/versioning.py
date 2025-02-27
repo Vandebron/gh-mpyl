@@ -229,11 +229,11 @@ def pretty_print(diff: DeepDiff) -> str:
 
 
 def check_upgrades_needed(
-    file_path: list[Path],
+    file_paths: list[Path],
 ) -> Generator[tuple[Path, DeepDiff | None], None, None]:
     all_paths = []
-    all_paths += file_path
-    for path in file_path:
+    all_paths += file_paths
+    for path in file_paths:
         all_paths += list(path.parent.glob(Project.traefik_yaml_file_glob_pattern()))
 
     for path in all_paths:
