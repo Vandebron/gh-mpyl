@@ -41,16 +41,15 @@ class TraefikYamlUpgrader(Upgrader):
     version_field_position = 0
 
     def works_with(self, project_file: Path):
-        return project_file.name.endswith("-traefik.yml")
+        return bool(Project.traefik_yaml_file_pattern().match(project_file.name))
 
 
 class ProjectYamlUpgrader(Upgrader):
     version_field_position = 2
 
     def works_with(self, project_file: Path):
-        return (
-            project_file.name == Project.project_yaml_file_name()
-            or project_file.name.startswith("project-override-")
+        return project_file.name == Project.project_yaml_file_name() or bool(
+            Project.project_overrides_yaml_file_pattern().match(project_file.name)
         )
 
 
@@ -235,7 +234,7 @@ def check_upgrades_needed(
     all_paths = []
     all_paths += file_path
     for path in file_path:
-        all_paths += list(path.parent.glob(Project.traefik_yaml_file_pattern()))
+        all_paths += list(path.parent.glob(Project.traefik_yaml_file_glob_pattern()))
 
     for path in all_paths:
         yield check_upgrade_needed(path)

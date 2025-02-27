@@ -15,6 +15,7 @@ in the `deployment/project.yml`. It defines how the source code to which it rela
 
 import logging
 import pkgutil
+import re
 import time
 import traceback
 from dataclasses import dataclass
@@ -542,16 +543,24 @@ class Project:
         return "project.yml"
 
     @staticmethod
-    def project_overrides_yaml_file_pattern() -> str:
+    def project_overrides_yaml_file_glob_pattern() -> str:
         return "project-override-*.yml"
+
+    @staticmethod
+    def project_overrides_yaml_file_pattern():
+        return re.compile("^project-override-.+.yml$")
 
     @staticmethod
     def traefik_yaml_file_name(service_name: str) -> str:
         return f"{service_name}-traefik.yml"
 
     @staticmethod
-    def traefik_yaml_file_pattern() -> str:
+    def traefik_yaml_file_glob_pattern() -> str:
         return "*-traefik.yml"
+
+    @staticmethod
+    def traefik_yaml_file_pattern():
+        return re.compile("^.+-traefik.yml$")
 
     @property
     def root_path(self) -> Path:

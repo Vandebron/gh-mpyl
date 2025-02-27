@@ -25,7 +25,7 @@ def find_projects() -> list[Path]:
         " -type d ( -name target -o -name .git ) -prune"
         " -o ("
         f" -path **/deployment/{Project.project_yaml_file_name()}"
-        f" -o -path **/deployment/{Project.project_overrides_yaml_file_pattern()}"
+        f" -o -path **/deployment/{Project.project_overrides_yaml_file_glob_pattern()}"
         " )"
         " -print"
     )
