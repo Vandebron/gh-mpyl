@@ -16,7 +16,7 @@ spec:
   - kind: Rule
     match: Host(`payments-1234.test.nl`)
     services:
-    - name: dockertest
+    - name: dockertest-dockertest
       kind: Service
       port: 8080
     middlewares:

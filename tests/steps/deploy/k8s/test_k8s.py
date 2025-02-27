@@ -154,8 +154,8 @@ class TestKubernetesChart:
             "ingress-dockertest-https-1",
             "ingress-dockertest-http-1",
             "ingress-dockertest-ingress-intracloud-https-0",
-            "ingress-dockertest-whitelist-0",
-            "ingress-dockertest-whitelist-1",
+            "ingress-dockertest-dockertest-whitelist-0",
+            "ingress-dockertest-dockertest-whitelist-1",
             "ingress-routes-dockertest",
             "middleware-strip-prefix",
             "middleware-strip-prefix-dockertest",
@@ -172,9 +172,7 @@ class TestKubernetesChart:
             traefik_project.deployments[0]
         ) | to_service_chart(builder, builder.project.deployments[0])
         self._roundtrip(self.template_path / "service", template, chart)
-        for key in chart.keys():
-            print(key)
-        assert chart.keys() == {
+        assert set(chart.keys()) == {
             "service-account",
             "sealed-secrets-dockertest",
             "deployment-dockertest",
@@ -184,8 +182,8 @@ class TestKubernetesChart:
             "ingress-dockertest-https-1",
             "ingress-dockertest-http-1",
             "ingress-dockertest-ingress-intracloud-https-0",
-            "ingress-dockertest-whitelist-0",
-            "ingress-dockertest-whitelist-1",
+            "ingress-dockertest-dockertest-whitelist-0",
+            "ingress-dockertest-dockertest-whitelist-1",
             "ingress-routes-dockertest",
             "middleware-strip-prefix",
             "middleware-strip-prefix-dockertest",

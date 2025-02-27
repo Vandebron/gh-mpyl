@@ -16,11 +16,11 @@ spec:
   - kind: Rule
     match: Host(`mpyl-minimalservice.prod-backend.nl`)
     services:
-    - name: minimalservice
+    - name: minimalservice-minimalservice
       kind: Service
       port: 8080
     middlewares:
-    - name: ingress-minimalservice-whitelist-0
+    - name: ingress-minimalservice-minimalservice-whitelist-0
   entryPoints:
   - websecure
   tls:

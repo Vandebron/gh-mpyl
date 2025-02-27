@@ -491,7 +491,7 @@ class ChartBuilder:
         return [
             HostWrapper(
                 traefik_host=host,
-                name=deployment.name.lower(),
+                name=f"{self.release_name}-{deployment.name.lower()}",
                 index=idx,
                 service_port=(
                     host.service_port
@@ -560,7 +560,7 @@ class ChartBuilder:
         return [
             V1AlphaIngressRoute.from_hosts(
                 metadata=self._to_object_meta(
-                    name=f"{deployment.name.lower()}-{host.name.lower()}-http{("s" if https else "")}-{i}"
+                    name=f"{host.name.lower()}-http{("s" if https else "")}-{i}"
                 ),
                 host=host,
                 target=self.target,
@@ -618,9 +618,7 @@ class ChartBuilder:
         }
 
         def to_metadata(host: HostWrapper) -> V1ObjectMeta:
-            metadata = self._to_object_meta(
-                name=f"{deployment.name.lower()}-{host.name}-whitelist-{host.index}"
-            )
+            metadata = self._to_object_meta(name=f"{host.name}-whitelist-{host.index}")
             metadata.annotations = {
                 k: ", ".join(v) for k, v in host.white_lists.items()
             }

@@ -16,11 +16,11 @@ spec:
   - kind: Rule
     match: Host(`payments-1234.test.nl`)
     services:
-    - name: dockertest
+    - name: dockertest-dockertest
       kind: Service
       port: 8080
     middlewares:
-    - name: ingress-dockertest-whitelist-0
+    - name: ingress-dockertest-dockertest-whitelist-0
     syntax: v2
   entryPoints:
   - websecure
