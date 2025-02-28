@@ -608,8 +608,8 @@ class ChartBuilder:
                 namespace=self.namespace,
                 pr_number=self.step_input.run_properties.versioning.pr_number,
                 https=https,
-                middlewares_override=[],
-                entrypoints_override=[],
+                default_middlewares=[],
+                default_entrypoints=[],
                 http_middleware=self.config_defaults.traefik_config.http_middleware,
                 default_tls=self.config_defaults.traefik_config.tls,
             )
@@ -630,8 +630,8 @@ class ChartBuilder:
                 namespace=self.namespace,
                 pr_number=self.step_input.run_properties.versioning.pr_number,
                 https=True,
-                middlewares_override=host.additional_route.middlewares,
-                entrypoints_override=host.additional_route.entrypoints,
+                default_middlewares=host.additional_route.middlewares,
+                default_entrypoints=host.additional_route.entrypoints,
                 http_middleware=self.config_defaults.traefik_config.http_middleware,
                 default_tls=self.config_defaults.traefik_config.http_middleware,
             )
