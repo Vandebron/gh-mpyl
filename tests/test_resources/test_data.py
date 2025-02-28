@@ -22,10 +22,11 @@ properties_values = parse_config(resource_path / DEFAULT_RUN_PROPERTIES_FILE_NAM
 def stub_run_properties(
     config: dict = config_values,
     properties: dict = properties_values,
+    target: Target = Target.PULL_REQUEST,
     deploy_image: Optional[str] = None,
 ):
     return RunProperties.from_configuration(
-        target=Target.PULL_REQUEST,
+        target=target,
         run_properties=properties,
         config=config,
         deploy_image=deploy_image,
@@ -33,15 +34,6 @@ def stub_run_properties(
 
 
 RUN_PROPERTIES = stub_run_properties()
-
-RUN_PROPERTIES_PROD = dataclasses.replace(
-    RUN_PROPERTIES,
-    target=Target.PRODUCTION,
-    versioning=dataclasses.replace(
-        RUN_PROPERTIES.versioning, tag="20230829-1234", pr_number=None
-    ),
-)
-
 
 @dataclass(frozen=True)
 class TestStage:
@@ -117,18 +109,16 @@ def get_project_with_stages(
         maintainers = ["Team1", "Team2"]
     stages = Stages.from_config(stage_config)
     return Project(
-        "test",
-        "Test project",
-        path,
-        None,
-        stages,
-        maintainers,
-        None,
-        None,
-        [],
-        None,
-        None,
-        None,
+        name="test",
+        description="Test project",
+        path=path,
+        pipeline=None,
+        stages=stages,
+        maintainer=maintainers,
+        deployments=[],
+        dependencies=None,
+        kubernetes=None,
+        _dagster=None,
     )
 
 

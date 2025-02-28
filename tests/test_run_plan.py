@@ -22,8 +22,6 @@ def stub_project(name: str) -> Project:
         pipeline=None,
         stages=Stages.from_config({}),
         maintainer=[],
-        docker=None,
-        build=None,
         deployments=[],
         dependencies=None,
         kubernetes=None,

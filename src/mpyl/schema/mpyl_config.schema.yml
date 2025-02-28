@@ -12,8 +12,6 @@ definitions:
         type: string
       vcs:
         $ref: '#/definitions/VCS'
-      docker:
-        $ref: '#/definitions/Docker'
       dagster:
         $ref: '#/definitions/Dagster'
       whiteLists:
@@ -24,7 +22,6 @@ definitions:
         $ref: '#/definitions/Project'
     required:
       - vcs
-      - docker
     title: MPyL global configuration
   Whitelists:
     type: object
@@ -96,95 +93,6 @@ definitions:
         type: [string, null]
         description: Path to the file that contains the changed files
     title: VCS
-  Docker:
-    type: object
-    additionalProperties: false
-    properties:
-      defaultRegistry:
-        type: string
-      registries:
-        type: array
-        minItems: 1
-        items:
-          $ref: '#/definitions/Registry'
-      build:
-        $ref: '#/definitions/Build'
-      compose:
-        type: object
-        properties:
-          periodSeconds:
-            description: Polling interval for checking if containers are up
-            type: integer
-            default: 2
-          failureThreshold:
-            description: Maximum number of times to poll before considering 'docker-compose up' failed
-            type: integer
-            default: 20
-        required: [periodSeconds, failureThreshold]
-    required:
-      - registries
-      - defaultRegistry
-    title: Docker
-  Build:
-    type: object
-    additionalProperties: false
-    properties:
-      rootFolder:
-        type: string
-      buildTarget:
-        description: The target in the multi-stage docker file to build in the 'build' stage
-        type: string
-      testTarget:
-        description: The target in the multi-stage docker file to build in the 'test' stage
-        type: string
-      dockerFileName:
-        type: string
-    required: [rootFolder, buildTarget, dockerFileName]
-  Registry:
-    type: object
-    additionalProperties: false
-    properties:
-      hostName:
-        type: [string, null]
-      organization:
-        type: [string, null]
-      userName:
-        type: string
-      password:
-        type: string
-      provider:
-        enum:
-          - aws
-          - azure
-          - docker
-        description: >-
-          Defines the container registry provider. Defaults to aws.
-        default: aws
-      region:
-        type: string
-      cache:
-        type: object
-        additionalProperties: false
-        properties:
-          cacheFromRegistry:
-            description: Whether to cache from the registry. When true, the to and from properties are ignored.
-            type: boolean
-            default: false
-          custom:
-            type: object
-            additionalProperties: false
-            properties:
-              to:
-                description: The --cache-to argument for docker buildx
-                type: string
-              from:
-                description: The --cache-from argument for docker buildx
-                type: string
-    required:
-      - hostName
-      - password
-      - userName
-    title: Registry
   Project:
     type: object
     additionalProperties: false
