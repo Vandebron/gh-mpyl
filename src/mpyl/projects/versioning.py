@@ -41,16 +41,15 @@ class TraefikYamlUpgrader(Upgrader):
     version_field_position = 0
 
     def works_with(self, project_file: Path):
-        return project_file.name.endswith("-traefik.yml")
+        return bool(Project.traefik_yaml_file_pattern().match(project_file.name))
 
 
 class ProjectYamlUpgrader(Upgrader):
     version_field_position = 2
 
     def works_with(self, project_file: Path):
-        return (
-            project_file.name == Project.project_yaml_file_name()
-            or project_file.name.startswith("project-override-")
+        return project_file.name == Project.project_yaml_file_name() or bool(
+            Project.project_overrides_yaml_file_pattern().match(project_file.name)
         )
 
 
@@ -257,12 +256,12 @@ def pretty_print(diff: DeepDiff) -> str:
 
 
 def check_upgrades_needed(
-    file_path: list[Path],
+    file_paths: list[Path],
 ) -> Generator[tuple[Path, DeepDiff | None], None, None]:
     all_paths = []
-    all_paths += file_path
-    for path in file_path:
-        all_paths += list(path.parent.glob(Project.traefik_yaml_file_pattern()))
+    all_paths += file_paths
+    for path in file_paths:
+        all_paths += list(path.parent.glob(Project.traefik_yaml_file_glob_pattern()))
 
     for path in all_paths:
         yield check_upgrade_needed(path)
@@ -280,4 +279,4 @@ def check_upgrade_needed(file_path: Path) -> tuple[Path, Optional[DeepDiff]]:
 def upgrade_file(project_file: Path) -> Optional[str]:
     _, yaml = load_for_roundtrip(project_file)
     upgraded = upgrade_to_latest(project_file)
-    return yaml_to_string(upgraded, yaml, True)
+    return yaml_to_string(upgraded, yaml, explicit_start=True)

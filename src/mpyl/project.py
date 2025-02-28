@@ -15,6 +15,7 @@ in the `deployment/project.yml`. It defines how the source code to which it rela
 
 import logging
 import pkgutil
+import re
 import time
 import traceback
 from dataclasses import dataclass
@@ -316,7 +317,6 @@ class Kubernetes:
     metrics: Optional[Metrics]
     resources: Resources
     job: Optional[Job]
-    image_pull_secrets: dict
     role: Optional[dict]
     command: Optional[TargetProperty[str]]
     args: Optional[TargetProperty[str]]
@@ -332,7 +332,6 @@ class Kubernetes:
             metrics=Metrics.from_config(values.get("metrics", {})),
             resources=Resources.from_config(values.get("resources", {})),
             job=Job.from_config(values.get("job", {})),
-            image_pull_secrets=values.get("imagePullSecrets", {}),
             role=values.get("role"),
             command=TargetProperty.from_config(values.get("command", {})),
             args=TargetProperty.from_config(values.get("args", {})),
@@ -542,16 +541,24 @@ class Project:
         return "project.yml"
 
     @staticmethod
-    def project_overrides_yaml_file_pattern() -> str:
+    def project_overrides_yaml_file_glob_pattern() -> str:
         return "project-override-*.yml"
 
     @staticmethod
-    def traefik_yaml_file_name(service_name: str) -> str:
-        return f"{service_name}-traefik.yml"
+    def project_overrides_yaml_file_pattern():
+        return re.compile("^project-override-.+.yml$")
 
     @staticmethod
-    def traefik_yaml_file_pattern() -> str:
+    def traefik_yaml_file_name(deployment_name: str) -> str:
+        return f"{deployment_name}-traefik.yml"
+
+    @staticmethod
+    def traefik_yaml_file_glob_pattern() -> str:
         return "*-traefik.yml"
+
+    @staticmethod
+    def traefik_yaml_file_pattern():
+        return re.compile("^.+-traefik.yml$")
 
     @property
     def root_path(self) -> Path:
