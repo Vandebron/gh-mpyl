@@ -35,6 +35,7 @@ def stub_run_properties(
 
 RUN_PROPERTIES = stub_run_properties()
 
+
 @dataclass(frozen=True)
 class TestStage:
     @staticmethod

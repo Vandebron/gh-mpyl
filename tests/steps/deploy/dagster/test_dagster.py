@@ -27,7 +27,9 @@ class TestDagster:
     )
     config_resource_path = root_test_path / "test_resources"
 
-    run_properties = test_data.stub_run_properties(deploy_image="docker_host/example-dagster-user-code")
+    run_properties = test_data.stub_run_properties(
+        deploy_image="docker_host/example-dagster-user-code"
+    )
 
     @staticmethod
     def _roundtrip(
@@ -62,7 +64,10 @@ class TestDagster:
 
     def test_generate_correct_values_yaml_with_production_target(self):
         run_properties = dataclasses.replace(
-            test_data.stub_run_properties(target=Target.PRODUCTION, deploy_image="docker_host/example-dagster-user-code"),
+            test_data.stub_run_properties(
+                target=Target.PRODUCTION,
+                deploy_image="docker_host/example-dagster-user-code",
+            ),
             versioning=dataclasses.replace(
                 self.run_properties.versioning, tag="20230829-1234", pr_number=None
             ),
