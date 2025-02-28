@@ -542,10 +542,6 @@ class Project:
         return "project.yml"
 
     @staticmethod
-    def project_overrides_yaml_file_pattern() -> str:
-        return "project-override-*.yml"
-
-    @staticmethod
     def traefik_yaml_file_name(service_name: str) -> str:
         return f"{service_name}-traefik.yml"
 
@@ -632,20 +628,6 @@ def validate_project(yaml_values: dict) -> dict:
     return yaml_values
 
 
-def load_possible_parent(
-    full_path: Path,
-    loader: YAML,
-) -> Optional[dict]:
-    parent_project_path = full_path.parent / Project.project_yaml_file_name()
-    if (
-        str(full_path).endswith(Project.project_yaml_file_name())
-        or not parent_project_path.exists()
-    ):
-        return None
-    with open(parent_project_path, encoding="utf-8") as file:
-        return loader.load(file)
-
-
 def load_traefik_config(traefik_path: Path, loader: YAML) -> Optional[dict]:
     if not traefik_path.exists():
         return None
@@ -672,10 +654,7 @@ def load_project(  # pylint: disable=too-many-locals
             start = time.time()
             loader: YAML = YAML()
             yaml_values: dict = loader.load(file)
-            parent_yaml_values: Optional[dict] = load_possible_parent(
-                project_path, loader
-            )
-            yaml_values = merge_dicts(yaml_values, parent_yaml_values, True)
+
             deployment_old = yaml_values.get(
                 "deployment"
             )  # deprecated, can be removed in a month
@@ -712,50 +691,3 @@ def load_project(  # pylint: disable=too-many-locals
         except Exception:
             logging.log(log_level, f"Failed to load {project_path}", exc_info=True)
             raise
-
-
-def merge_dicts(
-    yaml_values: dict, parent_yaml_values: Optional[dict], root_level=False
-) -> dict:
-    """
-    Merge yml values and possible parent yaml values. YML values take precedence over parent values.
-    stages are not merged, but overridden.
-    :param root_level: The current level is the root level, false for nested levels
-    :param yaml_values: the original yml values
-    :param parent_yaml_values: the possible parent, if None, the original values are returned
-    :return: the merged values.
-    """
-    if parent_yaml_values is None:
-        return yaml_values
-    merged = parent_yaml_values.copy()
-    for key, value in yaml_values.items():
-        # ignore all keys that are not allowed to be overridden
-        if root_level and key not in (
-            "stages",
-            "deployment",
-            "deployments",
-            "name",
-            "description",
-            "kubernetes",
-        ):
-            continue
-        # overridden project does not inherit stages
-        if root_level and key == "stages":
-            merged[key] = value
-        # combine the deployment lists
-        if (
-            root_level
-            and key == "deployments"
-            and key in merged
-            and isinstance(merged[key], list)
-            and isinstance(value, list)
-        ):
-            for index, deployment in enumerate(value):
-                merged[key][index] = merge_dicts(merged[key][index], deployment)
-        elif (
-            key in merged and isinstance(merged[key], dict) and isinstance(value, dict)
-        ):
-            merged[key] = merge_dicts(merged[key], value)
-        else:
-            merged[key] = value
-    return merged

@@ -48,10 +48,7 @@ class ProjectYamlUpgrader(Upgrader):
     version_field_position = 2
 
     def works_with(self, project_file: Path):
-        return (
-            project_file.name == Project.project_yaml_file_name()
-            or project_file.name.startswith("project-override-")
-        )
+        return project_file.name == Project.project_yaml_file_name()
 
 
 class TraefikUpgraderOne(TraefikYamlUpgrader):

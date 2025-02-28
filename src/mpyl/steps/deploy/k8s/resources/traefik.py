@@ -40,8 +40,8 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
         target: Target,
         namespace: str,
         pr_number: Optional[int],
-        middlewares_override: list[str],
-        entrypoints_override: list[str],
+        default_middlewares: list[str],
+        default_entrypoints: list[str],
         http_middleware: str,
         default_tls: str,
         https: bool = True,
@@ -57,8 +57,8 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
                 {"name": http_middleware} if not https else None,
                 {"name": host.full_name},
             ]
-            if len(middlewares_override) == 0
-            else [{"name": m for m in middlewares_override}]
+            if len(default_middlewares) == 0
+            else [{"name": m for m in default_middlewares}]
         )
 
         route: dict[str, Any] = {
@@ -90,8 +90,8 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
 
         combined_entrypoints = (
             ["websecure" if https else "web"]
-            if len(entrypoints_override) == 0
-            else entrypoints_override
+            if len(default_entrypoints) == 0
+            else default_entrypoints
         )
 
         return cls(

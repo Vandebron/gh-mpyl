@@ -116,9 +116,3 @@ class TestMpylSchema:
 
     def test_project_yaml_file_name(self):
         assert self.project.project_yaml_file_name() == "project.yml"
-
-    def test_project_overrides_yaml_file_pattern(self):
-        assert (
-            self.project.project_overrides_yaml_file_pattern()
-            == "project-override-*.yml"
-        )
