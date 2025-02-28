@@ -16,8 +16,6 @@ definitions:
         $ref: '#/definitions/Docker'
       dagster:
         $ref: '#/definitions/Dagster'
-      whiteLists:
-        $ref: '#/definitions/Whitelists'
       kubernetes:
         $ref: '#/definitions/Kubernetes'
       project:
@@ -26,62 +24,6 @@ definitions:
       - vcs
       - docker
     title: MPyL global configuration
-  Whitelists:
-    type: object
-    required:
-      - default
-      - addresses
-    properties:
-      default:
-        description: Default whitelist for all environments
-        type: array
-        items:
-          minItems: 1
-          type: string
-      addresses:
-        type: array
-        minItems: 1
-        items:
-          type: object
-          additionalProperties: false
-          required:
-            - name
-          oneOf:
-            - required:
-                - pr
-                - test
-                - acceptance
-                - production
-            - required:
-                - all
-          properties:
-            name:
-              type: string
-            pr:
-              type: array
-              items:
-                minItems: 1
-                type: string
-            test:
-              type: array
-              items:
-                minItems: 1
-                type: string
-            acceptance:
-              type: array
-              items:
-                minItems: 1
-                type: string
-            production:
-              type: array
-              items:
-                minItems: 1
-                type: string
-            all:
-              type: array
-              items:
-                minItems: 1
-                type: string
   Kubernetes:
     type: object
     required:

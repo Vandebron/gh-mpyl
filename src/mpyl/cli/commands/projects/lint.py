@@ -1,6 +1,5 @@
 """Helper methods for linting projects for correctness are found here"""
 
-import itertools
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -125,41 +124,6 @@ def __detail_wrong_substitutions(
                 f"  {env} references unrecognized project {unrecognized_project_name}"
                 + (f" (did you mean {suggestion}?)" if suggestion else "")
             )
-
-
-def _lint_whitelisting_rules(
-    console: Console,
-    projects: list[Project],
-    config: dict,
-    target: Target,
-) -> list[tuple[Project, set[str]]]:
-    console.print("")
-    console.print(f"Checking whitelisting rules for target {target}: ")
-    defined_whitelists: set[str] = set(
-        map(lambda rule: rule["name"], config["whiteLists"]["addresses"])
-    )
-    wrong_whitelists: list[tuple[Project, set[str]]] = []
-    for project in projects:
-        if project.deployments:
-            for deployment in project.deployments:
-                if traefik := deployment.traefik:
-                    whitelists: set[str] = set(
-                        itertools.chain.from_iterable(
-                            [
-                                whitelist_property.get_value(target)
-                                for whitelist_property in [
-                                    host.whitelists
-                                    for host in traefik.hosts
-                                    if host.whitelists is not None
-                                ]
-                                if whitelist_property.get_value(target) is not None
-                            ]
-                        )
-                    )
-                    if diff := whitelists.difference(defined_whitelists):
-                        wrong_whitelists.append((project, diff))
-
-    return wrong_whitelists
 
 
 def _assert_no_self_dependencies(console: Console, all_projects: list[Project]):

@@ -17,7 +17,6 @@ from ..cli.commands.projects.lint import (
     _check_and_load_projects,
     _assert_unique_project_names,
     _assert_correct_project_linkup,
-    _lint_whitelisting_rules,
     __detail_wrong_substitutions,
     _assert_no_self_dependencies,
     _find_projects_without_deployments,
@@ -111,22 +110,6 @@ def lint(ctx: Context):
         failed = True
         __detail_wrong_substitutions(console, all_projects, wrong_substitutions)
 
-    for target in Target:
-        wrong_whitelists = _lint_whitelisting_rules(
-            console=console,
-            projects=all_projects,
-            config=ctx.config,
-            target=target,
-        )
-        if len(wrong_whitelists) == 0:
-            console.print("  ✅ No undefined whitelists found")
-        else:
-            for project, diff in wrong_whitelists:
-                console.log(
-                    f"  ❌ Project {project.name} has undefined whitelists: {diff}"
-                )
-                failed = True
-
     projects_with_self_dependencies = _assert_no_self_dependencies(
         console, all_projects
     )
@@ -177,7 +160,7 @@ def upgrade(ctx: Context, apply: bool):
         need_upgrade = [path for path, diff in materialized if diff is not None]
         number_of_upgrades = len(need_upgrade)
         status.console.print(
-            f"Found {len(materialized)} projects, of which {number_of_upgrades} need to be upgraded"
+            f"Found {len(materialized)} project or traefik files, of which {number_of_upgrades} need to be upgraded"
         )
         status.stop()
         if number_of_upgrades > 0 and Confirm.ask("Upgrade all?"):
