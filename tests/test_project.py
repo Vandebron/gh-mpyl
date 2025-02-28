@@ -102,12 +102,6 @@ class TestMpylSchema:
     def test_project_target_path(self):
         assert self.project.target_path == self.resource_path / "default" / ".mpyl"
 
-    def test_project_test_containers_path(self):
-        assert (
-            self.project.test_containers_path
-            == self.resource_path / "default" / "docker-compose-test.yml"
-        )
-
     def test_project_test_report_path(self):
         assert (
             self.project.test_report_path

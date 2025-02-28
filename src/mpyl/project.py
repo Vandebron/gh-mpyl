@@ -435,39 +435,6 @@ class Traefik:
 
 
 @dataclass(frozen=True)
-class Docker:
-    host_name: str
-
-    @staticmethod
-    def from_config(values: dict):
-        return Docker(host_name=values["hostName"])
-
-
-@dataclass(frozen=True)
-class BuildArgs:
-    plain: list[KeyValueProperty]
-    credentials: list[EnvCredential]
-
-    @staticmethod
-    def from_config(values: dict):
-        return BuildArgs(
-            plain=list(map(KeyValueProperty.from_config, values.get("plain", []))),
-            credentials=list(
-                map(EnvCredential.from_config, values.get("credentials", []))
-            ),
-        )
-
-
-@dataclass(frozen=True)
-class Build:
-    args: BuildArgs
-
-    @staticmethod
-    def from_config(values: dict):
-        return Build(args=BuildArgs.from_config(values.get("args", {})))
-
-
-@dataclass(frozen=True)
 class Deployment:
     name: str
     properties: Optional[Properties]
@@ -508,8 +475,6 @@ class Project:
     pipeline: Optional[str]
     stages: Stages
     maintainer: list[str]
-    docker: Optional[Docker]
-    build: Optional[Build]
     deployments: list[Deployment]
     dependencies: Optional[Dependencies]
     kubernetes: Optional[KubernetesCommon]
@@ -562,16 +527,11 @@ class Project:
         return self.deployment_path / RUN_ARTIFACTS_FOLDER
 
     @property
-    def test_containers_path(self) -> Path:
-        return self.deployment_path / "docker-compose-test.yml"
-
-    @property
     def test_report_path(self) -> Path:
         return Path(self.root_path) / "target/test-reports"
 
     @staticmethod
     def from_config(values: dict, project_path: Path):
-        docker_config = values.get("docker")
         kubernetes_values = values.get("kubernetes", {})
         dagster = values.get("dagster")
         deployment_old = values.get("deployment", {})
@@ -603,8 +563,6 @@ class Project:
             pipeline=values.get("pipeline"),
             stages=Stages.from_config(values.get("stages", {})),
             maintainer=values.get("maintainer", []),
-            docker=Docker.from_config(docker_config) if docker_config else None,
-            build=Build.from_config(values.get("build", {})),
             deployments=deployments,
             dependencies=(
                 Dependencies.from_config(dependencies) if dependencies else None

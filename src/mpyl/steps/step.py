@@ -38,8 +38,8 @@ description: 'A simple Java service'
 Your step needs to return an `mpyl.steps.models.Output` object with fields that are hopefully self-explanatory.
 
 ##### Step input
-The step receives an `mpyl.steps.models.Input` for `execute`. If your step needs configuration settings, like for
-example `mpyl.utilities.docker.DockerConfig`, this can be constructed from the `mpyl.steps.models.RunProperties.config`
+The step receives an `mpyl.steps.models.Input` for `execute`. If your step needs configuration settings,
+this can be constructed from the `mpyl.steps.models.RunProperties.config`
 dictionary on `mpyl.steps.models.Input.run_properties`.
 Make sure to update the schema under `src/mpyl/schema/mpyl_config.schema.yml` accordingly, so that the configuration
 remains type safe and mistakes are found as early as possible.

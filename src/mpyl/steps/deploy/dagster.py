@@ -16,7 +16,6 @@ from ..output import Output
 from ..step import Step, Meta
 from ..models import RunProperties
 from ...utilities.dagster import DagsterConfig
-from ...utilities.docker import DockerConfig
 from ...utilities.helm import convert_to_helm_release_name, get_name_suffix
 from ...utilities.subprocess import custom_check_output
 
@@ -90,7 +89,6 @@ class DagsterBase:
             name_suffix=name_suffix,
             run_properties=properties,
             service_account_override=global_service_account_override,
-            docker_config=DockerConfig.from_dict(properties.config),
         )
 
         values_path = Path(step_input.project.target_path)

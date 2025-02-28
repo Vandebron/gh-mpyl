@@ -1,14 +1,13 @@
+import dataclasses
 from pathlib import Path
 
 from ruamel.yaml import YAML
 
-from src.mpyl import parse_config
-from src.mpyl.project import load_project
+from src.mpyl.project import Target, load_project
 from src.mpyl.run_plan import RunPlan
 from src.mpyl.steps.deploy.k8s.chart import ChartBuilder
 from src.mpyl.steps.deploy.k8s.resources.dagster import to_user_code_values
 from src.mpyl.steps.input import Input
-from src.mpyl.utilities.docker import DockerConfig
 from src.mpyl.utilities.helm import get_name_suffix
 from src.mpyl.utilities.yaml import yaml_to_string
 from tests import root_test_path
@@ -28,6 +27,10 @@ class TestDagster:
     )
     config_resource_path = root_test_path / "test_resources"
 
+    run_properties = test_data.stub_run_properties(
+        deploy_image="docker_host/example-dagster-user-code"
+    )
+
     @staticmethod
     def _roundtrip(
         file_name: Path,
@@ -43,19 +46,16 @@ class TestDagster:
             project=load_project(
                 self.resource_path / "project.yml", validate_project_yaml=True
             ),
-            run_properties=test_data.RUN_PROPERTIES,
+            run_properties=self.run_properties,
             run_plan=RunPlan.empty(),
         )
 
         values = to_user_code_values(
             builder=ChartBuilder(step_input),
             release_name="example-dagster-user-code-pr-1234",
-            name_suffix=get_name_suffix(test_data.RUN_PROPERTIES),
-            run_properties=test_data.RUN_PROPERTIES,
+            name_suffix=get_name_suffix(self.run_properties),
+            run_properties=self.run_properties,
             service_account_override="global_service_account",
-            docker_config=DockerConfig.from_dict(
-                parse_config(Path(f"{self.config_resource_path}/mpyl_config.yml"))
-            ),
         )
 
         self._roundtrip(
@@ -63,23 +63,29 @@ class TestDagster:
         )
 
     def test_generate_correct_values_yaml_with_production_target(self):
+        run_properties = dataclasses.replace(
+            test_data.stub_run_properties(
+                target=Target.PRODUCTION,
+                deploy_image="docker_host/example-dagster-user-code",
+            ),
+            versioning=dataclasses.replace(
+                self.run_properties.versioning, tag="20230829-1234", pr_number=None
+            ),
+        )
         step_input = Input(
             project=load_project(
                 Path(self.resource_path, "project.yml"), validate_project_yaml=True
             ),
-            run_properties=test_data.RUN_PROPERTIES_PROD,
+            run_properties=run_properties,
             run_plan=RunPlan.empty(),
         )
 
         values = to_user_code_values(
             builder=ChartBuilder(step_input),
             release_name="example-dagster-user-code",
-            name_suffix=get_name_suffix(test_data.RUN_PROPERTIES_PROD),
-            run_properties=test_data.RUN_PROPERTIES_PROD,
+            name_suffix=get_name_suffix(run_properties),
+            run_properties=run_properties,
             service_account_override="global_service_account",
-            docker_config=DockerConfig.from_dict(
-                parse_config(Path(f"{self.config_resource_path}/mpyl_config.yml"))
-            ),
         )
 
         self._roundtrip(self.generated_values_path, "values_with_target_prod", values)
@@ -89,19 +95,16 @@ class TestDagster:
             project=load_project(
                 Path(self.resource_path, "project.yml"), validate_project_yaml=True
             ),
-            run_properties=test_data.RUN_PROPERTIES,
+            run_properties=self.run_properties,
             run_plan=RunPlan.empty(),
         )
 
         values = to_user_code_values(
             builder=ChartBuilder(step_input),
             release_name="example-dagster-user-code-pr-1234",
-            name_suffix=get_name_suffix(test_data.RUN_PROPERTIES),
-            run_properties=test_data.RUN_PROPERTIES,
+            name_suffix=get_name_suffix(self.run_properties),
+            run_properties=self.run_properties,
             service_account_override=None,
-            docker_config=DockerConfig.from_dict(
-                parse_config(Path(f"{self.config_resource_path}/mpyl_config.yml"))
-            ),
         )
 
         self._roundtrip(
@@ -114,19 +117,16 @@ class TestDagster:
                 self.dagster_project_folder / "project_with_sealed_secret.yml",
                 validate_project_yaml=True,
             ),
-            run_properties=test_data.RUN_PROPERTIES,
+            run_properties=self.run_properties,
             run_plan=RunPlan.empty(),
         )
 
         values = to_user_code_values(
             builder=ChartBuilder(step_input),
             release_name="example-dagster-user-code-pr-1234",
-            name_suffix=get_name_suffix(test_data.RUN_PROPERTIES),
-            run_properties=test_data.RUN_PROPERTIES,
+            name_suffix=get_name_suffix(self.run_properties),
+            run_properties=self.run_properties,
             service_account_override=None,
-            docker_config=DockerConfig.from_dict(
-                parse_config(Path(f"{self.config_resource_path}/mpyl_config.yml"))
-            ),
         )
 
         self._roundtrip(

@@ -73,18 +73,16 @@ class TestSteps:
             {"build": None, "test": None, "deploy": None, "postdeploy": None}
         )
         project = Project(
-            "test",
-            "Test project",
-            "",
-            None,
-            stages,
-            [],
-            None,
-            None,
-            [],
-            None,
-            None,
-            None,
+            name="test",
+            description="Test project",
+            path="",
+            pipeline=None,
+            stages=stages,
+            maintainer=[],
+            deployments=[],
+            dependencies=None,
+            kubernetes=None,
+            _dagster=None,
         )
         output = steps.execute(
             stage=TestStage.deploy(),
