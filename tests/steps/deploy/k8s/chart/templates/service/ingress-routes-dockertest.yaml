@@ -19,4 +19,4 @@ spec:
   - kind: Rule
     match: placeholder-test-pr-1234-1234-test
     middlewares:
-    - name: strip-prefix-dockertest
+    - name: strip-prefix

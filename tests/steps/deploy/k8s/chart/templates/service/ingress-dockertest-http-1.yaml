@@ -22,7 +22,7 @@ spec:
       port: 4091
     middlewares:
     - name: traefik-https-redirect@kubernetescrd
-    - name: ingress-dockertest-dockertest-whitelist-1
+    - name: whitelist-1-dockertest-dockertest
     syntax: v3
     priority: 1000
   entryPoints:

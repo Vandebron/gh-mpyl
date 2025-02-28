@@ -49,12 +49,12 @@ class TestKubernetesChart:
     @staticmethod
     def _roundtrip(
         file_name: Path,
-        chart: str,
+        filename: str,
         resources: dict[str, Union[CustomResourceDefinition, V1Job, V1CronJob]],
         overwrite: bool = False,
     ):
-        name_chart = file_name / f"{chart}.yaml"
-        resource = resources[chart]
+        name_chart = file_name / f"{filename}.yaml"
+        resource = resources[filename]
         assert_roundtrip(name_chart, to_yaml(resource), overwrite)
 
     @staticmethod
@@ -154,10 +154,9 @@ class TestKubernetesChart:
             "ingress-dockertest-https-1",
             "ingress-dockertest-http-1",
             "ingress-dockertest-ingress-intracloud-https-0",
-            "ingress-dockertest-whitelist-0",
-            "ingress-dockertest-whitelist-1",
+            "middleware-whitelist-0-dockertest",
+            "middleware-whitelist-1-dockertest",
             "ingress-routes-dockertest",
-            "middleware-strip-prefix",
             "middleware-strip-prefix-dockertest",
             "prometheus-rule-dockertest",
             "service-monitor-dockertest",
@@ -171,7 +170,9 @@ class TestKubernetesChart:
         chart = builder.to_common_chart(
             traefik_project.deployments[0]
         ) | to_service_chart(builder, builder.project.deployments[0])
-        self._roundtrip(self.template_path / "service", template, chart)
+        self._roundtrip(
+            self.template_path / "service", filename=template, resources=chart
+        )
         assert set(chart.keys()) == {
             "service-account",
             "sealed-secrets-dockertest",
@@ -182,10 +183,9 @@ class TestKubernetesChart:
             "ingress-dockertest-https-1",
             "ingress-dockertest-http-1",
             "ingress-dockertest-ingress-intracloud-https-0",
-            "ingress-dockertest-whitelist-0",
-            "ingress-dockertest-whitelist-1",
+            "middleware-whitelist-0-dockertest",
+            "middleware-whitelist-1-dockertest",
             "ingress-routes-dockertest",
-            "middleware-strip-prefix",
             "middleware-strip-prefix-dockertest",
             "prometheus-rule-dockertest",
             "service-monitor-dockertest",
@@ -201,8 +201,7 @@ class TestKubernetesChart:
             == "placeholder-test-pr-1234-1234-test"
         )
         assert (
-            ingress_routes.spec["routes"][0]["middlewares"][0]["name"]
-            == "strip-prefix-dockertest"
+            ingress_routes.spec["routes"][0]["middlewares"][0]["name"] == "strip-prefix"
         )
 
     def test_middlewares_placeholder_replacement(self):

@@ -612,9 +612,11 @@ class ChartBuilder:
             else []
         )
         adjusted_middlewares = {
-            f'middleware-{middleware["metadata"]["name"]}': V1AlphaMiddleware.from_spec(
+            f'middleware-{middleware["metadata"]["name"]}-{deployment.name}': V1AlphaMiddleware.from_spec(
                 metadata=self._to_object_meta(
-                    name=f"{self.release_name}-{deployment.name.lower()}-{middleware["metadata"]["name"]}",
+                    # this needs to be the exact name selected by the developer,
+                    # otherwise they won't be able to match it in the ingress
+                    name=middleware["metadata"]["name"],
                     deployment_name=deployment.name.lower(),
                 ),
                 spec=middleware["spec"],
@@ -624,7 +626,7 @@ class ChartBuilder:
 
         def to_metadata(deployment: Deployment, host: HostWrapper) -> V1ObjectMeta:
             metadata = self._to_object_meta(
-                name=f"{host.name}-whitelist-{host.index}",
+                name=f"whitelist-{host.index}-{host.name}",
                 deployment_name=deployment.name.lower(),
             )
             metadata.annotations = {
@@ -633,7 +635,7 @@ class ChartBuilder:
             return metadata
 
         return {
-            f"ingress-{deployment.name}-whitelist-{host.index}": V1AlphaMiddleware.from_source_ranges(
+            f"middleware-whitelist-{host.index}-{deployment.name}": V1AlphaMiddleware.from_source_ranges(
                 metadata=to_metadata(deployment, host),
                 source_ranges=list(itertools.chain(*host.white_lists.values())),
             )

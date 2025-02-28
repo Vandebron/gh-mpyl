@@ -21,7 +21,7 @@ spec:
       kind: Service
       port: 4091
     middlewares:
-    - name: ingress-dockertest-dockertest-whitelist-1
+    - name: whitelist-1-dockertest-dockertest
     syntax: v3
     priority: 1000
   entryPoints:

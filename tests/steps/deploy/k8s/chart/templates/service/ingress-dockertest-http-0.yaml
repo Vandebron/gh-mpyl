@@ -22,7 +22,7 @@ spec:
       port: 8080
     middlewares:
     - name: traefik-https-redirect@kubernetescrd
-    - name: ingress-dockertest-dockertest-whitelist-0
+    - name: whitelist-0-dockertest-dockertest
     syntax: v2
   entryPoints:
   - web

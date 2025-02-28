@@ -53,7 +53,7 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
         combined_middlewares = (
             [
                 {"name": http_middleware} if not https else None,
-                {"name": f"ingress-{host.name}-whitelist-{host.index}"},
+                {"name": f"whitelist-{host.index}-{host.name}"},
             ]
             if len(middlewares_override) == 0
             else [{"name": m for m in middlewares_override}]
