@@ -82,7 +82,7 @@ class TestSteps:
             None,
             None,
             [],
-            None,
+            [],
             None,
             None,
         )

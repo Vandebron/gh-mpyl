@@ -6,7 +6,6 @@ from jsonschema import ValidationError
 
 from src.mpyl.project import load_project, Target
 from tests import root_test_path
-from tests.test_resources.test_data import TestStage
 
 
 class TestMpylSchema:
@@ -40,17 +39,11 @@ class TestMpylSchema:
         ), "should start with"
 
         assert self.project.dependencies is not None
-        assert self.project.dependencies.for_stage(TestStage.build().name) == [
-            "test/docker/"
+        assert self.project.dependencies == [
+            "test/docker/",
+            "test2/docker/",
+            "specs/*.js",
         ]
-        assert self.project.dependencies.for_stage(TestStage.test().name) == [
-            "test2/docker/"
-        ]
-        assert self.project.dependencies.for_stage(TestStage.deploy().name) is None
-        assert self.project.dependencies.for_stage(TestStage.post_deploy().name) == [
-            "specs/*.js"
-        ]
-
         assert self.project.deployments[0].kubernetes is not None
         assert self.project.deployments[0].kubernetes.port_mappings == {8080: 80}
         assert self.project.deployments[0].kubernetes.liveness_probe is not None
