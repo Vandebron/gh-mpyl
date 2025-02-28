@@ -157,7 +157,6 @@ class DeploymentDefaults:
     startup_probe_defaults: dict
     job_defaults: dict
     traefik_defaults: Traefik
-    image_pull_secrets: dict
     deployment_strategy: dict
     additional_routes: list[TraefikAdditionalRoute]
     traefik_config: TraefikConfig
@@ -178,7 +177,6 @@ class DeploymentDefaults:
             startup_probe_defaults=kubernetes["startupProbe"],
             job_defaults=kubernetes.get("job", {}),
             traefik_defaults=Traefik.from_config(deployment_values.get("traefik", {})),
-            image_pull_secrets=kubernetes.get("imagePullSecrets", {}),
             deployment_strategy=config["kubernetes"]["deploymentStrategy"],
             additional_routes=list(
                 map(TraefikAdditionalRoute.from_config, additional_routes)
@@ -213,7 +211,7 @@ class ChartBuilder:
             else self.project.namespace(step_input.run_properties.target)
         )
 
-    def to_labels(self) -> dict:
+    def to_labels(self, deployment_name: Optional[str] = None) -> dict:
         run_properties = self.step_input.run_properties
         app_labels = {
             "name": self.release_name,
@@ -221,6 +219,9 @@ class ChartBuilder:
             "app.kubernetes.io/name": self.release_name,
             "app.kubernetes.io/instance": self.release_name,
         }
+
+        if deployment_name:
+            app_labels.update({"vandebron.nl/deployment": deployment_name.lower()})
 
         if len(self.project.maintainer) > 0:
             app_labels["maintainers"] = ".".join(self.project.maintainer).replace(
@@ -242,20 +243,15 @@ class ChartBuilder:
         return {"image": self._get_image()}
 
     def _to_object_meta(
-        self, name: Optional[str] = None, annotations: Optional[dict] = None
+        self,
+        name: Optional[str] = None,
+        annotations: Optional[dict] = None,
+        deployment_name: Optional[str] = None,
     ) -> V1ObjectMeta:
         return V1ObjectMeta(
             name=name if name else self.release_name,
-            labels=self.to_labels(),
+            labels=self.to_labels(deployment_name=deployment_name),
             annotations=annotations,
-        )
-
-    def _to_selector(self):
-        return V1LabelSelector(
-            match_labels={
-                "app.kubernetes.io/instance": self.release_name,
-                "app.kubernetes.io/name": self.release_name,
-            }
         )
 
     @staticmethod
@@ -326,19 +322,29 @@ class ChartBuilder:
             kind="Service",
             metadata=V1ObjectMeta(
                 annotations=self._to_annotations(),
-                name=self.release_name,
-                labels=self.to_labels(),
+                name=f"{self.release_name}-{deployment.name.lower()}",
+                labels=self.to_labels(deployment_name=deployment.name.lower()),
             ),
             spec=V1ServiceSpec(
                 type="ClusterIP",
                 ports=service_ports,
-                selector=self._to_selector().match_labels,
+                selector=V1LabelSelector(
+                    match_labels={
+                        "app.kubernetes.io/instance": self.release_name,
+                        "app.kubernetes.io/name": self.release_name,
+                        "vandebron.nl/deployment": deployment.name.lower(),
+                    }
+                    # Use the Deployment name as a label selector so that this Service points only to the Pods
+                    # created by it, and not to all Pods in the application.
+                    # Required for applications with multiple deployments.
+                ).match_labels,
             ),
         )
 
     def to_job(self, deployment: Deployment) -> V1Job:
+        job_name = f"{self.release_name}-{deployment.name.lower()}"
         job_container = V1Container(
-            name=self.release_name,
+            name=job_name,
             image=self._get_image(),
             env=self._get_env_vars(deployment),
             image_pull_policy="Always",
@@ -356,7 +362,9 @@ class ChartBuilder:
         )
 
         pod_template = V1PodTemplateSpec(
-            metadata=self._to_object_meta(annotations=self._to_image_annotation()),
+            metadata=self._to_object_meta(
+                annotations=self._to_image_annotation(), name=job_name
+            ),
             spec=V1PodSpec(
                 containers=[job_container],
                 service_account=self.release_name,
@@ -400,24 +408,30 @@ class ChartBuilder:
         return V1CronJob(
             api_version="batch/v1",
             kind="CronJob",
-            metadata=self._to_object_meta(),
+            metadata=self._to_object_meta(
+                name=f"{self.release_name}-{deployment.name.lower()}"
+            ),
             spec=v1_cron_job_spec,
         )
 
-    def to_prometheus_rule(self, alerts: list[Alert]) -> V1PrometheusRule:
+    def to_prometheus_rule(
+        self, alerts: list[Alert], deployment_name: str
+    ) -> V1PrometheusRule:
         return V1PrometheusRule(
             metadata=self._to_object_meta(
-                name=f"{self.project.name.lower()}-prometheus-rule"
+                name=f"{self.release_name}-{deployment_name.lower()}",
+                deployment_name=deployment_name.lower(),
             ),
             alerts=alerts,
         )
 
     def to_service_monitor(
-        self, metrics: Metrics, default_port: int
+        self, metrics: Metrics, default_port: int, deployment_name: str
     ) -> V1ServiceMonitor:
         return V1ServiceMonitor(
             metadata=self._to_object_meta(
-                name=f"{self.project.name.lower()}-service-monitor"
+                name=f"{self.release_name}-{deployment_name.lower()}",
+                deployment_name=deployment_name.lower(),
             ),
             metrics=metrics,
             default_port=default_port,
@@ -442,7 +456,7 @@ class ChartBuilder:
         return [
             HostWrapper(
                 traefik_host=host,
-                name=self.release_name,
+                name=f"{self.release_name}-{deployment.name.lower()}",
                 index=idx,
                 service_port=(
                     host.service_port
@@ -469,7 +483,7 @@ class ChartBuilder:
             for idx, host in enumerate(hosts)
         ]
 
-    def _replace_placeholders(self, traefik_object: dict | list):
+    def _replace_traefik_placeholders(self, traefik_object: dict | list):
         traefik_object = replace_item(
             traefik_object,
             PR_NUMBER_PLACEHOLDER,
@@ -486,7 +500,7 @@ class ChartBuilder:
     def to_ingress(self, deployment: Deployment) -> Optional[V1AlphaIngressRoute]:
         """Converts the deployment traefik ingress routes configuration to a V1AlphaIngressRoute object."""
         ingress_route_spec = (
-            self._replace_placeholders(
+            self._replace_traefik_placeholders(
                 deployment.traefik.ingress_routes.get_value(self.target)
             )
             if deployment.traefik and deployment.traefik.ingress_routes
@@ -497,7 +511,10 @@ class ChartBuilder:
             return None
 
         return V1AlphaIngressRoute.from_spec(
-            metadata=self._to_object_meta(name=f"ingress-routes-{self.release_name}"),
+            metadata=self._to_object_meta(
+                name=f"{self.release_name}-{deployment.name.lower()}",
+                deployment_name=deployment.name.lower(),
+            ),
             spec=ingress_route_spec,
         )
 
@@ -508,11 +525,12 @@ class ChartBuilder:
         return [
             V1AlphaIngressRoute.from_hosts(
                 metadata=self._to_object_meta(
-                    name=f"{self.release_name}-ingress-{i}-http"
-                    + ("s" if https else "")
+                    name=f"{host.name.lower()}-http{("s" if https else "")}-{i}",
+                    deployment_name=deployment.name.lower(),
                 ),
                 host=host,
                 target=self.target,
+                release_name=self.release_name,
                 namespace=self.namespace,
                 pr_number=self.step_input.run_properties.versioning.pr_number,
                 https=https,
@@ -529,10 +547,12 @@ class ChartBuilder:
         return [
             V1AlphaIngressRoute.from_hosts(
                 metadata=self._to_object_meta(
-                    name=f"{self.release_name}-{host.additional_route.name}-{i}"
+                    name=f"{deployment.name.lower()}-{host.additional_route.name}-{i}",
+                    deployment_name=deployment.name.lower(),
                 ),
                 host=host,
                 target=self.target,
+                release_name=self.release_name,
                 namespace=self.namespace,
                 pr_number=self.step_input.run_properties.versioning.pr_number,
                 https=True,
@@ -547,15 +567,20 @@ class ChartBuilder:
 
     def to_middlewares(self, deployment: Deployment) -> dict[str, V1AlphaMiddleware]:
         middlewares = (
-            self._replace_placeholders(
+            self._replace_traefik_placeholders(
                 deployment.traefik.middlewares.get_value(self.target)
             )
             if deployment.traefik and deployment.traefik.middlewares
             else []
         )
         adjusted_middlewares = {
-            f'middleware-{middleware["metadata"]["name"]}': V1AlphaMiddleware.from_spec(
-                metadata=self._to_object_meta(name=middleware["metadata"]["name"]),
+            f'middleware-{middleware["metadata"]["name"]}-{deployment.name}': V1AlphaMiddleware.from_spec(
+                metadata=self._to_object_meta(
+                    # this needs to be the exact name selected by the developer,
+                    # otherwise they won't be able to match it in the ingress
+                    name=middleware["metadata"]["name"],
+                    deployment_name=deployment.name.lower(),
+                ),
                 spec=middleware["spec"],
             )
             for middleware in middlewares
@@ -563,17 +588,12 @@ class ChartBuilder:
 
         return adjusted_middlewares
 
-    def to_service_account(self, deployment: Deployment) -> V1ServiceAccount:
-        image_pull_secrets_config = (
-            deployment.kubernetes.image_pull_secrets
-            or self.config_defaults.image_pull_secrets
-        )
+    def to_service_account(self) -> V1ServiceAccount:
         secrets = [
             ChartBuilder._to_k8s_model(
-                secret,
+                {"name": "aws-ecr"},
                 V1LocalObjectReference,
             )
-            for secret in image_pull_secrets_config
         ]
         return V1ServiceAccount(
             api_version="v1",
@@ -612,13 +632,13 @@ class ChartBuilder:
         )
 
     def to_sealed_secrets(
-        self, sealed_secrets: list[KeyValueProperty]
+        self, sealed_secrets: list[KeyValueProperty], name: str
     ) -> V1SealedSecret:
         secrets: dict[str, str] = {}
         for secret in sealed_secrets:
             secrets[secret.key] = secret.get_value(self.target)
 
-        return V1SealedSecret(name=self.release_name, secrets=secrets)
+        return V1SealedSecret(name=name.lower(), secrets=secrets)
 
     @staticmethod
     def _to_resource_requirements(
@@ -671,14 +691,14 @@ class ChartBuilder:
         return ChartBuilder._to_resource_requirements(resources, defaults, self.target)
 
     def _create_sealed_secret_env_vars(
-        self, secret_list: list[KeyValueProperty]
+        self, secret_list: list[KeyValueProperty], secret_name: str
     ) -> list[V1EnvVar]:
         return [
             V1EnvVar(
                 name=e.key,
                 value_from=V1EnvVarSource(
                     secret_key_ref=V1SecretKeySelector(
-                        key=e.key, name=self.release_name, optional=False
+                        key=e.key, name=secret_name.lower(), optional=False
                     )
                 ),
             )
@@ -701,12 +721,16 @@ class ChartBuilder:
         return raw_env_vars
 
     def get_sealed_secret_as_env_vars(
-        self, sealed_secrets: list[KeyValueProperty]
+        self,
+        sealed_secrets: list[KeyValueProperty],
+        secret_name: str,
     ) -> list[V1EnvVar]:
         sealed_secrets_for_target = list(
             filter(lambda v: v.get_value(self.target) is not None, sealed_secrets)
         )
-        return self._create_sealed_secret_env_vars(sealed_secrets_for_target)
+        return self._create_sealed_secret_env_vars(
+            sealed_secrets_for_target, secret_name
+        )
 
     def _get_env_vars(self, deployment: Deployment) -> list[V1EnvVar]:
         raw_env_vars = (
@@ -738,7 +762,10 @@ class ChartBuilder:
             else []
         )
         sealed_secrets = (
-            self.get_sealed_secret_as_env_vars(deployment.properties.sealed_secrets)
+            self.get_sealed_secret_as_env_vars(
+                deployment.properties.sealed_secrets,
+                f"{self.release_name}-{deployment.name.lower()}",
+            )
             if deployment.properties
             else []
         )
@@ -760,7 +787,7 @@ class ChartBuilder:
         liveness_probe, startup_probe = self._construct_probes(deployment)
 
         container = V1Container(
-            name="service",
+            name=f"{self.release_name}-{deployment.name.lower()}",
             image=self._get_image(),
             env=self._get_env_vars(deployment),
             ports=ports,
@@ -793,13 +820,15 @@ class ChartBuilder:
             kind="Deployment",
             metadata=V1ObjectMeta(
                 annotations=self._to_annotations(),
-                name=self.release_name,
+                name=f"{self.release_name}-{deployment.name.lower()}",
                 labels=self.to_labels(),
             ),
             spec=V1DeploymentSpec(
                 replicas=instances.get_value(target=self.target),
                 template=V1PodTemplateSpec(
-                    metadata=self._to_object_meta(),
+                    metadata=self._to_object_meta(
+                        deployment_name=deployment.name.lower()
+                    ),
                     spec=V1PodSpec(
                         containers=[container],
                         service_account=self.release_name,
@@ -807,20 +836,27 @@ class ChartBuilder:
                     ),
                 ),
                 strategy=strategy,
-                selector=self._to_selector(),
+                selector=V1LabelSelector(
+                    match_labels={
+                        "app.kubernetes.io/instance": self.release_name,
+                        "app.kubernetes.io/name": self.release_name,
+                    }
+                ),
             ),
         )
 
     def to_common_chart(
         self, deployment: Deployment
     ) -> dict[str, CustomResourceDefinition]:
-        chart = {"service-account": self.to_service_account(deployment)}
+        chart = {"service-account": self.to_service_account()}
 
         if deployment.properties and len(deployment.properties.sealed_secrets) > 0:
-            chart["sealed-secrets"] = self.to_sealed_secrets(
-                deployment.properties.sealed_secrets
+            chart[f"sealed-secrets-{deployment.name}"] = self.to_sealed_secrets(
+                deployment.properties.sealed_secrets,
+                f"{self.release_name}-{deployment.name.lower()}",
             )
 
+        # role is only used for Keycloak which only has 1 deployment, can be removed soon
         role = deployment.kubernetes.role or {}
         if role:
             chart["role"] = self.to_role(role)
@@ -836,7 +872,9 @@ def to_metrics(builder: ChartBuilder, deployment: Deployment):
     metrics = deployment.kubernetes.metrics
     service_monitor = (
         {
-            "service-monitor": builder.to_service_monitor(metrics, default_port),
+            f"service-monitor-{deployment.name}": builder.to_service_monitor(
+                metrics, default_port, deployment.name.lower()
+            ),
         }
         if metrics and metrics.enabled
         else {}
@@ -848,7 +886,7 @@ def to_service_chart(
     builder: ChartBuilder, deployment: Deployment
 ) -> dict[str, CustomResourceDefinition]:
     return (
-        {"service": builder.to_service(deployment)}
+        {f"service-{deployment.name}": builder.to_service(deployment)}
         | {f"deployment-{deployment.name}": builder.to_deployment(deployment)}
         | _to_ingress_routes_charts(builder, deployment)
         | builder.to_middlewares(deployment)
@@ -858,11 +896,11 @@ def to_service_chart(
 
 def _to_ingress_routes_charts(builder: ChartBuilder, deployment: Deployment):
     ingress_https = {
-        f"{builder.project.name}-ingress-{i}-https": route
+        f"ingress-{deployment.name}-https-{i}": route
         for i, route in enumerate(builder.to_ingress_routes(deployment, https=True))
     }
     ingress_http = {
-        f"{builder.project.name}-ingress-{i}-http": route
+        f"ingress-{deployment.name}-http-{i}": route
         for i, route in enumerate(builder.to_ingress_routes(deployment, https=False))
     }
     ingress_routes = (
@@ -871,7 +909,7 @@ def _to_ingress_routes_charts(builder: ChartBuilder, deployment: Deployment):
         else {}
     )
     additional_routes = {
-        route.metadata.name: route
+        f"ingress-{route.metadata.name}": route
         for i, route in enumerate(builder.to_additional_routes(deployment))
     }
 
@@ -882,7 +920,10 @@ def _to_prometheus_chart(builder: ChartBuilder, deployment: Deployment):
     metrics = deployment.kubernetes.metrics
     prometheus_chart = (
         {
-            "prometheus-rule": builder.to_prometheus_rule(alerts=metrics.alerts),
+            f"prometheus-rule-{deployment.name}": builder.to_prometheus_rule(
+                alerts=metrics.alerts,
+                deployment_name=deployment.name.lower(),
+            ),
         }
         if metrics and metrics.enabled
         else {}

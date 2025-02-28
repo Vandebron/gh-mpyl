@@ -1,27 +1,4 @@
 traefik:
-  ingressRoutes:
-    all:
-      entryPoints:
-        - web
-      routes:
-        - kind: Rule
-          match: placeholder-test-{namespace}-{PR-NUMBER}-test
-          middlewares:
-            - name: "strip-prefix"
-  middlewares:
-    all:
-      - metadata:
-          name: "strip-prefix"
-        spec:
-          stripPrefix:
-            prefixes:
-              - "/service"
-      - metadata:
-          name: "strip-prefix"
-        spec:
-          stripPrefix:
-            prefixes:
-              - "/service2/test/{namespace}/{PR-NUMBER}"
   hosts:
     - host:
         pr: "Host(`payments-{PR-NUMBER}.test.nl`)"

@@ -28,7 +28,7 @@ spec:
         maintainer: MPyL
         version: pr-1234
         revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-      name: job
+      name: job-job
     spec:
       containers:
       - args:
@@ -42,11 +42,11 @@ spec:
           valueFrom:
             secretKeyRef:
               key: SOME_SECRET_ENV
-              name: job
+              name: job-job
               optional: false
         image: registry/image:123
         imagePullPolicy: Always
-        name: job
+        name: job-job
         resources:
           limits:
             cpu: 500m
