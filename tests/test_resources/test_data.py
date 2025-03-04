@@ -16,18 +16,26 @@ from tests import root_test_path
 
 resource_path = root_test_path / "test_resources"
 config_values = parse_config(resource_path / DEFAULT_CONFIG_FILE_NAME)
-properties_values = parse_config(resource_path / DEFAULT_RUN_PROPERTIES_FILE_NAME)
 
 
 def stub_run_properties(
     config: dict = config_values,
-    properties: dict = properties_values,
     target: Target = Target.PULL_REQUEST,
     deploy_image: Optional[str] = None,
+    tag: Optional[str] = None,
+    pr_number: Optional[int] = None,
 ):
+    run_properties = parse_config(resource_path / DEFAULT_RUN_PROPERTIES_FILE_NAME)
+    if tag:
+        run_properties.setdefault("build", {}).setdefault("versioning", {})
+        run_properties["build"]["versioning"].update({"tag": tag})
+    if pr_number:
+        run_properties.setdefault("build", {}).setdefault("versioning", {})
+        run_properties["build"]["versioning"].update({"pr_number": pr_number})
+
     return RunProperties.from_configuration(
         target=target,
-        run_properties=properties,
+        run_properties=run_properties,
         config=config,
         deploy_image=deploy_image,
     )

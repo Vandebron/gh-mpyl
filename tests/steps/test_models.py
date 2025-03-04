@@ -30,12 +30,8 @@ class TestModels:
 
     def test_should_pass_validation(self):
         os.environ["CHANGE_ID"] = "123"
-        valid_run_properties_values = parse_config(
-            root_test_path / "../run_properties.yml"
-        )
         run_properties = stub_run_properties(
             config=self.config_values,
-            properties=valid_run_properties_values,
         )
 
         assert run_properties
