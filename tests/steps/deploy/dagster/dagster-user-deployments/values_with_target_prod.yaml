@@ -3,8 +3,6 @@ global:
 serviceAccount:
   create: false
 fullnameOverride: ucd-educ
-imagePullSecrets:
-- name: aws-ecr
 deployments:
 - dagsterApiGrpcArgs:
   - --python-file
