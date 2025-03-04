@@ -33,7 +33,7 @@ class TestRunResult:
         None,
         None,
         [],
-        None,
+        [],
         None,
         None,
     )

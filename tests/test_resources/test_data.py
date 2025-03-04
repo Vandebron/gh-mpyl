@@ -126,7 +126,7 @@ def get_project_with_stages(
         None,
         None,
         [],
-        None,
+        [],
         None,
         None,
     )

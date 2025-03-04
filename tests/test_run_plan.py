@@ -25,7 +25,7 @@ def stub_project(name: str) -> Project:
         docker=None,
         build=None,
         deployments=[],
-        dependencies=None,
+        dependencies=[],
         kubernetes=None,
         _dagster=None,
     )
