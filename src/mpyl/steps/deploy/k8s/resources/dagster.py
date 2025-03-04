@@ -75,7 +75,7 @@ def to_user_code_values(
                         "pullPolicy": "Always",
                         # The dagster-user-deployment Helm chart expects (for whatever reason) the container image to
                         # be split between "tag" and "repository", so we have to manually remove the version tag from
-                        # deploy_image otherwise it will # show up twice in the generated manifests.
+                        # deploy_image otherwise it will show up twice in the generated manifests.
                         # See helm/dagster/charts/dagster-user-deployments/templates/deployment-user.yaml#L55
                         # and helm/dagster/charts/dagster-user-deployments/templates/helpers/_helpers.tpl#L31-L39
                         # (I'd love to point to the full URL but the linter complains the line is too long........)
