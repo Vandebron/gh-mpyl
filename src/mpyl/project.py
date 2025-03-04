@@ -316,7 +316,6 @@ class Kubernetes:
     metrics: Optional[Metrics]
     resources: Resources
     job: Optional[Job]
-    image_pull_secrets: dict
     role: Optional[dict]
     command: Optional[TargetProperty[str]]
     args: Optional[TargetProperty[str]]
@@ -332,7 +331,6 @@ class Kubernetes:
             metrics=Metrics.from_config(values.get("metrics", {})),
             resources=Resources.from_config(values.get("resources", {})),
             job=Job.from_config(values.get("job", {})),
-            image_pull_secrets=values.get("imagePullSecrets", {}),
             role=values.get("role"),
             command=TargetProperty.from_config(values.get("command", {})),
             args=TargetProperty.from_config(values.get("args", {})),
@@ -548,8 +546,8 @@ class Project:
         return "project-override-*.yml"
 
     @staticmethod
-    def traefik_yaml_file_name(service_name: str) -> str:
-        return f"{service_name}-traefik.yml"
+    def traefik_yaml_file_name(deployment_name: str) -> str:
+        return f"{deployment_name}-traefik.yml"
 
     @property
     def root_path(self) -> Path:
