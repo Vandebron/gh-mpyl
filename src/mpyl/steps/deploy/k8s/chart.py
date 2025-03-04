@@ -177,7 +177,6 @@ class DeploymentDefaults:
     job_defaults: dict
     traefik_defaults: Traefik
     white_lists: DefaultWhitelists
-    image_pull_secrets: dict
     deployment_strategy: dict
     additional_routes: list[TraefikAdditionalRoute]
     traefik_config: TraefikConfig
@@ -199,7 +198,6 @@ class DeploymentDefaults:
             job_defaults=kubernetes.get("job", {}),
             traefik_defaults=Traefik.from_config(deployment_values.get("traefik", {})),
             white_lists=DefaultWhitelists.from_config(config.get("whiteLists", {})),
-            image_pull_secrets=kubernetes.get("imagePullSecrets", {}),
             deployment_strategy=config["kubernetes"]["deploymentStrategy"],
             additional_routes=list(
                 map(TraefikAdditionalRoute.from_config, additional_routes)
@@ -614,23 +612,14 @@ class ChartBuilder:
             for host in hosts
         } | adjusted_middlewares
 
-    def to_service_account(self, deployment: Deployment) -> V1ServiceAccount:
-        image_pull_secrets_config = (
-            deployment.kubernetes.image_pull_secrets
-            or self.config_defaults.image_pull_secrets
-        )
-        secrets = [
-            ChartBuilder._to_k8s_model(
-                secret,
-                V1LocalObjectReference,
-            )
-            for secret in image_pull_secrets_config
-        ]
+    def to_service_account(self) -> V1ServiceAccount:
         return V1ServiceAccount(
             api_version="v1",
             kind="ServiceAccount",
             metadata=self._to_object_meta(),
-            image_pull_secrets=secrets,
+            image_pull_secrets=[
+                ChartBuilder._to_k8s_model({"name": "aws-ecr"}, V1LocalObjectReference)
+            ],
         )
 
     def to_role(self, role: dict) -> V1Role:
@@ -865,7 +854,7 @@ class ChartBuilder:
     def to_common_chart(
         self, deployment: Deployment
     ) -> dict[str, CustomResourceDefinition]:
-        chart = {"service-account": self.to_service_account(deployment)}
+        chart = {"service-account": self.to_service_account()}
 
         if deployment.properties and len(deployment.properties.sealed_secrets) > 0:
             chart["sealed-secrets"] = self.to_sealed_secrets(

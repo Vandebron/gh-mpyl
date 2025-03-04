@@ -60,9 +60,6 @@ def to_user_code_values(
             "serviceAccount": {"create": service_account_override is None},
             # ucd, short for user-code-deployment
             "fullnameOverride": f"ucd-{shorten_name(project.name)}{name_suffix}",
-            "imagePullSecrets": [
-                {"name": "aws-ecr"},
-            ],
             "deployments": [
                 {
                     "dagsterApiGrpcArgs": [
