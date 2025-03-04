@@ -17,13 +17,21 @@ class TestHelm:
 
     def test_get_name_suffix_for_pr_target(self):
         assert (
-            get_name_suffix(test_data.stub_run_properties(target=Target.PULL_REQUEST))
+            get_name_suffix(
+                test_data.stub_run_properties(
+                    target=Target.PULL_REQUEST, pr_number=1234
+                )
+            )
             == "-pr-1234"
         )
 
     def test_get_name_suffix_for_prod_target(self):
         assert (
-            get_name_suffix(test_data.stub_run_properties(target=Target.PRODUCTION))
+            get_name_suffix(
+                test_data.stub_run_properties(
+                    target=Target.PRODUCTION, tag="tag", pr_number=1234
+                )
+            )
             == ""
         )
 
