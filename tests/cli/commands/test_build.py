@@ -63,7 +63,6 @@ class TestBuildCli:
         )
         assert result._exception is None
         assert result.is_success
-        assert result._exception is None
 
     def test_run_with_failing_project_should_be_handled(self):
         project = get_project_with_stages({"deploy": "Throwing Deploy"})

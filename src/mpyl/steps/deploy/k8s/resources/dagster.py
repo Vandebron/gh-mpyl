@@ -9,7 +9,6 @@ from . import to_dict
 from ..chart import ChartBuilder
 from .....project import Project, Target, KeyValueProperty
 from .....steps.models import RunProperties
-from .....utilities.docker import DockerConfig, registry_for_project
 from .....utilities.helm import shorten_name
 
 
@@ -24,10 +23,8 @@ def to_user_code_values(
     name_suffix: str,
     run_properties: RunProperties,
     service_account_override: Optional[str],
-    docker_config: DockerConfig,
 ) -> dict:
     project = builder.project
-    docker_registry = registry_for_project(docker_config, project)
 
     global_override = {}
     if not service_account_override is None:
@@ -77,7 +74,7 @@ def to_user_code_values(
                     "image": {
                         "pullPolicy": "Always",
                         "tag": run_properties.versioning.identifier,
-                        "repository": f"{docker_registry.host_name}/{project.name}",
+                        "repository": run_properties.deploy_image,
                     },
                     "labels": {
                         **{

@@ -8,30 +8,6 @@ dagster:
   daemon: dagster-daemon
   webserver: dagster-dagster-webserver
   globalServiceAccountOverride: global-dagster-user-deployment
-docker:
-  defaultRegistry: acme.docker.com
-  registries:
-    - hostName: aws.amazonaws.com
-      userName: !ENV ${AWS_ACCESS_KEY_ID:user}
-      password: !ENV ${AWS_SECRET_ACCESS_KEY:password}
-      region: us-east-1
-      provider: aws
-    - hostName: acme.docker.com
-      userName: !ENV ${DOCKER_REGISTRY_USR:docker_user}
-      password: !ENV ${DOCKER_REGISTRY_PSW:docker_password}
-      cache:
-        cacheFromRegistry: false
-        custom:
-          to: type=gha,mode=max
-          from: type=gha
-  build:
-    rootFolder: .
-    buildTarget: builder
-    testTarget: tester
-    dockerFileName: Dockerfile-mpl
-  compose:
-    periodSeconds: 2
-    failureThreshold: 20
 whiteLists:
   default: [VPN]
   addresses:

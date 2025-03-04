@@ -20,8 +20,6 @@ class TestDeploySetLinkup:
             pipeline=None,
             stages=Stages.from_config({}),
             maintainer=[],
-            docker=None,
-            build=None,
             deployments=[],  # pylint: disable=duplicate-code
             dependencies=Dependencies({}),
             kubernetes=KubernetesCommon(
