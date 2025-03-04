@@ -128,9 +128,6 @@ deployment:
         tls:
           all: "le-custom-prod-wildcard-cert"
         insecure: true
-        whitelists:
-          test:
-            - "Test"
         additionalRoute: "ingress-intracloud-https"
         syntax:
           all: v2
@@ -139,18 +136,6 @@ deployment:
         servicePort: 4091
         priority:
           all: 1000
-        whitelists:
-          pr:
-            - "K8s-Test"
-            - "VPN"
-            - "TargetSpecificWhitelist"
-          test:
-            - "K8s-Test"
-            - "VPN"
-          acceptance:
-            - "VPN"
-          production:
-            - "Outside-World"
         tls:
           all: "le-other-prod-wildcard-cert"
         syntax:

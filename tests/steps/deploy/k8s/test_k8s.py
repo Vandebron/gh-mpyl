@@ -135,13 +135,6 @@ class TestKubernetesChart:
             exc_info.value
         )
 
-    def test_should_not_extend_whitelists_if_none_defined_for_target(self):
-        project = test_data.get_project()
-        builder = self._get_builder(project)
-        wrappers = builder.create_host_wrappers(project.deployments[0])
-        assert test_data.RUN_PROPERTIES.target == Target.PULL_REQUEST
-        assert "Test" not in wrappers[0].white_lists
-
     @pytest.mark.parametrize(
         "template",
         [
@@ -154,8 +147,6 @@ class TestKubernetesChart:
             "ingress-dockertest-https-1",
             "ingress-dockertest-http-1",
             "ingress-dockertest-ingress-intracloud-https-0",
-            "middleware-whitelist-0-dockertest",
-            "middleware-whitelist-1-dockertest",
             "ingress-routes-dockertest",
             "middleware-strip-prefix-dockertest",
             "prometheus-rule-dockertest",
@@ -183,8 +174,6 @@ class TestKubernetesChart:
             "ingress-dockertest-https-1",
             "ingress-dockertest-http-1",
             "ingress-dockertest-ingress-intracloud-https-0",
-            "middleware-whitelist-0-dockertest",
-            "middleware-whitelist-1-dockertest",
             "ingress-routes-dockertest",
             "middleware-strip-prefix-dockertest",
             "prometheus-rule-dockertest",

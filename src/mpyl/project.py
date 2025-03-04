@@ -15,6 +15,7 @@ in the `deployment/project.yml`. It defines how the source code to which it rela
 
 import logging
 import pkgutil
+import re
 import time
 import traceback
 from dataclasses import dataclass
@@ -375,7 +376,6 @@ class TraefikHost:
     service_port: Optional[int]
     has_swagger: bool
     tls: Optional[TargetProperty[str]]
-    whitelists: TargetProperty[list[str]]
     priority: Optional[TargetProperty[int]]
     insecure: bool
     additional_route: Optional[str]
@@ -388,7 +388,6 @@ class TraefikHost:
             service_port=values.get("servicePort"),
             has_swagger=values.get("hasSwagger", True),
             tls=TargetProperty.from_config(values.get("tls", {})),
-            whitelists=TargetProperty.from_config(values.get("whitelists", {})),
             priority=TargetProperty.from_config(values.get("priority", {})),
             insecure=values.get("insecure", False),
             additional_route=values.get("additionalRoute", None),
@@ -542,12 +541,24 @@ class Project:
         return "project.yml"
 
     @staticmethod
-    def project_overrides_yaml_file_pattern() -> str:
+    def project_overrides_yaml_file_glob_pattern() -> str:
         return "project-override-*.yml"
+
+    @staticmethod
+    def project_overrides_yaml_file_pattern():
+        return re.compile("^project-override-.+.yml$")
 
     @staticmethod
     def traefik_yaml_file_name(deployment_name: str) -> str:
         return f"{deployment_name}-traefik.yml"
+
+    @staticmethod
+    def traefik_yaml_file_glob_pattern() -> str:
+        return "*-traefik.yml"
+
+    @staticmethod
+    def traefik_yaml_file_pattern():
+        return re.compile("^.+-traefik.yml$")
 
     @property
     def root_path(self) -> Path:
