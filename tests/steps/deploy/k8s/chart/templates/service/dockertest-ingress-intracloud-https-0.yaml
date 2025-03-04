@@ -6,7 +6,6 @@ metadata:
     app.kubernetes.io/version: pr-1234
     app.kubernetes.io/name: dockertest
     app.kubernetes.io/instance: dockertest
-    vandebron.nl/deployment: dockertest
     maintainers: MPyL
     maintainer: MPyL
     version: pr-1234
@@ -17,7 +16,7 @@ spec:
   - kind: Rule
     match: Host(`payments-1234.test.nl`)
     services:
-    - name: dockertest-dockertest
+    - name: dockertest
       kind: Service
       port: 8080
     middlewares:

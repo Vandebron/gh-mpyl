@@ -13,7 +13,7 @@ metadata:
     maintainer: MPyL
     version: pr-1234
     revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-  name: testdeploymentsstrategyparameters-testdeploymentsstrategyparameters2
+  name: testdeploymentsstrategyparameters
 spec:
   replicas: 1
   selector:
@@ -32,7 +32,6 @@ spec:
         app.kubernetes.io/version: pr-1234
         app.kubernetes.io/name: testdeploymentsstrategyparameters
         app.kubernetes.io/instance: testdeploymentsstrategyparameters
-        vandebron.nl/deployment: testdeploymentsstrategyparameters2
         maintainers: MPyL
         maintainer: MPyL
         version: pr-1234
@@ -45,7 +44,7 @@ spec:
           value: PullRequest
         image: registry/image:123
         imagePullPolicy: Always
-        name: testdeploymentsstrategyparameters-testdeploymentsstrategyparameters2
+        name: service
         ports:
         - containerPort: 8080
           name: port-0

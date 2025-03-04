@@ -27,6 +27,10 @@ class HostWrapper:
     additional_route: Optional[TraefikAdditionalRoute]
     insecure: bool = False
 
+    @property
+    def full_name(self) -> str:
+        return f"{self.name}-ingress-{self.index}-whitelist"
+
 
 class V1AlphaIngressRoute(CustomResourceDefinition):
     @classmethod
@@ -35,7 +39,6 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
         metadata: V1ObjectMeta,
         host: HostWrapper,
         target: Target,
-        release_name: str,
         namespace: str,
         pr_number: Optional[int],
         middlewares_override: list[str],
@@ -44,8 +47,8 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
         default_tls: str,
         https: bool = True,
     ):
-        def _interpolate_names(host: str) -> str:
-            host = host.replace(SERVICE_NAME_PLACEHOLDER, release_name)
+        def _interpolate_names(host: str, name: str) -> str:
+            host = host.replace(SERVICE_NAME_PLACEHOLDER, name)
             host = host.replace(NAMESPACE_PLACEHOLDER, namespace)
             host = replace_pr_number(host, pr_number)
             return host
@@ -53,7 +56,7 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
         combined_middlewares = (
             [
                 {"name": http_middleware} if not https else None,
-                {"name": f"whitelist-{host.index}-{host.name}"},
+                {"name": host.full_name},
             ]
             if len(middlewares_override) == 0
             else [{"name": m for m in middlewares_override}]
@@ -63,6 +66,7 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
             "kind": "Rule",
             "match": _interpolate_names(
                 host=host.traefik_host.host.get_value(target),
+                name=host.name,
             ),
             "services": [
                 {"name": host.name, "kind": "Service", "port": host.service_port}

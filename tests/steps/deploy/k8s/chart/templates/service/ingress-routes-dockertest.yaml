@@ -6,12 +6,11 @@ metadata:
     app.kubernetes.io/version: pr-1234
     app.kubernetes.io/name: dockertest
     app.kubernetes.io/instance: dockertest
-    vandebron.nl/deployment: dockertest
     maintainers: MPyL
     maintainer: MPyL
     version: pr-1234
     revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-  name: dockertest-dockertest
+  name: ingress-routes-dockertest
 spec:
   entryPoints:
   - web
@@ -19,4 +18,4 @@ spec:
   - kind: Rule
     match: placeholder-test-pr-1234-1234-test
     middlewares:
-    - name: strip-prefix
+    - name: strip-prefix-dockertest

@@ -7,7 +7,7 @@ traefik:
         - kind: Rule
           match: placeholder-test-{namespace}-{PR-NUMBER}-test
           middlewares:
-            - name: "strip-prefix"
+            - name: "strip-prefix-{SERVICE-NAME}"
   middlewares:
     all:
       - metadata:
@@ -17,7 +17,7 @@ traefik:
             prefixes:
               - "/service"
       - metadata:
-          name: "strip-prefix"
+          name: "strip-prefix-{SERVICE-NAME}"
         spec:
           stripPrefix:
             prefixes:
