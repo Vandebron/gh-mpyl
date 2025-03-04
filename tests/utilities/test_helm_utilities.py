@@ -1,3 +1,4 @@
+from src.mpyl.project import Target
 from src.mpyl.utilities.helm import (
     convert_to_helm_release_name,
     get_name_suffix,
@@ -15,10 +16,16 @@ class TestHelm:
         assert convert_to_helm_release_name("my.project", "") == "my-project"
 
     def test_get_name_suffix_for_pr_target(self):
-        assert get_name_suffix(test_data.RUN_PROPERTIES) == "-pr-1234"
+        assert (
+            get_name_suffix(test_data.stub_run_properties(target=Target.PULL_REQUEST))
+            == "-pr-1234"
+        )
 
     def test_get_name_suffix_for_prod_target(self):
-        assert get_name_suffix(test_data.RUN_PROPERTIES_PROD) == ""
+        assert (
+            get_name_suffix(test_data.stub_run_properties(target=Target.PRODUCTION))
+            == ""
+        )
 
     def test_shorten_name_for_short_name(self):
         assert shorten_name("etp") == "etp"

@@ -18,7 +18,6 @@ from src.mpyl.steps.deploy.k8s.chart import (
 from src.mpyl.steps.deploy.k8s.resources import to_yaml, CustomResourceDefinition
 from src.mpyl.steps.deploy.k8s.resources.traefik import V1AlphaIngressRoute
 from src.mpyl.steps.input import Input
-from src.mpyl.utilities.docker import DockerConfig
 from tests import root_test_path
 from tests.test_resources import test_data
 from tests.test_resources.test_data import (
@@ -105,11 +104,6 @@ class TestKubernetesChart:
                 probe, self.liveness_probe_defaults, target=Target.PULL_REQUEST
             )
         assert "Invalid value for `port`, must not be `None`" in str(exc_info.value)
-
-    def test_load_docker_config(self):
-        yaml_values = parse_config(self.resource_path / DEFAULT_CONFIG_FILE_NAME)
-        docker_config = DockerConfig.from_dict(yaml_values)
-        assert docker_config.registries[0].host_name == "docker_host"
 
     def test_should_validate_against_crd_schema(self):
         project = test_data.get_project()

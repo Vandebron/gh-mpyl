@@ -643,17 +643,13 @@ class ChartBuilder:
         } | adjusted_middlewares
 
     def to_service_account(self) -> V1ServiceAccount:
-        secrets = [
-            ChartBuilder._to_k8s_model(
-                {"name": "aws-ecr"},
-                V1LocalObjectReference,
-            )
-        ]
         return V1ServiceAccount(
             api_version="v1",
             kind="ServiceAccount",
             metadata=self._to_object_meta(),
-            image_pull_secrets=secrets,
+            image_pull_secrets=[
+                ChartBuilder._to_k8s_model({"name": "aws-ecr"}, V1LocalObjectReference)
+            ],
         )
 
     def to_role(self, role: dict) -> V1Role:
