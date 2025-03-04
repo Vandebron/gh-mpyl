@@ -57,6 +57,8 @@ project:  # default values
   allowedMaintainers: [Team1, Team2, MPyL]
   deployment:
     kubernetes:
+      imagePullSecrets:
+        - name: acme-registry
       job:
         ttlSecondsAfterFinished:
           all: 3600

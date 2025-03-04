@@ -440,7 +440,7 @@ spec:
 # service-account
 apiVersion: v1
 imagePullSecrets:
-- name: aws-ecr
+- name: acme-registry
 kind: ServiceAccount
 metadata:
   labels:

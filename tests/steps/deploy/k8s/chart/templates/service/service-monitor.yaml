@@ -6,12 +6,11 @@ metadata:
     app.kubernetes.io/version: pr-1234
     app.kubernetes.io/name: dockertest
     app.kubernetes.io/instance: dockertest
-    vandebron.nl/deployment: dockertest
     maintainers: MPyL
     maintainer: MPyL
     version: pr-1234
     revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-  name: dockertest-dockertest
+  name: dockertest-service-monitor
 spec:
   endpoints:
   - honorLabels: true

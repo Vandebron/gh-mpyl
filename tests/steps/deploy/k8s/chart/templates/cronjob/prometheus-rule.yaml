@@ -6,15 +6,14 @@ metadata:
     app.kubernetes.io/version: pr-1234
     app.kubernetes.io/name: cronjob
     app.kubernetes.io/instance: cronjob
-    vandebron.nl/deployment: cronjob
     maintainers: MPyL
     maintainer: MPyL
     version: pr-1234
     revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-  name: cronjob-cronjob
+  name: cronjob-prometheus-rule
 spec:
   groups:
-  - name: cronjob-cronjob-group
+  - name: cronjob-prometheus-rule-group
     rules:
     - alert: JobError
       annotations:

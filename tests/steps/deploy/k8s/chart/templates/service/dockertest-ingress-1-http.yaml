@@ -6,23 +6,22 @@ metadata:
     app.kubernetes.io/version: pr-1234
     app.kubernetes.io/name: dockertest
     app.kubernetes.io/instance: dockertest
-    vandebron.nl/deployment: dockertest
     maintainers: MPyL
     maintainer: MPyL
     version: pr-1234
     revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-  name: dockertest-dockertest-http-1
+  name: dockertest-ingress-1-http
 spec:
   routes:
   - kind: Rule
     match: Host(`some.other.host.com`)
     services:
-    - name: dockertest-dockertest
+    - name: dockertest
       kind: Service
       port: 4091
     middlewares:
     - name: traefik-https-redirect@kubernetescrd
-    - name: whitelist-1-dockertest-dockertest
+    - name: dockertest-ingress-1-whitelist
     syntax: v3
     priority: 1000
   entryPoints:
