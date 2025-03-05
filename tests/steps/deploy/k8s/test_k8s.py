@@ -46,12 +46,12 @@ class TestKubernetesChart:
     @staticmethod
     def _roundtrip(
         file_name: Path,
-        chart: str,
+        filename: str,
         resources: dict[str, Union[CustomResourceDefinition, V1Job, V1CronJob]],
         overwrite: bool = False,
     ):
-        name_chart = file_name / f"{chart}.yaml"
-        resource = resources[chart]
+        name_chart = file_name / f"{filename}.yaml"
+        resource = resources[filename]
         assert_roundtrip(name_chart, to_yaml(resource), overwrite)
 
     @staticmethod
@@ -112,6 +112,7 @@ class TestKubernetesChart:
             host=wrappers[0],
             target=Target.PRODUCTION,
             pr_number=1234,
+            release_name="dockertest",
             namespace="pr-1234",
             middlewares_override=[],
             entrypoints_override=[],
@@ -137,21 +138,20 @@ class TestKubernetesChart:
         "template",
         [
             "deployment-dockertest",
-            "service",
+            "service-dockertest",
             "service-account",
-            "sealed-secrets",
-            "dockertest-ingress-0-https",
-            "dockertest-ingress-0-http",
-            "dockertest-ingress-1-https",
-            "dockertest-ingress-1-http",
-            "dockertest-ingress-intracloud-https-0",
-            "dockertest-ingress-0-whitelist",
-            "dockertest-ingress-1-whitelist",
+            "sealed-secrets-dockertest",
+            "ingress-dockertest-https-0",
+            "ingress-dockertest-http-0",
+            "ingress-dockertest-https-1",
+            "ingress-dockertest-http-1",
+            "ingress-dockertest-ingress-intracloud-https-0",
+            "middleware-whitelist-0-dockertest",
+            "middleware-whitelist-1-dockertest",
             "ingress-routes-dockertest",
-            "middleware-strip-prefix",
             "middleware-strip-prefix-dockertest",
-            "prometheus-rule",
-            "service-monitor",
+            "prometheus-rule-dockertest",
+            "service-monitor-dockertest",
             "role",
             "rolebinding",
         ],
@@ -162,26 +162,25 @@ class TestKubernetesChart:
         chart = builder.to_common_chart(
             traefik_project.deployments[0]
         ) | to_service_chart(builder, builder.project.deployments[0])
-        self._roundtrip(self.template_path / "service", template, chart)
-        for key in chart.keys():
-            print(key)
-        assert chart.keys() == {
+        self._roundtrip(
+            self.template_path / "service", filename=template, resources=chart
+        )
+        assert set(chart.keys()) == {
             "service-account",
-            "sealed-secrets",
+            "sealed-secrets-dockertest",
             "deployment-dockertest",
-            "service",
-            "dockertest-ingress-0-https",
-            "dockertest-ingress-0-http",
-            "dockertest-ingress-1-https",
-            "dockertest-ingress-1-http",
-            "dockertest-ingress-intracloud-https-0",
-            "dockertest-ingress-0-whitelist",
-            "dockertest-ingress-1-whitelist",
+            "service-dockertest",
+            "ingress-dockertest-https-0",
+            "ingress-dockertest-http-0",
+            "ingress-dockertest-https-1",
+            "ingress-dockertest-http-1",
+            "ingress-dockertest-ingress-intracloud-https-0",
+            "middleware-whitelist-0-dockertest",
+            "middleware-whitelist-1-dockertest",
             "ingress-routes-dockertest",
-            "middleware-strip-prefix",
             "middleware-strip-prefix-dockertest",
-            "prometheus-rule",
-            "service-monitor",
+            "prometheus-rule-dockertest",
+            "service-monitor-dockertest",
             "role",
             "rolebinding",
         }
@@ -194,8 +193,7 @@ class TestKubernetesChart:
             == "placeholder-test-pr-1234-1234-test"
         )
         assert (
-            ingress_routes.spec["routes"][0]["middlewares"][0]["name"]
-            == "strip-prefix-dockertest"
+            ingress_routes.spec["routes"][0]["middlewares"][0]["name"] == "strip-prefix"
         )
 
     def test_middlewares_placeholder_replacement(self):
@@ -255,7 +253,7 @@ class TestKubernetesChart:
         builder = self._get_builder(project)
         chart = to_service_chart(builder, project.deployments[0])
         self._roundtrip(
-            self.template_path / "ingress", "minimalService-ingress-0-https", chart
+            self.template_path / "ingress", "ingress-minimalService-https-0", chart
         )
 
     def test_production_ingress(self):
@@ -268,12 +266,12 @@ class TestKubernetesChart:
         builder = self._get_builder(project, run_properties_prod)
         chart = to_service_chart(builder, project.deployments[0])
         self._roundtrip(
-            self.template_path / "ingress-prod", "minimalService-ingress-0-https", chart
+            self.template_path / "ingress-prod", "ingress-minimalService-https-0", chart
         )
 
     @pytest.mark.parametrize(
         "template",
-        ["job-job", "service-account", "sealed-secrets", "prometheus-rule"],
+        ["job-job", "service-account", "sealed-secrets-job", "prometheus-rule-job"],
     )
     def test_job_chart_roundtrip(self, template):
         job_project = get_job_project()
@@ -285,7 +283,12 @@ class TestKubernetesChart:
 
     @pytest.mark.parametrize(
         "template",
-        ["cronjob-cronjob", "service-account", "sealed-secrets", "prometheus-rule"],
+        [
+            "cronjob-cronjob",
+            "service-account",
+            "sealed-secrets-cronjob",
+            "prometheus-rule-cronjob",
+        ],
     )
     def test_cron_job_chart_roundtrip(self, template):
         cron_job_project = get_cron_job_project()
