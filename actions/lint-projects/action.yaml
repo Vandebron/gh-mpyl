@@ -7,7 +7,7 @@ inputs:
     required: false
 runs:
   using: docker
-  image: docker://public.ecr.aws/vdb-public/gh-mpyl:fix/broken-image-name-in-helm-tempalte
+  image: docker://public.ecr.aws/vdb-public/gh-mpyl:pr-223
   args:
     - projects
     - lint
