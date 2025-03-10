@@ -13,7 +13,7 @@ rich = "==13.9.4"
 pyaml-env = "==1.2.2"
 python-dotenv = "==1.0.1"
 toml = "==0.10.2"
-deepdiff = "==8.2.0"
+deepdiff = "==8.3.0"
 requests = "==2.32.3"
 referencing = "==0.36.2"
 
