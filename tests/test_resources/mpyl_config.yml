@@ -85,7 +85,7 @@ project: # default values
       tls: "le-custom-prod-wildcard-cert"
     kubernetes:
       imagePullSecrets:
-        - name: 'acme-registry'
+        - name: 'aws-ecr'
       job:
         ttlSecondsAfterFinished:
           all: 3600
