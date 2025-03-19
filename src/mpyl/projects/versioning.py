@@ -108,8 +108,8 @@ class ProjectUpgraderThree(Upgrader):
             del deployment["dagster"]
             previous_dict["dagster"] = dagster_config
 
-        # copy project name to deployment name (just for the migration, they don't need to match later)
-        deployment.insert(0, "name", previous_dict["name"])
+        # give the deployment a default name (just for the migration, they can be customised by the teams)
+        deployment.insert(0, "name", "http")
 
         # move deployment to deployments
         del previous_dict["deployment"]
