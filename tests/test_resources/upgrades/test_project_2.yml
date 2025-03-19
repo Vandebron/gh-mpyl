@@ -27,7 +27,7 @@ kubernetes:
   projectId:
     all: test1234
 deployments:
-  - name: 'dockertest'
+  - name: http
     cluster:
       pr: 'other-test'
       test: 'test'

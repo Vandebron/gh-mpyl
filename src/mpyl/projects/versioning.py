@@ -123,11 +123,11 @@ class ProjectUpgraderThree(Upgrader):
         # combine kubernetes deploy steps
         if previous_dict["stages"].get("deploy", "") == "Kubernetes Job Deploy":
             previous_dict["stages"]["deploy"] = "Kubernetes Deploy"
-        
+
         # update traefik config file name
         service_name = previous_dict["name"]
         traefik_yml_path = (
-                self.project_yml_path.parent / Project.traefik_yaml_file_name(service_name)
+            self.project_yml_path.parent / Project.traefik_yaml_file_name(service_name)
         )
         if traefik_yml_path.exists():
             traefik_yml_path.rename(
