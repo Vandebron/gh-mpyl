@@ -72,6 +72,11 @@ class ProjectUpgraderTwo(Upgrader):
 
 
 class ProjectUpgraderThree(Upgrader):
+    project_yml_path: Path
+
+    def __init__(self, project_yml_path: Path):
+        self.project_yml_path = project_yml_path
+
     target_version = 3
 
     def upgrade(self, previous_dict: ordereddict) -> ordereddict:
@@ -118,6 +123,16 @@ class ProjectUpgraderThree(Upgrader):
         # combine kubernetes deploy steps
         if previous_dict["stages"].get("deploy", "") == "Kubernetes Job Deploy":
             previous_dict["stages"]["deploy"] = "Kubernetes Deploy"
+        
+        # update traefik config file name
+        service_name = previous_dict["name"]
+        traefik_yml_path = (
+                self.project_yml_path.parent / Project.traefik_yaml_file_name(service_name)
+        )
+        if traefik_yml_path.exists():
+            traefik_yml_path.rename(
+                self.project_yml_path.parent / Project.traefik_yaml_file_name("http")
+            )
 
         return previous_dict
 
@@ -142,7 +157,7 @@ def upgrade_to_latest(project_file: Path) -> ordereddict:
     upgraders = [
         ProjectUpgraderOne(),
         ProjectUpgraderTwo(project_file),
-        ProjectUpgraderThree(),
+        ProjectUpgraderThree(project_file),
     ]
 
     upgrade_index = get_entry_upgrader_index(__get_version(to_upgrade), upgraders)
