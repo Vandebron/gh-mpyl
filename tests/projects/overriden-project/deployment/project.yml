@@ -11,7 +11,7 @@ kubernetes:
   projectId:
     all: test1234
 deployments:
-  - name: ocpp
+  - name: http
     properties:
       env:
         - key: DEPLOY_ENV
