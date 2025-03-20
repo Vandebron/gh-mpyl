@@ -11,7 +11,7 @@ kubernetes:
   projectId:
     all: test1234
 deployments:
-  - name: http
+  - name: cronjob
     properties:
       env:
         - key: PROD_ONLY_ENV

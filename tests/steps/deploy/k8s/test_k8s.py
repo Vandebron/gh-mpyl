@@ -275,7 +275,7 @@ class TestKubernetesChart:
 
     @pytest.mark.parametrize(
         "template",
-        ["job-http", "service-account", "sealed-secrets-http", "prometheus-rule-http"],
+        ["job-job", "service-account", "sealed-secrets-job", "prometheus-rule-job"],
     )
     def test_job_chart_roundtrip(self, template):
         job_project = get_job_project()
@@ -288,10 +288,10 @@ class TestKubernetesChart:
     @pytest.mark.parametrize(
         "template",
         [
-            "cronjob-http",
+            "cronjob-cronjob",
             "service-account",
-            "sealed-secrets-http",
-            "prometheus-rule-http",
+            "sealed-secrets-cronjob",
+            "prometheus-rule-cronjob",
         ],
     )
     def test_cron_job_chart_roundtrip(self, template):
