@@ -72,11 +72,6 @@ class ProjectUpgraderTwo(Upgrader):
 
 
 class ProjectUpgraderThree(Upgrader):
-    project_yml_path: Path
-
-    def __init__(self, project_yml_path: Path):
-        self.project_yml_path = project_yml_path
-
     target_version = 3
 
     def upgrade(self, previous_dict: ordereddict) -> ordereddict:
@@ -113,8 +108,8 @@ class ProjectUpgraderThree(Upgrader):
             del deployment["dagster"]
             previous_dict["dagster"] = dagster_config
 
-        # give the deployment a default name (just for the migration, they can be customised by the teams)
-        deployment.insert(0, "name", "http")
+        # copy project name to deployment name (just for the migration, they don't need to match later)
+        deployment.insert(0, "name", previous_dict["name"])
 
         # move deployment to deployments
         del previous_dict["deployment"]
@@ -124,8 +119,37 @@ class ProjectUpgraderThree(Upgrader):
         if previous_dict["stages"].get("deploy", "") == "Kubernetes Job Deploy":
             previous_dict["stages"]["deploy"] = "Kubernetes Deploy"
 
-        # update traefik config file name
+        return previous_dict
+
+
+class ProjectUpgraderFour(Upgrader):
+    project_yml_path: Path
+
+    def __init__(self, project_yml_path: Path):
+        self.project_yml_path = project_yml_path
+
+    target_version = 4
+
+    def upgrade(self, previous_dict: ordereddict) -> ordereddict:
         service_name = previous_dict["name"]
+
+        # change the default deployment name
+        deployments = previous_dict.get("deployments", [])
+        if len(deployments) == 1:
+            deployment = deployments[0]
+
+            if deployment["name"] == service_name:
+                is_job = deployment.get("kubernetes", {}).get("job", {})
+                is_cron_job = is_job.get("cron")
+
+                if is_cron_job:
+                    deployment["name"] = "cronjob"
+                elif is_job:
+                    deployment["name"] = "job"
+                else:
+                    deployment["name"] = "http"
+
+        # update traefik config file name
         traefik_yml_path = (
             self.project_yml_path.parent / Project.traefik_yaml_file_name(service_name)
         )
@@ -157,7 +181,8 @@ def upgrade_to_latest(project_file: Path) -> ordereddict:
     upgraders = [
         ProjectUpgraderOne(),
         ProjectUpgraderTwo(project_file),
-        ProjectUpgraderThree(project_file),
+        ProjectUpgraderThree(),
+        ProjectUpgraderFour(project_file),
     ]
 
     upgrade_index = get_entry_upgrader_index(__get_version(to_upgrade), upgraders)
