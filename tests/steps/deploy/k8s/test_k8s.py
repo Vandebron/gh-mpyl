@@ -216,7 +216,7 @@ class TestKubernetesChart:
         chart = to_service_chart(builder, project.deployments[0])
         self._roundtrip(
             self.template_path / "deployment",
-            "deployment-testDeploymentStrategyParameters",
+            "deployment-testdeploymentstrategyparameters",
             chart,
         )
 
@@ -227,12 +227,12 @@ class TestKubernetesChart:
         chart2 = to_service_chart(builder, project.deployments[1])
         self._roundtrip(
             self.template_path / "deployment",
-            "deployment-testDeploymentsStrategyParameters1",
+            "deployment-testdeploymentsstrategyparameters1",
             chart1,
         )
         self._roundtrip(
             self.template_path / "deployment",
-            "deployment-testDeploymentsStrategyParameters2",
+            "deployment-testdeploymentsstrategyparameters2",
             chart2,
         )
 
@@ -242,11 +242,11 @@ class TestKubernetesChart:
         job_chart = to_job_chart(builder, project.deployments[0])
         cron_job_chart = to_cron_job_chart(builder, project.deployments[1])
         self._roundtrip(
-            self.template_path / "deployments", "job-jobDeployment", job_chart
+            self.template_path / "deployments", "job-jobdeployment", job_chart
         )
         self._roundtrip(
             self.template_path / "deployments",
-            "cronjob-cronJobDeployment",
+            "cronjob-cronjobdeployment",
             cron_job_chart,
         )
 
