@@ -1,6 +1,6 @@
 name: 'dockertest'
 description: 'This is a test container. For testing the MPyL pipelines, not to be deployed anywhere.'
-projectYmlVersion: 3
+projectYmlVersion: 4
 stages:
   build: Docker Build
   test: Docker Test
@@ -27,7 +27,7 @@ kubernetes:
   projectId:
     all: test1234
 deployments:
-  - name: http
+  - name: 'cronjob'
     cluster:
       pr: 'other-test'
       test: 'test'
