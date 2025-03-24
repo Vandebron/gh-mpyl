@@ -24,7 +24,7 @@ jobs:
     outputs:
       build-docker-image: ${{ steps.changed-files.outputs.any_changed == 'true' }}
     steps:
-      - uses: tj-actions/changed-files@v46.0.1
+      - uses: tj-actions/changed-files@v46.0.3
         id: changed-files
         with:
           files: |-
