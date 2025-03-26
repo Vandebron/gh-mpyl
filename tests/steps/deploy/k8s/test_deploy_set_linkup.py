@@ -6,6 +6,7 @@ from src.mpyl.project import (
     Target,
     TargetProperty,
 )
+from src.mpyl.project import Deployment
 from src.mpyl.steps.deploy.k8s import substitute_namespaces
 
 
@@ -20,7 +21,9 @@ class TestDeploySetLinkup:
             pipeline=None,
             stages=Stages.from_config({}),
             maintainer=[],
-            deployments=[],  # pylint: disable=duplicate-code
+            deployments=[
+                Deployment("http", None, None, None)
+            ],  # pylint: disable=duplicate-code
             dependencies=Dependencies({}),
             kubernetes=KubernetesCommon(
                 project_id=TargetProperty.from_config({}),
@@ -38,16 +41,16 @@ class TestDeploySetLinkup:
 
     def test_should_link_up_deploy_set(self):
         envs = {
-            "KEY_1": "http://energy-dashboard.{namespace}.svc.cluster.local:4082",
-            "KEY_2": "http://main-website.{namespace}.svc.cluster.local:4050",
-            "KEY_3": "test-{PR-NUMBER}.play-backend.zonnecollectief.nl",
+            "KEY_1": "http://energy-dashboard-http.{namespace}.svc.cluster.local:4082",
+            "KEY_2": "http://main-website-http.{namespace}.svc.cluster.local:4050",
+            "KEY_3": "test-http-{PR-NUMBER}.play-backend.zonnecollectief.nl",
             "KEY_4": "abcd",
         }
 
         expected_envs = {
-            "KEY_1": "http://energy-dashboard.pr-1234.svc.cluster.local:4082",
-            "KEY_2": "http://main-website.webapps.svc.cluster.local:4050",
-            "KEY_3": "test-1234.play-backend.zonnecollectief.nl",
+            "KEY_1": "http://energy-dashboard-http.pr-1234.svc.cluster.local:4082",
+            "KEY_2": "http://main-website-http.webapps.svc.cluster.local:4050",
+            "KEY_3": "test-http-1234.play-backend.zonnecollectief.nl",
             "KEY_4": "abcd",
         }
 
@@ -59,13 +62,13 @@ class TestDeploySetLinkup:
 
     def test_should_link_up_to_base_services_if_not_pr(self):
         envs = {
-            "KEY_1": "http://energy-dashboard.{namespace}.svc.cluster.local:4082",
-            "KEY_2": "http://main-website.{namespace}.svc.cluster.local:4050",
+            "KEY_1": "http://energy-dashboard-http.{namespace}.svc.cluster.local:4082",
+            "KEY_2": "http://main-website-http.{namespace}.svc.cluster.local:4050",
             "KEY_3": "abcd",
         }
         expected_envs = {
-            "KEY_1": "http://energy-dashboard.webapps.svc.cluster.local:4082",
-            "KEY_2": "http://main-website.webapps.svc.cluster.local:4050",
+            "KEY_1": "http://energy-dashboard-http.webapps.svc.cluster.local:4082",
+            "KEY_2": "http://main-website-http.webapps.svc.cluster.local:4050",
             "KEY_3": "abcd",
         }
         replaced_envs = substitute_namespaces(
