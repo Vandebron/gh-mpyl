@@ -176,7 +176,7 @@ class ProjectUpgraderFive(Upgrader):
                 for env_var in properties.get("env", []):
                     for key, value in env_var.items():
                         regex = (
-                            r"http://([a-z]+)\.("
+                            r"http://([a-zA-Z0-9\-]+)\.("
                             + f"{NAMESPACE_PLACEHOLDER}"
                             + r"|[a-z]+)\.svc"
                         )
