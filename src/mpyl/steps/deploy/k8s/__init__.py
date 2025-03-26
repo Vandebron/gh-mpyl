@@ -70,12 +70,15 @@ def substitute_namespaces(
         deployment_name: str,
         namespace: str,
     ):
-        search_value = f"{service_name}-{deployment_name}.{NAMESPACE_PLACEHOLDER}"
-        replace_value = f"{service_name}-{deployment_name}.{namespace}"
-        replaced_namespace = original_value.replace(search_value, replace_value)
-        updated_pr = replace_pr_number(replaced_namespace, pr_identifier)
-        if updated_pr != original_value:
-            env[key_to_replace] = updated_pr
+        replacements = {
+            f"{service_name}-{deployment_name}.{NAMESPACE_PLACEHOLDER}": f"{service_name}-{deployment_name}.{namespace}",  # pylint: disable=line-too-long
+            f"{service_name}.{NAMESPACE_PLACEHOLDER}": f"{service_name}.{namespace}",
+        }
+        for search_value, replace_value in replacements.items():
+            replaced_namespace = original_value.replace(search_value, replace_value)
+            updated_pr = replace_pr_number(replaced_namespace, pr_identifier)
+            if updated_pr != original_value:
+                env[key_to_replace] = updated_pr
 
     for project in all_projects:
         linked_project_namespace = get_namespace_for_linked_project(project)
