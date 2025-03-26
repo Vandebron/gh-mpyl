@@ -178,7 +178,7 @@ class ProjectUpgraderFive(Upgrader):
                         regex = (
                             r"http://([a-zA-Z0-9\-]+)\.("
                             + f"{NAMESPACE_PLACEHOLDER}"
-                            + r"|[a-z]+)\.svc"
+                            + r"|[a-z\-]+)\.svc"
                         )
                         match = re.search(regex, value)
                         if match:
