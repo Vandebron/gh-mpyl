@@ -75,8 +75,16 @@ def to_user_code_values(
                     "envSecrets": [{"name": s.name} for s in project.dagster.secrets],
                     "image": {
                         "pullPolicy": "Always",
+                        # The dagster-user-deployment Helm chart expects (for whatever reason) the container image to
+                        # be split between "tag" and "repository", so we have to manually remove the version tag from
+                        # deploy_image otherwise it will show up twice in the generated manifests.
+                        # See helm/dagster/charts/dagster-user-deployments/templates/deployment-user.yaml#L55
+                        # and helm/dagster/charts/dagster-user-deployments/templates/helpers/_helpers.tpl#L31-L39
+                        # (I'd love to point to the full URL but the linter complains the line is too long........)
                         "tag": run_properties.versioning.identifier,
-                        "repository": run_properties.deploy_image,
+                        "repository": str(run_properties.deploy_image).removesuffix(
+                            f":{run_properties.versioning.identifier}"
+                        ),
                     },
                     "labels": {
                         **{

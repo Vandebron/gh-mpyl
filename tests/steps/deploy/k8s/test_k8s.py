@@ -1,4 +1,3 @@
-import dataclasses
 from pathlib import Path
 from typing import cast, Union
 
@@ -26,7 +25,6 @@ from tests.test_resources.test_data import (
     get_cron_job_project,
     get_minimal_project,
     stub_run_properties,
-    RUN_PROPERTIES,
     TestStage,
     get_project_traefik,
     get_deployment_strategy_project,
@@ -260,15 +258,11 @@ class TestKubernetesChart:
 
     def test_production_ingress(self):
         project = get_minimal_project()
-        run_properties_prod = stub_run_properties(deploy_image="registry/image:123")
-        run_properties_prod = dataclasses.replace(
-            run_properties_prod,
+        run_properties_prod = stub_run_properties(
             target=Target.PRODUCTION,
-            versioning=dataclasses.replace(
-                RUN_PROPERTIES.versioning, tag="20230829-1234", pr_number=None
-            ),
+            deploy_image="registry/image:version",
+            tag="20230829-1234",
         )
-
         builder = self._get_builder(project, run_properties_prod)
         chart = to_service_chart(builder, project.deployments[0])
         self._roundtrip(

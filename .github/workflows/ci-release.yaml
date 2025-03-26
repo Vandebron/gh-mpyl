@@ -33,7 +33,7 @@ jobs:
 
       - name: Compute the next version to release
         id: semver
-        uses: ietf-tools/semver-action@v1.9.0
+        uses: ietf-tools/semver-action@v1.10.0
         with:
           token: ${{ github.token }}
           noVersionBumpBehavior: patch
@@ -52,7 +52,7 @@ jobs:
           registry-type: public
 
       - name: Create repository in ECR
-        uses: int128/create-ecr-repository-action@v1.357.0
+        uses: int128/create-ecr-repository-action@v1.359.0
         with:
           repository: ${{ env.image-name }}
           public: true
@@ -99,7 +99,7 @@ jobs:
           done
 
       - name: Generate token to commit to main
-        uses: actions/create-github-app-token@v1.11.6
+        uses: actions/create-github-app-token@v1.11.7
         id: commit-token
         with:
           repositories: gh-mpyl
