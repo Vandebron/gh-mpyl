@@ -254,9 +254,7 @@ class TestKubernetesChart:
         project = get_minimal_project()
         builder = self._get_builder(project)
         chart = to_service_chart(builder, project.deployments[0])
-        self._roundtrip(
-            self.template_path / "ingress", "ingress-minimalService-https-0", chart
-        )
+        self._roundtrip(self.template_path / "ingress", "ingress-http-https-0", chart)
 
     def test_production_ingress(self):
         project = get_minimal_project()
@@ -272,7 +270,7 @@ class TestKubernetesChart:
         builder = self._get_builder(project, run_properties_prod)
         chart = to_service_chart(builder, project.deployments[0])
         self._roundtrip(
-            self.template_path / "ingress-prod", "ingress-minimalService-https-0", chart
+            self.template_path / "ingress-prod", "ingress-http-https-0", chart
         )
 
     @pytest.mark.parametrize(
@@ -312,7 +310,7 @@ class TestKubernetesChart:
         assert builder._get_image() == "test-image:latest"
         chart = to_service_chart(builder, builder.project.deployments[0])
         assert (
-            cast(V1DeploymentSpec, chart["deployment-minimalService"].spec)
+            cast(V1DeploymentSpec, chart["deployment-http"].spec)
             .template.spec.containers[0]
             .image
             == "test-image:latest"

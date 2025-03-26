@@ -6,7 +6,7 @@ maintainer:
 stages:
   build: Echo Build
 deployments:
-  - name: 'example-dagster-user-code'
+  - name: 'http'
     properties:
       env:
         - key: DEPLOY_ENV
