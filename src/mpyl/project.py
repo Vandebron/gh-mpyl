@@ -448,7 +448,7 @@ class Deployment:
         traefik = values.get("traefik")
 
         return Deployment(
-            name=values["name"],
+            name=values["name"].lower(),
             properties=Properties.from_config(props) if props else None,
             _kubernetes=Kubernetes.from_config(kubernetes) if kubernetes else None,
             traefik=Traefik.from_config(traefik) if traefik else None,
