@@ -8,6 +8,7 @@ list in this module.
 """
 
 import copy
+import re
 from abc import ABC
 from pathlib import Path
 from typing import Generator
@@ -16,6 +17,7 @@ from typing import Optional
 from deepdiff import DeepDiff
 from ruamel.yaml.compat import ordereddict
 
+from ..constants import NAMESPACE_PLACEHOLDER
 from ..project import Project
 from ..utilities.yaml import yaml_to_string, load_for_roundtrip, yaml_for_roundtrip
 
@@ -161,6 +163,36 @@ class ProjectUpgraderFour(Upgrader):
         return previous_dict
 
 
+class ProjectUpgraderFive(Upgrader):
+    target_version = 5
+
+    def upgrade(self, previous_dict: ordereddict) -> ordereddict:
+        # update the env var url's
+        deployments = previous_dict.get("deployments", [])
+        for deployment in deployments:
+            properties = deployment.get("properties")
+
+            if properties:
+                for env_var in properties.get("env", []):
+                    for key, value in env_var.items():
+                        regex = (
+                            r"http://([a-zA-Z0-9\-]+)\.("
+                            + f"{NAMESPACE_PLACEHOLDER}"
+                            + r"|[a-z\-]+)\.svc"
+                        )
+                        match = re.search(regex, value)
+                        if match:
+                            service_name = match.groups()[0]
+                            namespace = match.groups()[1]
+                            env_var[key] = re.sub(
+                                regex,
+                                f"http://{service_name}-http.{namespace}.svc",
+                                value,
+                            )
+
+        return previous_dict
+
+
 def get_entry_upgrader_index(
     current_version: int, upgraders: list[Upgrader]
 ) -> Optional[int]:
@@ -183,6 +215,7 @@ def upgrade_to_latest(project_file: Path) -> ordereddict:
         ProjectUpgraderTwo(project_file),
         ProjectUpgraderThree(),
         ProjectUpgraderFour(project_file),
+        ProjectUpgraderFive(),
     ]
 
     upgrade_index = get_entry_upgrader_index(__get_version(to_upgrade), upgraders)
