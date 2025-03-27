@@ -13,7 +13,7 @@ metadata:
     maintainer: MPyL
     version: pr-1234
     revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-  name: dockertest
+  name: dockertest-dockertest
 spec:
   replicas: 3
   selector:
@@ -32,6 +32,7 @@ spec:
         app.kubernetes.io/version: pr-1234
         app.kubernetes.io/name: dockertest
         app.kubernetes.io/instance: dockertest
+        vandebron.nl/deployment: dockertest
         maintainers: MPyL
         maintainer: MPyL
         version: pr-1234
@@ -46,12 +47,12 @@ spec:
         - name: SOME_ENV
           value: PullRequest
         - name: WITH_NAMESPACE
-          value: minimalService.mpyl.svc.cluster.local
+          value: minimalService-http.mpyl.svc.cluster.local
         - name: SOME_SEALED_SECRET_ENV
           valueFrom:
             secretKeyRef:
               key: SOME_SEALED_SECRET_ENV
-              name: dockertest
+              name: dockertest-dockertest
               optional: false
         - name: SOME_SECRET_ENV
           valueFrom:
@@ -82,7 +83,7 @@ spec:
           periodSeconds: 30
           successThreshold: 0
           timeoutSeconds: 20
-        name: service
+        name: dockertest-dockertest
         ports:
         - containerPort: 80
           name: port-0

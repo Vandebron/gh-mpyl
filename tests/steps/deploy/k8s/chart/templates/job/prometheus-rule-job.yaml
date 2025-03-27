@@ -2,26 +2,27 @@ apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   labels:
-    name: dockertest
+    name: job
     app.kubernetes.io/version: pr-1234
-    app.kubernetes.io/name: dockertest
-    app.kubernetes.io/instance: dockertest
+    app.kubernetes.io/name: job
+    app.kubernetes.io/instance: job
+    vandebron.nl/deployment: job
     maintainers: MPyL
     maintainer: MPyL
     version: pr-1234
     revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-  name: dockertest-prometheus-rule
+  name: job-job
 spec:
   groups:
-  - name: dockertest-prometheus-rule-group
+  - name: job-job-group
     rules:
-    - alert: ServiceError
+    - alert: JobError
       annotations:
-        description: Service has encountered errors
+        description: Job has encountered errors
       expr: 'true'
       for: 1m
       labels:
-        alertname: ServiceError
+        alertname: JobError
         severity: warning
     - alert: the name of the alert
       annotations:

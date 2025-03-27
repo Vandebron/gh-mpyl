@@ -8,6 +8,7 @@ from .helm import write_helm_chart
 from ...deploy.k8s.resources import CustomResourceDefinition
 from ...input import Input
 from ...output import Output
+from ....constants import NAMESPACE_PLACEHOLDER
 from ....project import Project, Target
 from ....utilities import replace_pr_number
 
@@ -62,18 +63,33 @@ def substitute_namespaces(
             return f"pr-{pr_identifier}"
         return project.namespace(target)
 
-    def replace_namespace(env_value: str, project_name: str, namespace: str) -> str:
-        search_value = project_name + ".{namespace}"
-        replace_value = project_name + "." + namespace
-        return env_value.replace(search_value, replace_value)
+    def replace_namespace(
+        key_to_replace: str,
+        original_value: str,
+        service_name: str,
+        deployment_name: str,
+        namespace: str,
+    ):
+        replacements = {
+            f"{service_name}-{deployment_name}.{NAMESPACE_PLACEHOLDER}": f"{service_name}-{deployment_name}.{namespace}",  # pylint: disable=line-too-long
+            f"{service_name}.{NAMESPACE_PLACEHOLDER}": f"{service_name}.{namespace}",
+        }
+        for search_value, replace_value in replacements.items():
+            replaced_namespace = original_value.replace(search_value, replace_value)
+            updated_pr = replace_pr_number(replaced_namespace, pr_identifier)
+            if updated_pr != original_value:
+                env[key_to_replace] = updated_pr
 
     for project in all_projects:
         linked_project_namespace = get_namespace_for_linked_project(project)
-        for key, value in env.items():
-            replaced_namespace = replace_namespace(
-                value, project.name, linked_project_namespace
-            )
-            updated_pr = replace_pr_number(replaced_namespace, pr_identifier)
-            env[key] = updated_pr
+        for deployment in project.deployments:
+            for key, value in env.items():
+                replace_namespace(
+                    key_to_replace=key,
+                    original_value=value,
+                    service_name=project.name,
+                    deployment_name=deployment.name,
+                    namespace=linked_project_namespace,
+                )
 
     return env

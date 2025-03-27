@@ -10,7 +10,7 @@ metadata:
     maintainer: MPyL
     version: pr-1234
     revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-  name: deploymentsproject
+  name: deploymentsproject-cronjobdeployment
 spec:
   failedJobsHistoryLimit: 3
   jobTemplate:
@@ -29,13 +29,13 @@ spec:
             maintainer: MPyL
             version: pr-1234
             revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-          name: deploymentsproject
+          name: deploymentsproject-cronjobdeployment
         spec:
           containers:
           - env: []
             image: registry/image:123
             imagePullPolicy: Always
-            name: deploymentsproject
+            name: deploymentsproject-cronjobdeployment
             resources:
               limits:
                 cpu: 500m

@@ -448,7 +448,7 @@ class Deployment:
         traefik = values.get("traefik")
 
         return Deployment(
-            name=values["name"],
+            name=values["name"].lower(),
             properties=Properties.from_config(props) if props else None,
             _kubernetes=Kubernetes.from_config(kubernetes) if kubernetes else None,
             traefik=Traefik.from_config(traefik) if traefik else None,
@@ -511,8 +511,8 @@ class Project:
         return "project-override-*.yml"
 
     @staticmethod
-    def traefik_yaml_file_name(service_name: str) -> str:
-        return f"{service_name}-traefik.yml"
+    def traefik_yaml_file_name(deployment_name: str) -> str:
+        return f"{deployment_name}-traefik.yml"
 
     @property
     def root_path(self) -> Path:
