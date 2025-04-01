@@ -415,7 +415,7 @@ definitions:
         $ref: '#/definitions/dtapValue'
   livenessProbe:
     type: object
-    additionalProperties: false
+    additionalProperties: true  # see monitoring.coreos.com_prometheuses.schema.yml for all possible values
     required:
       - path
     properties:
@@ -442,7 +442,7 @@ definitions:
         type: integer
   startupProbe:
     type: object
-    additionalProperties: false
+    additionalProperties: true  # see monitoring.coreos.com_prometheuses.schema.yml for all possible values
     required:
       - path
     properties:
