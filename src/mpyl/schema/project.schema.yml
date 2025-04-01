@@ -10,6 +10,7 @@ required:
 dependencies:
   deployment:
     - maintainer
+additionalProperties: false
 properties:
   name:
     description: Uniquely identifies this project
@@ -47,7 +48,7 @@ properties:
     $id: '#/properties/stages'
     description: Defines which steps should be executed at each stage
     type: object
-    additionalProperties: true
+    additionalProperties: false
     propertyNames:
       $ref: mpyl_stages.schema.yml#/definitions/stageNames
     properties:
@@ -146,9 +147,6 @@ properties:
                 id:
                   type: string
     minProperties: 1
-  deployment:
-    description: "DEPRECATED: will be removed soon. Please use 'deployments' from now on."
-    $ref: '#/definitions/deployment'
   deployments:
     type: array
     description: >-
@@ -179,7 +177,16 @@ properties:
 definitions:
   deployment:
     type: object
+    additionalProperties: false
     properties:
+      name:
+        type: string
+      bpm:
+        type: object
+        additionalProperties: false
+        properties:
+          projectId:
+            type: string
       properties:
         type: object
         additionalProperties: false
@@ -230,7 +237,7 @@ definitions:
             type: string
     minProperties: 1
   traefik:
-    additionalProperties: true
+    additionalProperties: false
     type: object
     properties:
       hosts:
@@ -408,7 +415,7 @@ definitions:
         $ref: '#/definitions/dtapValue'
   livenessProbe:
     type: object
-    additionalProperties: true
+    additionalProperties: false
     required:
       - path
     properties:
@@ -435,7 +442,7 @@ definitions:
         type: integer
   startupProbe:
     type: object
-    additionalProperties: true
+    additionalProperties: false
     required:
       - path
     properties:
@@ -673,7 +680,7 @@ definitions:
         type: string
   kubernetes:
     type: object
-    additionalProperties: true  # for old tags with "rancher" still defined
+    additionalProperties: false
     properties:
       secrets:
         type: array
@@ -707,6 +714,7 @@ definitions:
         $ref: '#/definitions/dtapValue'
       resources:
         type: object
+        additionalProperties: false
         properties:
           instances:
             description: Sets the number of replicas to be started
@@ -740,19 +748,23 @@ definitions:
             $ref: '#/definitions/limitResources'
           request:
             $ref: '#/definitions/requestResources'
-        additionalProperties: false
       portMappings:
         type: object
       job:
         type: object
-        additionalProperties: true
+        additionalProperties: false
         properties:
           ttlSecondsAfterFinished:
             $ref: '#/definitions/dtapNumberValue'
           activeDeadlineSeconds:
             $ref: '#/definitions/dtapNumberValue'
+          backoffLimit:
+            type: number
+          restartPolicy:
+            type: string
           cron:
             type: object
+            additionalProperties: false
             description: Cron job configuration
             oneOf:
               - required:
