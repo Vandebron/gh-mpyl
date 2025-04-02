@@ -194,3 +194,17 @@ def _find_projects_without_deployments(console: Console, all_projects: list[Proj
                 projects_without_deployments.append(project)
 
     return projects_without_deployments
+
+
+def _find_too_long_service_names(console: Console, all_projects: list[Project]):
+    console.print("")
+    console.print("Checking for services with too long names:")
+    too_long_names = []
+
+    for project in all_projects:
+        for deployment in project.deployments:
+            name = f"{project.name}-{deployment.name}"
+            if len(name) > 52:
+                too_long_names.append(name)
+
+    return too_long_names
