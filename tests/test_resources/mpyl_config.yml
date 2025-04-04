@@ -84,8 +84,6 @@ project: # default values
       httpMiddleware: "traefik-https-redirect@kubernetescrd"
       tls: "le-custom-prod-wildcard-cert"
     kubernetes:
-      imagePullSecrets:
-        - name: 'aws-ecr'
       job:
         ttlSecondsAfterFinished:
           all: 3600
