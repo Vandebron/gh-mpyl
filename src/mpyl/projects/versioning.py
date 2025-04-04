@@ -175,6 +175,8 @@ class ProjectUpgraderFive(Upgrader):
             if properties:
                 for env_var in properties.get("env", []):
                     for key, value in env_var.items():
+                        if "keycloak" in value:
+                            continue
                         regex = (
                             r"http://([a-zA-Z0-9\-]+)\.("
                             + f"{NAMESPACE_PLACEHOLDER}"
