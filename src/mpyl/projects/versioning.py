@@ -8,6 +8,7 @@ list in this module.
 """
 
 import copy
+import re
 from abc import ABC
 from pathlib import Path
 from typing import Generator
@@ -16,6 +17,7 @@ from typing import Optional
 from deepdiff import DeepDiff
 from ruamel.yaml.compat import ordereddict
 
+from ..constants import NAMESPACE_PLACEHOLDER
 from ..project import Project
 from ..utilities.yaml import yaml_to_string, load_for_roundtrip, yaml_for_roundtrip
 
@@ -122,6 +124,77 @@ class ProjectUpgraderThree(Upgrader):
         return previous_dict
 
 
+class ProjectUpgraderFour(Upgrader):
+    project_yml_path: Path
+
+    def __init__(self, project_yml_path: Path):
+        self.project_yml_path = project_yml_path
+
+    target_version = 4
+
+    def upgrade(self, previous_dict: ordereddict) -> ordereddict:
+        service_name = previous_dict["name"]
+
+        # change the default deployment name
+        deployments = previous_dict.get("deployments", [])
+        if len(deployments) == 1:
+            deployment = deployments[0]
+
+            if deployment["name"] == service_name:
+                is_job = deployment.get("kubernetes", {}).get("job", {})
+                is_cron_job = is_job.get("cron")
+
+                if is_cron_job:
+                    deployment["name"] = "cronjob"
+                elif is_job:
+                    deployment["name"] = "job"
+                else:
+                    deployment["name"] = "http"
+
+        # update traefik config file name
+        traefik_yml_path = (
+            self.project_yml_path.parent / Project.traefik_yaml_file_name(service_name)
+        )
+        if traefik_yml_path.exists():
+            traefik_yml_path.rename(
+                self.project_yml_path.parent / Project.traefik_yaml_file_name("http")
+            )
+
+        return previous_dict
+
+
+class ProjectUpgraderFive(Upgrader):
+    target_version = 5
+
+    def upgrade(self, previous_dict: ordereddict) -> ordereddict:
+        # update the env var url's
+        deployments = previous_dict.get("deployments", [])
+        for deployment in deployments:
+            properties = deployment.get("properties")
+
+            if properties:
+                for env_var in properties.get("env", []):
+                    for key, value in env_var.items():
+                        if "keycloak" in value:
+                            continue
+                        regex = (
+                            r"http://([a-zA-Z0-9\-]+)\.("
+                            + f"{NAMESPACE_PLACEHOLDER}"
+                            + r"|[a-z\-]+)\.svc"
+                        )
+                        match = re.search(regex, value)
+                        if match:
+                            service_name = match.groups()[0]
+                            namespace = match.groups()[1]
+                            env_var[key] = re.sub(
+                                regex,
+                                f"http://{service_name}-http.{namespace}.svc",
+                                value,
+                            )
+
+        return previous_dict
+
+
 def get_entry_upgrader_index(
     current_version: int, upgraders: list[Upgrader]
 ) -> Optional[int]:
@@ -143,6 +216,8 @@ def upgrade_to_latest(project_file: Path) -> ordereddict:
         ProjectUpgraderOne(),
         ProjectUpgraderTwo(project_file),
         ProjectUpgraderThree(),
+        ProjectUpgraderFour(project_file),
+        ProjectUpgraderFive(),
     ]
 
     upgrade_index = get_entry_upgrader_index(__get_version(to_upgrade), upgraders)

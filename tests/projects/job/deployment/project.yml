@@ -6,7 +6,7 @@ stages:
   build: Echo Build
   deploy: "Kubernetes Job Deploy"
 deployments:
-  - name: job
+  - name: cronjob
     kubernetes:
       job:
         cron:

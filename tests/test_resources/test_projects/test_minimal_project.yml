@@ -20,7 +20,7 @@ kubernetes:
   projectId:
     all: test1234
 deployments:
-  - name: 'minimalService'
+  - name: 'http'
     properties:
       env:
         - key: SOME_ENV

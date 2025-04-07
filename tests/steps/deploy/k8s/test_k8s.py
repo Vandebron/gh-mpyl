@@ -1,4 +1,3 @@
-import dataclasses
 from pathlib import Path
 from typing import cast, Union
 
@@ -18,7 +17,6 @@ from src.mpyl.steps.deploy.k8s.chart import (
 from src.mpyl.steps.deploy.k8s.resources import to_yaml, CustomResourceDefinition
 from src.mpyl.steps.deploy.k8s.resources.traefik import V1AlphaIngressRoute
 from src.mpyl.steps.input import Input
-from src.mpyl.utilities.docker import DockerConfig
 from tests import root_test_path
 from tests.test_resources import test_data
 from tests.test_resources.test_data import (
@@ -27,7 +25,6 @@ from tests.test_resources.test_data import (
     get_cron_job_project,
     get_minimal_project,
     stub_run_properties,
-    RUN_PROPERTIES,
     TestStage,
     get_project_traefik,
     get_deployment_strategy_project,
@@ -106,11 +103,6 @@ class TestKubernetesChart:
             )
         assert "Invalid value for `port`, must not be `None`" in str(exc_info.value)
 
-    def test_load_docker_config(self):
-        yaml_values = parse_config(self.resource_path / DEFAULT_CONFIG_FILE_NAME)
-        docker_config = DockerConfig.from_dict(yaml_values)
-        assert docker_config.registries[0].host_name == "docker_host"
-
     def test_should_validate_against_crd_schema(self):
         project = test_data.get_project()
         builder = self._get_builder(project)
@@ -148,6 +140,7 @@ class TestKubernetesChart:
             "deployment-dockertest",
             "service-dockertest",
             "service-account",
+            "service",
             "sealed-secrets-dockertest",
             "ingress-dockertest-https-0",
             "ingress-dockertest-http-0",
@@ -177,6 +170,7 @@ class TestKubernetesChart:
             "service-account",
             "sealed-secrets-dockertest",
             "deployment-dockertest",
+            "service",
             "service-dockertest",
             "ingress-dockertest-https-0",
             "ingress-dockertest-http-0",
@@ -222,7 +216,7 @@ class TestKubernetesChart:
         chart = to_service_chart(builder, project.deployments[0])
         self._roundtrip(
             self.template_path / "deployment",
-            "deployment-testDeploymentStrategyParameters",
+            "deployment-testdeploymentstrategyparameters",
             chart,
         )
 
@@ -233,12 +227,12 @@ class TestKubernetesChart:
         chart2 = to_service_chart(builder, project.deployments[1])
         self._roundtrip(
             self.template_path / "deployment",
-            "deployment-testDeploymentsStrategyParameters1",
+            "deployment-testdeploymentsstrategyparameters1",
             chart1,
         )
         self._roundtrip(
             self.template_path / "deployment",
-            "deployment-testDeploymentsStrategyParameters2",
+            "deployment-testdeploymentsstrategyparameters2",
             chart2,
         )
 
@@ -248,11 +242,11 @@ class TestKubernetesChart:
         job_chart = to_job_chart(builder, project.deployments[0])
         cron_job_chart = to_cron_job_chart(builder, project.deployments[1])
         self._roundtrip(
-            self.template_path / "deployments", "job-jobDeployment", job_chart
+            self.template_path / "deployments", "job-jobdeployment", job_chart
         )
         self._roundtrip(
             self.template_path / "deployments",
-            "cronjob-cronJobDeployment",
+            "cronjob-cronjobdeployment",
             cron_job_chart,
         )
 
@@ -260,25 +254,19 @@ class TestKubernetesChart:
         project = get_minimal_project()
         builder = self._get_builder(project)
         chart = to_service_chart(builder, project.deployments[0])
-        self._roundtrip(
-            self.template_path / "ingress", "ingress-minimalService-https-0", chart
-        )
+        self._roundtrip(self.template_path / "ingress", "ingress-http-https-0", chart)
 
     def test_production_ingress(self):
         project = get_minimal_project()
-        run_properties_prod = stub_run_properties(deploy_image="registry/image:123")
-        run_properties_prod = dataclasses.replace(
-            run_properties_prod,
+        run_properties_prod = stub_run_properties(
             target=Target.PRODUCTION,
-            versioning=dataclasses.replace(
-                RUN_PROPERTIES.versioning, tag="20230829-1234", pr_number=None
-            ),
+            deploy_image="registry/image:version",
+            tag="20230829-1234",
         )
-
         builder = self._get_builder(project, run_properties_prod)
         chart = to_service_chart(builder, project.deployments[0])
         self._roundtrip(
-            self.template_path / "ingress-prod", "ingress-minimalService-https-0", chart
+            self.template_path / "ingress-prod", "ingress-http-https-0", chart
         )
 
     @pytest.mark.parametrize(
@@ -318,7 +306,7 @@ class TestKubernetesChart:
         assert builder._get_image() == "test-image:latest"
         chart = to_service_chart(builder, builder.project.deployments[0])
         assert (
-            cast(V1DeploymentSpec, chart["deployment-minimalService"].spec)
+            cast(V1DeploymentSpec, chart["deployment-http"].spec)
             .template.spec.containers[0]
             .image
             == "test-image:latest"

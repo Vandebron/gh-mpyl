@@ -4,7 +4,7 @@ projectYmlVersion: 3
 stages:
   deploy: Echo Deploy
 deployments:
-  - name: ocpp-second
+  - name: http
     properties:
       env:
         - key: INSTANCE

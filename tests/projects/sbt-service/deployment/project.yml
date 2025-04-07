@@ -11,7 +11,7 @@ kubernetes:
   projectId:
     all: "p-11111"
 deployments:
-  - name: 'sbtservice'
+  - name: 'http'
     properties:
       env:
         - key: SOME_ENV

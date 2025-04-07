@@ -9,7 +9,6 @@ from . import to_dict
 from ..chart import ChartBuilder
 from .....project import Project, Target, KeyValueProperty
 from .....steps.models import RunProperties
-from .....utilities.docker import DockerConfig, registry_for_project
 from .....utilities.helm import shorten_name
 
 
@@ -24,10 +23,8 @@ def to_user_code_values(
     name_suffix: str,
     run_properties: RunProperties,
     service_account_override: Optional[str],
-    docker_config: DockerConfig,
 ) -> dict:
     project = builder.project
-    docker_registry = registry_for_project(docker_config, project)
 
     global_override = {}
     if not service_account_override is None:
@@ -62,9 +59,6 @@ def to_user_code_values(
             "serviceAccount": {"create": service_account_override is None},
             # ucd, short for user-code-deployment
             "fullnameOverride": f"ucd-{shorten_name(project.name)}{name_suffix}",
-            "imagePullSecrets": [
-                {"name": "aws-ecr"},
-            ],
             "deployments": [
                 {
                     "dagsterApiGrpcArgs": [
@@ -81,8 +75,16 @@ def to_user_code_values(
                     "envSecrets": [{"name": s.name} for s in project.dagster.secrets],
                     "image": {
                         "pullPolicy": "Always",
+                        # The dagster-user-deployment Helm chart expects (for whatever reason) the container image to
+                        # be split between "tag" and "repository", so we have to manually remove the version tag from
+                        # deploy_image otherwise it will show up twice in the generated manifests.
+                        # See helm/dagster/charts/dagster-user-deployments/templates/deployment-user.yaml#L55
+                        # and helm/dagster/charts/dagster-user-deployments/templates/helpers/_helpers.tpl#L31-L39
+                        # (I'd love to point to the full URL but the linter complains the line is too long........)
                         "tag": run_properties.versioning.identifier,
-                        "repository": f"{docker_registry.host_name}/{project.name}",
+                        "repository": str(run_properties.deploy_image).removesuffix(
+                            f":{run_properties.versioning.identifier}"
+                        ),
                     },
                     "labels": {
                         **{

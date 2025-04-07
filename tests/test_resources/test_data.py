@@ -16,31 +16,32 @@ from tests import root_test_path
 
 resource_path = root_test_path / "test_resources"
 config_values = parse_config(resource_path / DEFAULT_CONFIG_FILE_NAME)
-properties_values = parse_config(resource_path / DEFAULT_RUN_PROPERTIES_FILE_NAME)
 
 
 def stub_run_properties(
     config: dict = config_values,
-    properties: dict = properties_values,
+    target: Target = Target.PULL_REQUEST,
     deploy_image: Optional[str] = None,
+    tag: Optional[str] = None,
+    pr_number: Optional[int] = None,
 ):
+    run_properties = parse_config(resource_path / DEFAULT_RUN_PROPERTIES_FILE_NAME)
+    if tag:
+        run_properties.setdefault("build", {}).setdefault("versioning", {})
+        run_properties["build"]["versioning"].update({"tag": tag})
+    if pr_number:
+        run_properties.setdefault("build", {}).setdefault("versioning", {})
+        run_properties["build"]["versioning"].update({"pr_number": pr_number})
+
     return RunProperties.from_configuration(
-        target=Target.PULL_REQUEST,
-        run_properties=properties,
+        target=target,
+        run_properties=run_properties,
         config=config,
         deploy_image=deploy_image,
     )
 
 
 RUN_PROPERTIES = stub_run_properties()
-
-RUN_PROPERTIES_PROD = dataclasses.replace(
-    RUN_PROPERTIES,
-    target=Target.PRODUCTION,
-    versioning=dataclasses.replace(
-        RUN_PROPERTIES.versioning, tag="20230829-1234", pr_number=None
-    ),
-)
 
 
 @dataclass(frozen=True)
@@ -117,18 +118,16 @@ def get_project_with_stages(
         maintainers = ["Team1", "Team2"]
     stages = Stages.from_config(stage_config)
     return Project(
-        "test",
-        "Test project",
-        path,
-        None,
-        stages,
-        maintainers,
-        None,
-        None,
-        [],
-        [],
-        None,
-        None,
+        name="test",
+        description="Test project",
+        path=path,
+        pipeline=None,
+        stages=stages,
+        maintainer=maintainers,
+        deployments=[],
+        dependencies=[],
+        kubernetes=None,
+        _dagster=None,
     )
 
 

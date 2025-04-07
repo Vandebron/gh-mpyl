@@ -21,6 +21,7 @@ from ..cli.commands.projects.lint import (
     __detail_wrong_substitutions,
     _assert_no_self_dependencies,
     _find_projects_without_deployments,
+    _find_too_long_service_names,
 )
 from ..cli.commands.projects.upgrade import check_upgrade
 from ..constants import DEFAULT_CONFIG_FILE_NAME
@@ -146,6 +147,16 @@ def lint(ctx: Context):
         for project in projects_without_deployments:
             console.print(
                 f"  ❌ Project {project.name} has a deploy stage defined without a deployments config"
+            )
+        failed = True
+
+    projects_with_too_long_names = _find_too_long_service_names(console, all_projects)
+    if len(projects_with_too_long_names) == 0:
+        console.print("  ✅ No project with a too long name found")
+    else:
+        for name in projects_with_too_long_names:
+            console.print(
+                f"  ❌ service_name-deployment_name can't be longer than 52 characters: {name}"
             )
         failed = True
 

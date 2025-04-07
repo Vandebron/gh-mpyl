@@ -24,18 +24,16 @@ class TestRunResult:
 
     project_a = test_data.get_project()
     project_b = Project(
-        "test",
-        "Test project",
-        "",
-        None,
-        Stages({}),
-        [],
-        None,
-        None,
-        [],
-        [],
-        None,
-        None,
+        name="test",
+        description="Test project",
+        path="",
+        pipeline=None,
+        stages=Stages({}),
+        maintainer=[],
+        deployments=[],
+        dependencies=[],
+        kubernetes=None,
+        _dagster=None,
     )
 
     run_plan = RunPlan.create(

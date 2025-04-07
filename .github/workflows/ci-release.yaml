@@ -33,7 +33,7 @@ jobs:
 
       - name: Compute the next version to release
         id: semver
-        uses: ietf-tools/semver-action@v1.9.0
+        uses: ietf-tools/semver-action@v1.10.1
         with:
           token: ${{ github.token }}
           noVersionBumpBehavior: patch
@@ -52,20 +52,20 @@ jobs:
           registry-type: public
 
       - name: Create repository in ECR
-        uses: int128/create-ecr-repository-action@v1.356.0
+        uses: int128/create-ecr-repository-action@v1.364.0
         with:
           repository: ${{ env.image-name }}
           public: true
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.4.0
+        uses: docker/setup-qemu-action@v3.6.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3.9.0
+        uses: docker/setup-buildx-action@v3.10.0
 
       - name: Build and push
         id: docker-build-push
-        uses: docker/build-push-action@v6.14.0
+        uses: docker/build-push-action@v6.15.0
         with:
           file: Dockerfile
           context: .
@@ -99,7 +99,7 @@ jobs:
           done
 
       - name: Generate token to commit to main
-        uses: actions/create-github-app-token@v1.11.5
+        uses: actions/create-github-app-token@v2.0.2
         id: commit-token
         with:
           repositories: gh-mpyl

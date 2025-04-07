@@ -8,6 +8,7 @@ from .helm import write_helm_chart
 from ...deploy.k8s.resources import CustomResourceDefinition
 from ...input import Input
 from ...output import Output
+from ....constants import NAMESPACE_PLACEHOLDER
 from ....project import Project, Target
 from ....utilities import replace_pr_number
 
@@ -63,30 +64,31 @@ def substitute_namespaces(
         return project.namespace(target)
 
     def replace_namespace(
+        key_to_replace: str,
         original_value: str,
         service_name: str,
+        deployment_name: str,
         namespace: str,
     ):
-        search_value = service_name + ".{namespace}"
-        replace_value = service_name + "." + namespace
-        replaced_namespace = original_value.replace(search_value, replace_value)
-        updated_pr = replace_pr_number(replaced_namespace, pr_identifier)
-        if updated_pr != original_value:
-            env[key] = updated_pr
+        replacements = {
+            f"{service_name}-{deployment_name}.{NAMESPACE_PLACEHOLDER}": f"{service_name}-{deployment_name}.{namespace}",  # pylint: disable=line-too-long
+            f"{service_name}.{NAMESPACE_PLACEHOLDER}": f"{service_name}.{namespace}",
+        }
+        for search_value, replace_value in replacements.items():
+            replaced_namespace = original_value.replace(search_value, replace_value)
+            updated_pr = replace_pr_number(replaced_namespace, pr_identifier)
+            if updated_pr != original_value:
+                env[key_to_replace] = updated_pr
 
     for project in all_projects:
         linked_project_namespace = get_namespace_for_linked_project(project)
-        for key, value in env.items():
-            replace_namespace(
-                original_value=value,
-                service_name=project.name,
-                namespace=linked_project_namespace,
-            )
-
-            for deployment in project.deployments:
+        for deployment in project.deployments:
+            for key, value in env.items():
                 replace_namespace(
+                    key_to_replace=key,
                     original_value=value,
-                    service_name=deployment.name,
+                    service_name=project.name,
+                    deployment_name=deployment.name,
                     namespace=linked_project_namespace,
                 )
 
