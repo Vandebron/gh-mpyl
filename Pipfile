@@ -19,7 +19,7 @@ referencing = "==0.36.2"
 
 [dev-packages]
 types-jsonschema = "==4.23.0.20241208"
-types-pyyaml = "==6.0.12.20250326"
+types-pyyaml = "==6.0.12.20250402"
 types-requests = "==2.32.0.20250328"
 types-six = "==1.17.0.20250403"
 pylint = "==3.3.6"
