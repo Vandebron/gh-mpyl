@@ -316,7 +316,6 @@ class Kubernetes:
     metrics: Optional[Metrics]
     resources: Resources
     job: Optional[Job]
-    role: Optional[dict]
     command: Optional[TargetProperty[str]]
     args: Optional[TargetProperty[str]]
     labels: Optional[list[KeyValueProperty]]
@@ -331,7 +330,6 @@ class Kubernetes:
             metrics=Metrics.from_config(values.get("metrics", {})),
             resources=Resources.from_config(values.get("resources", {})),
             job=Job.from_config(values.get("job", {})),
-            role=values.get("role"),
             command=TargetProperty.from_config(values.get("command", {})),
             args=TargetProperty.from_config(values.get("args", {})),
             labels=list(map(KeyValueProperty.from_config, values.get("labels", []))),

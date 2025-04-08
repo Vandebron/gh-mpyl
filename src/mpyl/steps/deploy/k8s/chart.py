@@ -34,11 +34,6 @@ from kubernetes.client import (
     V1CronJob,
     V1CronJobSpec,
     V1JobTemplateSpec,
-    V1Role,
-    V1RoleBinding,
-    V1PolicyRule,
-    V1RoleRef,
-    RbacV1Subject,
 )
 
 from . import substitute_namespaces
@@ -689,35 +684,6 @@ class ChartBuilder:
             ],
         )
 
-    def to_role(self, role: dict) -> V1Role:
-        return V1Role(
-            api_version="rbac.authorization.k8s.io/v1",
-            kind="Role",
-            metadata=self._to_object_meta(),
-            rules=[
-                ChartBuilder._to_k8s_model({"apiGroups": [""]} | role, V1PolicyRule)
-            ],
-        )
-
-    def to_role_binding(self) -> V1RoleBinding:
-        return V1RoleBinding(
-            api_version="rbac.authorization.k8s.io/v1",
-            kind="RoleBinding",
-            metadata=self._to_object_meta(),
-            role_ref=V1RoleRef(
-                api_group="rbac.authorization.k8s.io",
-                kind="Role",
-                name=self.release_name,
-            ),
-            subjects=[
-                RbacV1Subject(
-                    kind="ServiceAccount",
-                    name=self.release_name,
-                    namespace=self.namespace,
-                )
-            ],
-        )
-
     def to_sealed_secrets(
         self, sealed_secrets: list[KeyValueProperty], name: str
     ) -> V1SealedSecret:
@@ -940,12 +906,6 @@ class ChartBuilder:
                 deployment.properties.sealed_secrets,
                 f"{self.release_name}-{deployment.name}",
             )
-
-        # role is only used for Keycloak which only has 1 deployment, can be removed soon
-        role = deployment.kubernetes.role or {}
-        if role:
-            chart["role"] = self.to_role(role)
-            chart["rolebinding"] = self.to_role_binding()
 
         prometheus = _to_prometheus_chart(self, deployment)
 
