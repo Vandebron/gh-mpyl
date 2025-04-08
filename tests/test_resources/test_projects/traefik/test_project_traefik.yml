@@ -68,12 +68,6 @@ deployments:
           all:
             schedule: "0 22 * * *"
             timeZone: "Europe/Amsterdam"
-      role:
-        resources:
-          - "pods"
-        verbs:
-          - "list"
-          - "get"
       livenessProbe:
         path:
           all: /health

@@ -785,8 +785,6 @@ definitions:
                 $ref: k8s_api_core.schema.yml#/definitions/io.k8s.api.batch.v1.CronJobSpec
               all:
                 $ref: k8s_api_core.schema.yml#/definitions/io.k8s.api.batch.v1.CronJobSpec
-      role:
-        $ref: k8s_api_core.schema.yml#/definitions/io.k8s.api.rbac.v1.PolicyRule
       metrics:
         description: >-
           Prometheus metrics. Requires prometheus operator to be installed.
