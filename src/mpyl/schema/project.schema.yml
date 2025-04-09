@@ -44,6 +44,9 @@ properties:
   pipeline:
     description: The pipeline this project will be built with
     type: string
+  architecture:
+    description: The build architecture for this project
+    type: string
   stages:
     $id: '#/properties/stages'
     description: Defines which steps should be executed at each stage
