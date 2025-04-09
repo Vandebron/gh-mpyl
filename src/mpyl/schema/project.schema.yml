@@ -119,7 +119,7 @@ properties:
     type: object
     additionalProperties: false
     properties:
-      platform:
+      platforms:
         description: The build platforms for this project
         type: array
         items:
