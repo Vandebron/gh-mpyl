@@ -120,7 +120,7 @@ properties:
     additionalProperties: false
     properties:
       platform:
-        description: The build platform for this project
+        description: The build platforms for this project
         type: array
         items:
           type: string
