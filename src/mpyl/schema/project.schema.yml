@@ -119,6 +119,11 @@ properties:
     type: object
     additionalProperties: false
     properties:
+      platforms:
+        description: The build platforms for this project
+        type: array
+        items:
+          type: string
       args:
         type: object
         description: >-
