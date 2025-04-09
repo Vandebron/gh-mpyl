@@ -51,5 +51,4 @@ deployments:
               **{{ $value }}** new signup failures with reason `{{ $labels.reason }}`.
               You can find more details in: <unrelated link>
 dependencies:
-  test:
-    - tests/projects/service/file.py
+  - tests/projects/service/file.py

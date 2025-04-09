@@ -173,20 +173,6 @@ class Stages(StageSpecificProperty[str]):
 
 
 @dataclass(frozen=True)
-class Dependencies(StageSpecificProperty[set[str]]):
-    def set_for_stage(self, stage: str) -> set[str]:
-        deps_for_stage = self.for_stage(stage)
-        return deps_for_stage if deps_for_stage else set()
-
-    def all(self) -> dict[str, set[str]]:
-        return {key: self.set_for_stage(key) for key in self.stages.keys()}
-
-    @staticmethod
-    def from_config(values: dict):
-        return Dependencies(values)
-
-
-@dataclass(frozen=True)
 class Env:
     @staticmethod
     def from_config(values: list[dict]):
@@ -474,7 +460,7 @@ class Project:
     stages: Stages
     maintainer: list[str]
     deployments: list[Deployment]
-    dependencies: Optional[Dependencies]
+    dependencies: list[str]
     kubernetes: Optional[KubernetesCommon]
     _dagster: Optional[Dagster]
 
@@ -552,8 +538,6 @@ class Project:
         deployments = [
             Deployment.from_config(deployment) for deployment in deployment_list
         ]
-        dependencies = values.get("dependencies")
-
         return Project(
             name=values["name"],
             description=values["description"],
@@ -562,9 +546,7 @@ class Project:
             stages=Stages.from_config(values.get("stages", {})),
             maintainer=values.get("maintainer", []),
             deployments=deployments,
-            dependencies=(
-                Dependencies.from_config(dependencies) if dependencies else None
-            ),
+            dependencies=values.get("dependencies", []),
             _dagster=Dagster.from_config(dagster) if dagster else None,
             kubernetes=KubernetesCommon.from_config(kubernetes_values),
         )
