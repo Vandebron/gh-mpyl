@@ -1,0 +1,15 @@
+---
+name: Generate Backstage components
+description: Run MPyL to generate Backstage components
+inputs:
+  repository:  # TODO: change to path maybe?
+    description: The repository name
+    required: true
+runs:
+  using: docker
+  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v1.2.26
+  args:
+    - --repository
+    - ${{ inputs.repository }}
+  env:
+    MPYL_CONFIG_PATH: ${{ inputs.config-path }}
