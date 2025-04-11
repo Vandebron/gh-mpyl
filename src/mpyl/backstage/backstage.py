@@ -5,7 +5,7 @@ import os
 import yaml
 
 from ..plan.discovery import find_projects
-from ..project import load_project, Project, Target
+from ..project import load_project, Project, Target, KeyValueProperty
 from ..steps import deploy
 from ..steps.deploy.k8s.chart import ChartBuilder
 
@@ -39,8 +39,8 @@ def generate_components(directory: str) -> None:
     for component_collection in component_collections:
         for file_location, components in component_collection.items():
             os.makedirs(os.path.dirname(file_location), exist_ok=True)
-            with open(file_location, "w+", encoding="utf-8") as file:
-                file.write(
+            with open(file_location, "w+", encoding="utf-8") as yaml_file:
+                yaml_file.write(
                     yaml.dump_all(components, default_flow_style=False, sort_keys=False)
                 )
 
@@ -73,7 +73,7 @@ def __get_project_names(projects: list[Project]) -> list[str]:
 def __get_dependencies_for_project(
     project: Project, project_names: list[str]
 ) -> list[str]:
-    env_vars = []
+    env_vars: list[KeyValueProperty] = []
     for deployment in project.deployments:
         if deployment.properties:
             env_vars = env_vars + deployment.properties.env
@@ -84,7 +84,7 @@ def __get_dependencies_for_project(
         raw_env_vars = ChartBuilder.extract_raw_env(Target.PRODUCTION, env_vars)
         for value in raw_env_vars.values():
             if "svc.cluster.local" in value and project_name in value:
-                dependencies.append(project_name)  # TODO: add check for keycloak
+                dependencies.append(project_name)  # add check for keycloak
     return list(set(dependencies))
 
 

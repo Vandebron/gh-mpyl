@@ -2,7 +2,7 @@
 
 import click
 
-from mpyl.backstage.backstage import generate_components
+from ..backstage.backstage import generate_components
 
 
 @click.group("backstage")
