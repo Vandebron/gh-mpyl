@@ -24,7 +24,7 @@ jobs:
     outputs:
       build-docker-image: ${{ steps.changed-files.outputs.any_changed == 'true' }}
     steps:
-      - uses: tj-actions/changed-files@v46.0.4
+      - uses: tj-actions/changed-files@v46.0.5
         id: changed-files
         with:
           files: |-
@@ -57,7 +57,7 @@ jobs:
           registry-type: public
 
       - name: Create repository in ECR
-        uses: int128/create-ecr-repository-action@v1.364.0
+        uses: int128/create-ecr-repository-action@v1.365.0
         with:
           repository: gh-mpyl
           public: true

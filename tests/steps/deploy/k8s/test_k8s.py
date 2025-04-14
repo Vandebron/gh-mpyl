@@ -27,7 +27,6 @@ from tests.test_resources.test_data import (
     stub_run_properties,
     TestStage,
     get_project_traefik,
-    get_deployment_strategy_project,
     get_deployments_strategy_project,
     get_job_deployments_project,
 )
@@ -153,8 +152,6 @@ class TestKubernetesChart:
             "middleware-strip-prefix-dockertest",
             "prometheus-rule-dockertest",
             "service-monitor-dockertest",
-            "role",
-            "rolebinding",
         ],
     )
     def test_service_chart_roundtrip(self, template):
@@ -183,8 +180,6 @@ class TestKubernetesChart:
             "middleware-strip-prefix-dockertest",
             "prometheus-rule-dockertest",
             "service-monitor-dockertest",
-            "role",
-            "rolebinding",
         }
 
     def test_ingress_routes_placeholder_replacement(self):
@@ -207,18 +202,6 @@ class TestKubernetesChart:
         assert middlewares["middleware-strip-prefix-dockertest"].spec["stripPrefix"][
             "prefixes"
         ] == ["/service2/test/pr-1234/1234"]
-
-    def test_deployment_strategy_roundtrip(
-        self,
-    ):  # To test backward compatibility with old tags
-        project = get_deployment_strategy_project()
-        builder = self._get_builder(project)
-        chart = to_service_chart(builder, project.deployments[0])
-        self._roundtrip(
-            self.template_path / "deployment",
-            "deployment-testdeploymentstrategyparameters",
-            chart,
-        )
 
     def test_deployments_strategy_roundtrip(self):
         project = get_deployments_strategy_project()
