@@ -7,7 +7,7 @@ inputs:
     required: false
 runs:
   using: docker
-  image: docker://public.ecr.aws/g8n9b4z3/gh-mpyl:pr-265
+  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v1.2.27
   args:
     - projects
     - lint
