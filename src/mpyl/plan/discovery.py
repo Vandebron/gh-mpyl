@@ -20,17 +20,18 @@ def find_projects() -> list[Path]:
     # is a bit harder to read but completes in a couple of seconds.
     # If you find a faster way to list all files, please raise a PR.
 
-    command = (
-        f"find {Path('.')}"
-        " -type d ( -name target -o -name .git ) -prune"
-        " -o ("
-        f" -path **/deployment/{Project.project_yaml_file_name()}"
-        f" -o -path **/deployment/{Project.project_overrides_yaml_file_pattern()}"
-        " )"
-        " -print"
-    )
+    command = [
+        "fdfind",
+        "--glob",
+        "--exclude",
+        "target",
+        "--exclude",
+        ".git",
+        "--full-path",
+        "**/deployment/project*.yml",
+    ]
     files = subprocess.run(
-        command.split(" "), capture_output=True, text=True, check=True, shell=False
+        command, capture_output=True, text=True, check=True, shell=False
     ).stdout.splitlines()
     return list(map(Path, sorted(files)))
 
