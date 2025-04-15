@@ -19,8 +19,6 @@ from kubernetes.client import (
     V1Service,
     V1ServiceSpec,
     V1ServicePort,
-    V1ServiceAccount,
-    V1LocalObjectReference,
     V1EnvVarSource,
     V1SecretKeySelector,
     V1Probe,
@@ -674,16 +672,6 @@ class ChartBuilder:
             for host in hosts
         } | adjusted_middlewares
 
-    def to_service_account(self) -> V1ServiceAccount:
-        return V1ServiceAccount(
-            api_version="v1",
-            kind="ServiceAccount",
-            metadata=self._to_object_meta(),
-            image_pull_secrets=[
-                ChartBuilder._to_k8s_model({"name": "aws-ecr"}, V1LocalObjectReference)
-            ],
-        )
-
     def to_sealed_secrets(
         self, sealed_secrets: list[KeyValueProperty], name: str
     ) -> V1SealedSecret:
@@ -899,7 +887,7 @@ class ChartBuilder:
     def to_common_chart(
         self, deployment: Deployment
     ) -> dict[str, CustomResourceDefinition]:
-        chart = {"service-account": self.to_service_account()}
+        chart = {}
 
         if deployment.properties and len(deployment.properties.sealed_secrets) > 0:
             chart[f"sealed-secrets-{deployment.name}"] = self.to_sealed_secrets(
