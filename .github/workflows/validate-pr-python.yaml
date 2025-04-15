@@ -86,9 +86,6 @@ jobs:
           cache-dependency-path: |
             Pipfile.lock
 
-      - name: Install fd
-        run: sudo apt-get -y install fd-find
-
       - name: Install pipenv
         run: pip install pipenv
 
