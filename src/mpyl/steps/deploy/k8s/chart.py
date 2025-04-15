@@ -588,8 +588,7 @@ class ChartBuilder:
         return [
             V1AlphaIngressRoute.from_hosts(
                 metadata=self._to_object_meta(
-                    name=f"{host.name.lower()}-https-{i}",
-                    deployment_name=deployment.name,
+                    name=f"{host.name.lower()}-{i}", deployment_name=deployment.name
                 ),
                 host=host,
                 target=self.target,
@@ -932,7 +931,7 @@ def to_service_chart(
 
 def _to_ingress_routes_charts(builder: ChartBuilder, deployment: Deployment):
     ingress_https = {
-        f"ingress-{deployment.name}-https-{i}": route
+        f"ingress-{deployment.name}-{i}": route
         for i, route in enumerate(builder.to_ingress_routes(deployment))
     }
     ingress_routes = (

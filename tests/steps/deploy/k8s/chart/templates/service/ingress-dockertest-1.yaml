@@ -11,7 +11,7 @@ metadata:
     maintainer: MPyL
     version: pr-1234
     revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
-  name: dockertest-dockertest-https-1
+  name: dockertest-dockertest-1
 spec:
   routes:
   - kind: Rule
