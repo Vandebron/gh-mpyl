@@ -115,7 +115,6 @@ class TestKubernetesChart:
             namespace="pr-1234",
             middlewares_override=[],
             entrypoints_override=[],
-            http_middleware="http",
             default_tls="default",
         )
         route.spec["tls"] = {"secretName": 1234}
@@ -142,9 +141,7 @@ class TestKubernetesChart:
             "service",
             "sealed-secrets-dockertest",
             "ingress-dockertest-https-0",
-            "ingress-dockertest-http-0",
             "ingress-dockertest-https-1",
-            "ingress-dockertest-http-1",
             "ingress-dockertest-ingress-intracloud-https-0",
             "middleware-whitelist-0-dockertest",
             "middleware-whitelist-1-dockertest",
@@ -170,9 +167,7 @@ class TestKubernetesChart:
             "service",
             "service-dockertest",
             "ingress-dockertest-https-0",
-            "ingress-dockertest-http-0",
             "ingress-dockertest-https-1",
-            "ingress-dockertest-http-1",
             "ingress-dockertest-ingress-intracloud-https-0",
             "middleware-whitelist-0-dockertest",
             "middleware-whitelist-1-dockertest",

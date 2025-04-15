@@ -151,17 +151,13 @@ class DefaultWhitelists:
 
 @dataclass(frozen=True)
 class TraefikConfig:
-    http_middleware: str
     tls: str
 
     @staticmethod
     def from_config(values: Optional[dict]):
         if not values:
             return None
-        return TraefikConfig(
-            http_middleware=values["httpMiddleware"],
-            tls=values["tls"],
-        )
+        return TraefikConfig(tls=values["tls"])
 
 
 @dataclass(frozen=True)
@@ -587,14 +583,12 @@ class ChartBuilder:
             spec=ingress_route_spec,
         )
 
-    def to_ingress_routes(
-        self, deployment: Deployment, https: bool
-    ) -> list[V1AlphaIngressRoute]:
+    def to_ingress_routes(self, deployment: Deployment) -> list[V1AlphaIngressRoute]:
         hosts = self.create_host_wrappers(deployment)
         return [
             V1AlphaIngressRoute.from_hosts(
                 metadata=self._to_object_meta(
-                    name=f"{host.name.lower()}-http{("s" if https else "")}-{i}",
+                    name=f"{host.name.lower()}-https-{i}",
                     deployment_name=deployment.name,
                 ),
                 host=host,
@@ -602,10 +596,8 @@ class ChartBuilder:
                 release_name=self.release_name,
                 namespace=self.namespace,
                 pr_number=self.step_input.run_properties.versioning.pr_number,
-                https=https,
                 middlewares_override=[],
                 entrypoints_override=[],
-                http_middleware=self.config_defaults.traefik_config.http_middleware,
                 default_tls=self.config_defaults.traefik_config.tls,
             )
             for i, host in enumerate(hosts)
@@ -624,11 +616,9 @@ class ChartBuilder:
                 release_name=self.release_name,
                 namespace=self.namespace,
                 pr_number=self.step_input.run_properties.versioning.pr_number,
-                https=True,
                 middlewares_override=host.additional_route.middlewares,
                 entrypoints_override=host.additional_route.entrypoints,
-                http_middleware=self.config_defaults.traefik_config.http_middleware,
-                default_tls=self.config_defaults.traefik_config.http_middleware,
+                default_tls=self.config_defaults.traefik_config.tls,
             )
             for i, host in enumerate(hosts)
             if host.additional_route
@@ -943,11 +933,7 @@ def to_service_chart(
 def _to_ingress_routes_charts(builder: ChartBuilder, deployment: Deployment):
     ingress_https = {
         f"ingress-{deployment.name}-https-{i}": route
-        for i, route in enumerate(builder.to_ingress_routes(deployment, https=True))
-    }
-    ingress_http = {
-        f"ingress-{deployment.name}-http-{i}": route
-        for i, route in enumerate(builder.to_ingress_routes(deployment, https=False))
+        for i, route in enumerate(builder.to_ingress_routes(deployment))
     }
     ingress_routes = (
         {f"ingress-routes-{deployment.name}": builder.to_ingress(deployment)}
@@ -959,7 +945,7 @@ def _to_ingress_routes_charts(builder: ChartBuilder, deployment: Deployment):
         for i, route in enumerate(builder.to_additional_routes(deployment))
     }
 
-    return ingress_https | ingress_http | ingress_routes | additional_routes
+    return ingress_https | ingress_routes | additional_routes
 
 
 def _to_prometheus_chart(builder: ChartBuilder, deployment: Deployment):
