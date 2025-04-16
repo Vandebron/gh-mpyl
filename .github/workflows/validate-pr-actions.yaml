@@ -194,3 +194,24 @@ jobs:
           version: a-random-version
           deploy-image: a-random-docker-image
           config-path: mpyl_config.example.yml
+
+  generate-backstage-components:
+    name: ▶️ Run actions/generate-backstage-components
+    runs-on: ubuntu-latest
+    if: ${{ !failure() && !cancelled() }}
+    needs:
+      - docker
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - name: Point action.yaml to the Docker image built in the previous job
+        if: needs.changed-files.outputs.build-docker-image == 'true'
+        env:
+          IMAGE: docker://${{ needs.docker.outputs.image }}
+        run: |-
+          yq -i '.runs.image = strenv(IMAGE)' actions/generate-backstage-components/action.yaml
+
+      - uses: ./actions/generate-backstage-components
+        with:
+          output-path: catalog/gh-mpyl
+          repository-url: https://github.com/Vandebron/gh-mpyl/tree/main
