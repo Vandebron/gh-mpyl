@@ -13,6 +13,8 @@ runs:
   using: docker
   image: docker://public.ecr.aws/vdb-public/gh-mpyl:pr-267
   args:
+    - backstage
+    - generate
     - --output
     - ${{ inputs.output-path }}
     - --url
