@@ -200,6 +200,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !failure() && !cancelled() }}
     needs:
+      - changed-files
       - docker
     steps:
       - uses: actions/checkout@v4.2.2
