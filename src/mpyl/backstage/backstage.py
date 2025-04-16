@@ -1,5 +1,6 @@
 """Functions to generate backstage components"""
 
+import logging
 import os
 
 import yaml
@@ -8,6 +9,8 @@ from ..plan.discovery import find_projects
 from ..project import load_project, Project, Target, KeyValueProperty
 from ..steps import deploy
 from ..steps.deploy.k8s.chart import ChartBuilder
+
+logger = logging.getLogger("mpyl")
 
 
 def generate_components(directory: str, repository_url: str) -> None:
@@ -39,6 +42,7 @@ def generate_components(directory: str, repository_url: str) -> None:
         for file_location, components in component_collection.items():
             os.makedirs(os.path.dirname(file_location), exist_ok=True)
             with open(file_location, "w+", encoding="utf-8") as components_yaml_file:
+                logger.info(f"Creating component file: {file_location}")
                 components_yaml_file.write(
                     yaml.dump_all(components, default_flow_style=False, sort_keys=False)
                 )
