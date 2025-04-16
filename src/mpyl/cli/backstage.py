@@ -12,11 +12,18 @@ def backstage():
 
 @backstage.command(help="Generate backstage component files")
 @click.option(
-    "--repository",
-    "-r",
+    "--output",
+    "-o",
     required=True,
     type=str,
-    help="Repository path",
+    help="The output path",
 )
-def generate(repository: str):
-    generate_components(repository)
+@click.option(
+    "--url",
+    "-u",
+    required=True,
+    type=str,
+    help="The repository url",
+)
+def generate(output: str, url: str):
+    generate_components(output, url)

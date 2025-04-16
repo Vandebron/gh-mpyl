@@ -10,11 +10,10 @@ from ..steps import deploy
 from ..steps.deploy.k8s.chart import ChartBuilder
 
 
-def generate_components(directory: str) -> None:
+def generate_components(directory: str, repository_url: str) -> None:
     projects: list[Project] = []
-    yaml_files = find_projects()
-    for file in yaml_files:
-        projects.append(load_project(file, validate_project_yaml=True))
+    for yaml_file in find_projects():
+        projects.append(load_project(yaml_file, validate_project_yaml=True))
 
     service_components: list[dict] = []
     maintainers: list[str] = []
@@ -24,7 +23,7 @@ def generate_components(directory: str) -> None:
             project.maintainer if len(project.maintainer) else ["unknown"]
         )
         service_components.append(
-            __generate_component(project, project_names, maintainer)
+            __generate_component(project, project_names, maintainer, repository_url)
         )
         maintainers.append(maintainer)
 
@@ -33,8 +32,8 @@ def generate_components(directory: str) -> None:
         group_components.append(__generate_group(maintainer))
 
     component_collections: list[dict[str, list[dict]]] = [
-        {f"catalog/{directory}/services.yaml": service_components},
-        {f"catalog/{directory}/groups.yaml": group_components},
+        {f"{directory}/services.yaml": service_components},
+        {f"{directory}/groups.yaml": group_components},
     ]
     for component_collection in component_collections:
         for file_location, components in component_collection.items():
@@ -89,7 +88,7 @@ def __get_dependencies_for_project(
 
 
 def __generate_component(
-    project: Project, project_names: list[str], maintainer: str
+    project: Project, project_names: list[str], maintainer: str, repository_url: str
 ) -> dict:
     return {
         "apiVersion": "backstage.io/v1alpha1",
@@ -99,7 +98,7 @@ def __generate_component(
             "description": project.description,
             "links": [
                 {
-                    "url": f"https://github.com/Vandebron/Vandebron/tree/master/{project.path}",
+                    "url": f"{repository_url}/{project.path}",
                     "type": "repository",
                     "title": "Github",
                 }
