@@ -12,8 +12,8 @@ from ..steps.deploy.k8s.chart import ChartBuilder
 
 def generate_components(directory: str, repository_url: str) -> None:
     projects: list[Project] = []
-    for yaml_file in find_projects():
-        projects.append(load_project(yaml_file, validate_project_yaml=True))
+    for project_yaml_file in find_projects():
+        projects.append(load_project(project_yaml_file, validate_project_yaml=True))
 
     service_components: list[dict] = []
     maintainers: list[str] = []
@@ -38,8 +38,8 @@ def generate_components(directory: str, repository_url: str) -> None:
     for component_collection in component_collections:
         for file_location, components in component_collection.items():
             os.makedirs(os.path.dirname(file_location), exist_ok=True)
-            with open(file_location, "w+", encoding="utf-8") as yaml_file:
-                yaml_file.write(
+            with open(file_location, "w+", encoding="utf-8") as components_yaml_file:
+                components_yaml_file.write(
                     yaml.dump_all(components, default_flow_style=False, sort_keys=False)
                 )
 
@@ -83,7 +83,9 @@ def __get_dependencies_for_project(
         raw_env_vars = ChartBuilder.extract_raw_env(Target.PRODUCTION, env_vars)
         for value in raw_env_vars.values():
             if "svc.cluster.local" in value and project_name in value:
-                dependencies.append(project_name)  # add check for keycloak
+                dependencies.append(
+                    project_name
+                )  # add check for keycloak and other tools (browserless, etc)
     return list(set(dependencies))
 
 
