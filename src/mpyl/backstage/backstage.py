@@ -48,7 +48,9 @@ def generate_components(directory: str, repository_url: str) -> None:
                 )
 
 
-def __get_project_type(project: Project) -> str:
+def __get_project_type(  # pylint: disable=too-many-return-statements
+    project: Project,
+) -> str:
     # This check can be removed after all project overrides are replaced
     if len(list(project.deployment_path.glob("*-override-*"))) > 0:
         return "project override"
@@ -59,6 +61,9 @@ def __get_project_type(project: Project) -> str:
 
     if "BPM" in deploy_step:
         return "bpm diagram"
+
+    if "Dagster" in deploy_step:
+        return "dagster"
 
     job_config = project.deployments[0].kubernetes.job
     if job_config:
