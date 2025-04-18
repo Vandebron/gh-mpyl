@@ -316,43 +316,6 @@ class ChartBuilder:
 
         return liveness_probe, startup_probe
 
-    def to_service_old(self, deployment: Deployment) -> V1Service:
-        service_ports = list(
-            map(
-                lambda key: V1ServicePort(
-                    port=int(key),
-                    target_port=int(deployment.kubernetes.port_mappings[key]),
-                    protocol="TCP",
-                    name=f"{key}-webservice-port",
-                ),
-                deployment.kubernetes.port_mappings.keys(),
-            )
-        )
-
-        return V1Service(
-            api_version="v1",
-            kind="Service",
-            metadata=V1ObjectMeta(
-                annotations=self._to_annotations(),
-                name=f"{self.release_name}",
-                labels=self.to_labels(deployment_name=deployment.name),
-            ),
-            spec=V1ServiceSpec(
-                type="ClusterIP",
-                ports=service_ports,
-                selector=V1LabelSelector(
-                    match_labels={
-                        "app.kubernetes.io/instance": self.release_name,
-                        "app.kubernetes.io/name": self.release_name,
-                        "vandebron.nl/deployment": deployment.name,
-                    }
-                    # Use the Deployment name as a label selector so that this Service points only to the Pods
-                    # created by it, and not to all Pods in the application.
-                    # Required for applications with multiple deployments.
-                ).match_labels,
-            ),
-        )
-
     def to_service(self, deployment: Deployment) -> V1Service:
         service_ports = list(
             map(
@@ -920,8 +883,7 @@ def to_service_chart(
     builder: ChartBuilder, deployment: Deployment
 ) -> dict[str, CustomResourceDefinition]:
     return (
-        {"service": builder.to_service_old(deployment)}
-        | {f"service-{deployment.name}": builder.to_service(deployment)}
+        {f"service-{deployment.name}": builder.to_service(deployment)}
         | {f"deployment-{deployment.name}": builder.to_deployment(deployment)}
         | _to_ingress_routes_charts(builder, deployment)
         | builder.to_middlewares(deployment)
