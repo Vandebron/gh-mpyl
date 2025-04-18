@@ -26,7 +26,6 @@ class TestDeploySetLinkup:
             ],  # pylint: disable=duplicate-code
             dependencies=Dependencies({}),
             kubernetes=KubernetesCommon(
-                project_id=TargetProperty.from_config({}),
                 namespace=TargetProperty.from_config({"all": namespace}),
             ),
             _dagster=None,
