@@ -31,7 +31,7 @@ class TestRunResult:
         stages=Stages({}),
         maintainer=[],
         deployments=[],
-        dependencies=None,
+        dependencies=[],
         kubernetes=None,
         _dagster=None,
     )
