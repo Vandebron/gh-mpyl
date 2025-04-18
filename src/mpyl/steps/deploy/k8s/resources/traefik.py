@@ -38,11 +38,9 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
         release_name: str,
         namespace: str,
         pr_number: Optional[int],
-        default_middlewares: list[str],
-        default_entrypoints: list[str],
-        http_middleware: str,
+        middlewares_override: list[str],
+        entrypoints_override: list[str],
         default_tls: str,
-        https: bool = True,
     ):
         def _interpolate_names(host: str) -> str:
             host = host.replace(SERVICE_NAME_PLACEHOLDER, release_name)
@@ -51,19 +49,14 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
             return host
 
         combined_middlewares = (
-            [
-                {"name": http_middleware} if not https else None,
-                {"name": f"whitelist-{host.index}-{host.name}"},
-            ]
-            if len(default_middlewares) == 0
-            else [{"name": m for m in default_middlewares}]
+            [{"name": f"whitelist-{host.index}-{host.name}"}]
+            if len(middlewares_override) == 0
+            else [{"name": m for m in middlewares_override}]
         )
 
         route: dict[str, Any] = {
             "kind": "Rule",
-            "match": _interpolate_names(
-                host=host.traefik_host.host.get_value(target),
-            ),
+            "match": _interpolate_names(host=host.traefik_host.host.get_value(target)),
             "services": [
                 {"name": host.name, "kind": "Service", "port": host.service_port}
             ],
@@ -86,20 +79,14 @@ class V1AlphaIngressRoute(CustomResourceDefinition):
             tls |= {"options": {"name": "insecure-ciphers", "namespace": "traefik"}}
 
         combined_entrypoints = (
-            ["websecure" if https else "web"]
-            if len(default_entrypoints) == 0
-            else default_entrypoints
+            ["websecure"] if len(entrypoints_override) == 0 else entrypoints_override
         )
 
         return cls(
             api_version="traefik.io/v1alpha1",
             kind="IngressRoute",
             metadata=metadata,
-            spec={
-                "routes": [route],
-                "entryPoints": combined_entrypoints,
-                "tls": tls if https else None,
-            },
+            spec={"routes": [route], "entryPoints": combined_entrypoints, "tls": tls},
             schema="traefik.ingress.schema.yml",
         )
 

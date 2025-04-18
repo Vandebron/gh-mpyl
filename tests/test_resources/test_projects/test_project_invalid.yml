@@ -4,7 +4,5 @@ stages:
   build: "Docker Build"
   deploy: Kubernetes Deploy
 kubernetes:
-  projectId:
-    all: test1234
   namespace:
     all: "webapps"
