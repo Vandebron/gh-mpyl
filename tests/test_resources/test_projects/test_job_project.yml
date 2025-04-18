@@ -8,8 +8,6 @@ stages:
 kubernetes:
   namespace:
     all: "job"
-  projectId:
-    all: test1234
 deployments:
   - name: job
     properties:

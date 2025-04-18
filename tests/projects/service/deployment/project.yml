@@ -21,8 +21,6 @@ dependencies:
 kubernetes:
   namespace:
     all: 'nodeservice'
-  projectId:
-    all: "p-11111"
 deployments:
   - name: 'http'
     properties:
