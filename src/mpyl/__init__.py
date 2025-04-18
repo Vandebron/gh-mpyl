@@ -12,6 +12,7 @@ import logging
 
 import click
 
+from .cli.backstage import backstage
 from .cli.build import build
 from .cli.health import health
 from .cli.plan import plan
@@ -36,6 +37,7 @@ def add_commands():
     main_group.add_command(projects)
     main_group.add_command(build)
     main_group.add_command(health)
+    main_group.add_command(backstage)
 
 
 def main():
