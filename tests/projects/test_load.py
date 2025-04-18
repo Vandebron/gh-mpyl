@@ -19,7 +19,6 @@ class TestProjectLoad:
 
     def test_load_all_project_dependencies(self):
         projects = load_projects()
-        print(f"project = {projects}")
         dependencies = list(map(lambda p: find_dependencies(p, projects), projects))
         deps: dict[str, ProjectWithDependents] = dict(
             map(lambda d: (d.name, d), dependencies)

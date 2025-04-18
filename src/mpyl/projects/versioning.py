@@ -34,66 +34,7 @@ class Upgrader(ABC):
         return previous_dict
 
 
-class TraefikYamlUpgrader(Upgrader):
-    version_field_position = 0
-
-    def works_with(self, project_file: Path):
-        return project_file.name.endswith("-traefik.yml")
-
-
-class ProjectYamlUpgrader(Upgrader):
-    version_field_position = 2
-
-    def works_with(self, project_file: Path):
-        return project_file.name == Project.project_yaml_file_name()
-
-
-class TraefikUpgraderOne(TraefikYamlUpgrader):
-    target_version = 1
-
-    def upgrade(self, previous_dict: ordereddict) -> ordereddict:
-        middlewares = previous_dict["traefik"].get("middlewares", [])
-        for target in middlewares:
-            for middleware in middlewares[target]:
-                spec = middleware["spec"]
-                if "ipAllowList" in spec:
-                    middlewares[target].remove(middleware)
-
-        hosts = previous_dict["traefik"].get("hosts", [])
-        for host in hosts:
-            if "whitelists" in host:
-                del host["whitelists"]
-
-        return previous_dict
-
-
-class TraefikUpgraderTwo(TraefikYamlUpgrader):
-    target_version = 2
-
-    def upgrade(self, previous_dict: ordereddict) -> ordereddict:
-        middlewares = previous_dict["traefik"].get("middlewares", [])
-
-        if middlewares:
-            for target in middlewares:
-                for middleware in middlewares[target]:
-                    spec = middleware["spec"]
-                    if "rateLimit" in spec:
-                        middlewares[target].remove(middleware)
-
-                if not middlewares[target]:
-                    del middlewares[
-                        target
-                    ]  # remove middlewares entries if they are empty now
-
-            if not previous_dict["traefik"]["middlewares"]:
-                del previous_dict["traefik"][
-                    "middlewares"
-                ]  # remove middlewares section if it's empty now
-
-        return previous_dict
-
-
-class ProjectUpgraderOne(ProjectYamlUpgrader):
+class ProjectUpgraderOne(Upgrader):
     target_version = 1
 
     def upgrade(self, previous_dict: ordereddict) -> ordereddict:
