@@ -8,10 +8,9 @@ inputs:
   repository-url:
     description: The url of the repository
     required: true
-
 runs:
   using: docker
-  image: docker://public.ecr.aws/vdb-public/gh-mpyl:pr-267
+  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v1.3.0
   args:
     - backstage
     - generate
