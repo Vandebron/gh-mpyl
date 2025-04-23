@@ -22,7 +22,7 @@ def generate_components(directory: str, repository_url: str) -> None:
     maintainers: list[str] = []
     project_names = __get_project_names(projects)
     for project in projects:
-        maintainer = project.maintainer[0] if len(project.maintainer) else ["unknown"]
+        maintainer = project.maintainer[0] if len(project.maintainer) else "unknown"
         service_components.append(
             __generate_component(project, project_names, maintainer, repository_url)
         )
