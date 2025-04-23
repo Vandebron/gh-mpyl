@@ -90,9 +90,11 @@ def __get_dependencies_for_project(
         raw_env_vars = ChartBuilder.extract_raw_env(Target.PRODUCTION, env_vars)
         for value in raw_env_vars.values():
             if "svc.cluster.local" in value and project_name in value:
-                dependencies.append(
-                    project_name
-                )  # add check for keycloak and other tools (browserless, etc)
+                dependencies.append(project_name)
+            if "keycloak.svc" in value:
+                dependencies.append("keycloak")
+            if "browserless" in value:
+                dependencies.append("browserless")
     return list(set(dependencies))
 
 
