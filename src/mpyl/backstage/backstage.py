@@ -33,8 +33,16 @@ def generate_components(directory: str, repository_url: str) -> None:
         group_components.append(__generate_group(maintainer))
 
     component_collections: list[dict[str, list[dict]]] = [
-        {f"{directory}/services.yaml": service_components},
-        {f"{directory}/groups.yaml": group_components},
+        {
+            f"{directory}/services.yaml": sorted(
+                service_components, key=lambda component: component["metadata"]["name"]
+            )
+        },
+        {
+            f"{directory}/groups.yaml": sorted(
+                group_components, key=lambda component: component["metadata"]["name"]
+            )
+        },
     ]
     for component_collection in component_collections:
         for file_location, components in component_collection.items():
@@ -95,7 +103,7 @@ def __get_dependencies_for_project(
                 dependencies.append("keycloak")
             if "browserless" in value:
                 dependencies.append("browserless")
-    return list(set(dependencies))
+    return sorted(list(set(dependencies)))
 
 
 def __generate_component(
