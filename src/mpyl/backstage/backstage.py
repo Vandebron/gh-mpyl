@@ -116,7 +116,7 @@ def __generate_component(
         "spec": {
             "type": __get_project_type(project),
             "lifecycle": "production",
-            "owner": maintainer,
+            "owner": maintainer.replace(" ", "-"),
             "dependsOn": [
                 f"component:default/{name}"
                 for name in __get_dependencies_for_project(project, project_names)
@@ -130,7 +130,8 @@ def __generate_group(maintainer: str) -> dict:
         "apiVersion": "backstage.io/v1alpha1",
         "kind": "Group",
         "metadata": {
-            "name": maintainer,
+            "title": maintainer,
+            "name": maintainer.replace(" ", "-"),
         },
         "spec": {
             "type": "team",
