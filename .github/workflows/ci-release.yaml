@@ -77,7 +77,7 @@ jobs:
           push: true
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@v3.8.1
+        uses: sigstore/cosign-installer@v3.8.2
 
       - name: Sign Docker image
         env:
