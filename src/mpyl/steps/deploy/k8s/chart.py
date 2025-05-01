@@ -849,6 +849,7 @@ class ChartBuilder:
                 if deployment.kubernetes.args
                 else None
             ),
+            security_context=deployment.kubernetes.security_context,
         )
 
         instances = resources.instances if resources.instances else defaults.instances
@@ -873,6 +874,7 @@ class ChartBuilder:
                         containers=[container],
                         service_account=self.release_name,
                         service_account_name=self.release_name,
+                        security_context=deployment.kubernetes.pod_security_context,
                     ),
                 ),
                 strategy=strategy,
