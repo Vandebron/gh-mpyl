@@ -14,10 +14,8 @@ deployments:
             schedule: "0 22 * * *"
             timeZone: "Europe/Amsterdam"
 dependencies:
-  build:
-    - tests/projects/sbt-service/src/
-  test:
-    - tests/projects/service/file.py
+  - tests/projects/sbt-service/src/
+  - tests/projects/service/file.py
 kubernetes:
   namespace:
     all: job

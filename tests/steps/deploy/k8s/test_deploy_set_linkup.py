@@ -1,5 +1,4 @@
 from src.mpyl.project import (
-    Dependencies,
     KubernetesCommon,
     Project,
     Stages,
@@ -24,7 +23,7 @@ class TestDeploySetLinkup:
             deployments=[
                 Deployment("http", None, None, None)
             ],  # pylint: disable=duplicate-code
-            dependencies=Dependencies({}),
+            dependencies=[],
             kubernetes=KubernetesCommon(
                 namespace=TargetProperty.from_config({"all": namespace}),
             ),
