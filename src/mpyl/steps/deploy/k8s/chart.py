@@ -715,7 +715,7 @@ class ChartBuilder:
 
         return V1EnvVar(name=ref.key, value_from=value_from)
 
-    def _create_secret_env_vars(self, secret_list: list[KeyValueRef]) -> list[V1EnvVar]:
+    def create_secret_env_vars(self, secret_list: list[KeyValueRef]) -> list[V1EnvVar]:
         return list(map(self._map_key_value_refs, secret_list))
 
     @staticmethod
@@ -762,7 +762,7 @@ class ChartBuilder:
             V1EnvVar(name=key, value=value) for key, value in processed_env_vars.items()
         ]
         secrets = (
-            self._create_secret_env_vars(deployment.properties.kubernetes)
+            self.create_secret_env_vars(deployment.properties.kubernetes)
             if deployment.properties
             else []
         )
