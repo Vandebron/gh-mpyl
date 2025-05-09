@@ -77,6 +77,9 @@ from ....utilities import replace_item
 CPU_REQUEST_SCALE_FACTOR = 0.2
 MEM_REQUEST_SCALE_FACTOR = 0.5
 
+# All applications now point to this service account rather than generating its own copy
+DEFAULT_SERVICE_ACCOUNT_NAME = "service-account"
+
 
 def try_parse_target(value: object, target: Target):
     if isinstance(value, dict):
@@ -377,8 +380,7 @@ class ChartBuilder:
             ),
             spec=V1PodSpec(
                 containers=[job_container],
-                service_account=self.release_name,
-                service_account_name=self.release_name,
+                service_account_name=DEFAULT_SERVICE_ACCOUNT_NAME,
                 restart_policy="Never",
             ),
         )
@@ -822,8 +824,7 @@ class ChartBuilder:
                     metadata=self._to_object_meta(deployment_name=deployment.name),
                     spec=V1PodSpec(
                         containers=[container],
-                        service_account=self.release_name,
-                        service_account_name=self.release_name,
+                        service_account_name=DEFAULT_SERVICE_ACCOUNT_NAME,
                     ),
                 ),
                 strategy=strategy,

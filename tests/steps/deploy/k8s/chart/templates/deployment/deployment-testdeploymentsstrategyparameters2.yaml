@@ -57,5 +57,4 @@ spec:
           requests:
             cpu: 100m
             memory: 512Mi
-      serviceAccount: testdeploymentsstrategyparameters
-      serviceAccountName: testdeploymentsstrategyparameters
+      serviceAccountName: service-account

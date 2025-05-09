@@ -44,8 +44,7 @@ spec:
                 cpu: 100m
                 memory: 512Mi
           restartPolicy: Never
-          serviceAccount: deploymentsproject
-          serviceAccountName: deploymentsproject
+          serviceAccountName: service-account
       ttlSecondsAfterFinished: 3600
   schedule: 00 00 31 02 *
   successfulJobsHistoryLimit: 3
