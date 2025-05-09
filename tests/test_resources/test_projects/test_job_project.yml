@@ -4,12 +4,10 @@ maintainer: ["MPyL"]
 stages:
   build: "Docker Build"
   test: "Echo Test"
-  deploy: "Kubernetes Job Deploy"
+  deploy: "Kubernetes Deploy"
 kubernetes:
   namespace:
     all: "job"
-  projectId:
-    all: test1234
 deployments:
   - name: job
     properties:
