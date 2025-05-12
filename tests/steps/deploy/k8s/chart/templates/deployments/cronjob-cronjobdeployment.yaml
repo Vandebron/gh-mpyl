@@ -32,7 +32,17 @@ spec:
           name: deploymentsproject-cronjobdeployment
         spec:
           containers:
-          - env: []
+          - env:
+            - name: OTEL_SERVICE_NAME
+              value: deploymentsProject
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel.example.com:4318
+            - name: OTEL_LOGS_EXPORTER
+              value: none
+            - name: OTEL_METRICS_EXPORTER
+              value: none
+            - name: OTEL_TRACES_EXPORTER
+              value: otlp
             image: registry/image:123
             imagePullPolicy: Always
             name: deploymentsproject-cronjobdeployment

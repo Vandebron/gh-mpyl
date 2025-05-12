@@ -71,6 +71,17 @@ project:  # default values
       metrics:
         path: /metrics
         enabled: true
+      env:
+        - key: OTEL_SERVICE_NAME
+          all: cronjob
+        - key: OTEL_EXPORTER_OTLP_ENDPOINT
+          all: http://otel.example.com:4318
+        - key: OTEL_LOGS_EXPORTER
+          all: none
+        - key: OTEL_METRICS_EXPORTER
+          all: none
+        - key: OTEL_TRACES_EXPORTER
+          all: otlp
     traefik:
       hosts:
         - host:
