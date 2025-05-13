@@ -116,6 +116,10 @@ definitions:
             $ref: '#/definitions/TraefikDefaults'
           kubernetes:
             $ref: project.schema.yml#/definitions/kubernetes
+          env:
+            type: array
+            items:
+              $ref: project.schema.yml#/definitions/env
   AdditionalTraefikRoutes:
     type: array
     items:

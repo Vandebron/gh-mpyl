@@ -172,6 +172,7 @@ class DeploymentDefaults:
     deployment_strategy: dict
     additional_routes: list[TraefikAdditionalRoute]
     traefik_config: TraefikConfig
+    env: list[KeyValueProperty]
 
     @staticmethod
     def from_config(config: dict):
@@ -179,10 +180,6 @@ class DeploymentDefaults:
         if deployment_values is None:
             raise KeyError("Configuration should have project.deployment section")
         kubernetes = deployment_values.get("kubernetes", {})
-        additional_routes = deployment_values.get("additionalTraefikRoutes", [])
-        traefik_config = TraefikConfig.from_config(
-            deployment_values.get("traefikDefaults", None)
-        )
         return DeploymentDefaults(
             resources_defaults=ResourceDefaults.from_config(kubernetes["resources"]),
             liveness_probe_defaults=kubernetes["livenessProbe"],
@@ -192,9 +189,17 @@ class DeploymentDefaults:
             white_lists=DefaultWhitelists.from_config(config.get("whiteLists", {})),
             deployment_strategy=config["kubernetes"]["deploymentStrategy"],
             additional_routes=list(
-                map(TraefikAdditionalRoute.from_config, additional_routes)
+                map(
+                    TraefikAdditionalRoute.from_config,
+                    deployment_values.get("additionalTraefikRoutes", []),
+                )
             ),
-            traefik_config=traefik_config,
+            traefik_config=TraefikConfig.from_config(
+                deployment_values.get("traefikDefaults", None)
+            ),
+            env=list(
+                map(KeyValueProperty.from_config, deployment_values.get("env", []))
+            ),
         )
 
 
@@ -733,6 +738,17 @@ class ChartBuilder:
             if deployment.properties
             else {}
         )
+
+        # this variable is added here explicitly because:
+        #   1. the name of this service should not be overriden
+        #   2. we don't expose the service name as a replaceable placeholder for env variables
+        raw_env_vars.update({"OTEL_SERVICE_NAME": self.project.name})
+
+        # add default environment variables if they are not declared for the project
+        for prop in self.config_defaults.env:
+            if prop.key not in raw_env_vars:
+                raw_env_vars.update({prop.key: prop.get_value(self.target)})
+
         pr_identifier = (
             None
             if self.step_input.run_properties.versioning.tag
