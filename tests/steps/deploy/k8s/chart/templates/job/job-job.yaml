@@ -55,6 +55,5 @@ spec:
             cpu: 100m
             memory: 512Mi
       restartPolicy: Never
-      serviceAccount: job
-      serviceAccountName: job
+      serviceAccountName: service-account
   ttlSecondsAfterFinished: 5
