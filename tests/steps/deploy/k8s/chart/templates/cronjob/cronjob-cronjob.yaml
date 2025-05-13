@@ -67,8 +67,7 @@ spec:
                 cpu: 100m
                 memory: 512Mi
           restartPolicy: Never
-          serviceAccount: cronjob
-          serviceAccountName: cronjob
+          serviceAccountName: service-account
       ttlSecondsAfterFinished: 3600
   schedule: 0 22 * * *
   successfulJobsHistoryLimit: 3
