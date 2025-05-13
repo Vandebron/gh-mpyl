@@ -809,10 +809,6 @@ definitions:
           Kubernetes deployment strategy.
           https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
         $ref: k8s_api_core.schema.yml#/definitions/io.k8s.api.apps.v1.DeploymentStrategy
-      env:
-        type: array
-        items:
-          $ref: '#/definitions/env'
     dependencies:
       portMappings:
         - metrics

@@ -179,10 +179,6 @@ class DeploymentDefaults:
         if deployment_values is None:
             raise KeyError("Configuration should have project.deployment section")
         kubernetes = deployment_values.get("kubernetes", {})
-        additional_routes = deployment_values.get("additionalTraefikRoutes", [])
-        traefik_config = TraefikConfig.from_config(
-            deployment_values.get("traefikDefaults", None)
-        )
         return DeploymentDefaults(
             resources_defaults=ResourceDefaults.from_config(kubernetes["resources"]),
             liveness_probe_defaults=kubernetes["livenessProbe"],
@@ -192,10 +188,17 @@ class DeploymentDefaults:
             white_lists=DefaultWhitelists.from_config(config.get("whiteLists", {})),
             deployment_strategy=config["kubernetes"]["deploymentStrategy"],
             additional_routes=list(
-                map(TraefikAdditionalRoute.from_config, additional_routes)
+                map(
+                    TraefikAdditionalRoute.from_config,
+                    deployment_values.get("additionalTraefikRoutes", []),
+                )
             ),
-            traefik_config=traefik_config,
-            env=list(map(KeyValueProperty.from_config, kubernetes.get("env", []))),
+            traefik_config=TraefikConfig.from_config(
+                deployment_values.get("traefikDefaults", None)
+            ),
+            env=list(
+                map(KeyValueProperty.from_config, deployment_values.get("env", []))
+            ),
         )
 
 
