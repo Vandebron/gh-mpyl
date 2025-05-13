@@ -48,6 +48,16 @@ spec:
           value: PullRequest
         - name: WITH_NAMESPACE
           value: minimalService-http.mpyl.svc.cluster.local
+        - name: OTEL_SERVICE_NAME
+          value: dockertest
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: http://otel.example.com:4318
+        - name: OTEL_LOGS_EXPORTER
+          value: none
+        - name: OTEL_METRICS_EXPORTER
+          value: none
+        - name: OTEL_TRACES_EXPORTER
+          value: otlp
         - name: SOME_SEALED_SECRET_ENV
           valueFrom:
             secretKeyRef:
@@ -104,5 +114,4 @@ spec:
           periodSeconds: 2
           successThreshold: 1
           timeoutSeconds: 3
-      serviceAccount: dockertest
-      serviceAccountName: dockertest
+      serviceAccountName: service-account

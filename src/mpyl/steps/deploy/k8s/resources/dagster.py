@@ -7,7 +7,7 @@ from typing import Optional
 
 from . import to_dict
 from ..chart import ChartBuilder
-from .....project import Project, Target, KeyValueProperty
+from .....project import Project, Target, KeyValueProperty, KeyValueRef
 from .....steps.models import RunProperties
 from .....utilities.helm import shorten_name
 
@@ -17,7 +17,7 @@ class Constants:
     HELM_CHART_REPO = "https://dagster-io.github.io/helm"
 
 
-def to_user_code_values(
+def to_user_code_values(  # pylint: disable=too-many-locals
     builder: ChartBuilder,
     release_name: str,
     name_suffix: str,
@@ -41,6 +41,15 @@ def to_user_code_values(
     ):
         sealed_secret_env.value_from.secret_key_ref.name = release_name
         sealed_secret_refs.append(to_dict(sealed_secret_env, skip_none=True))
+
+    combined_secret_refs: list[KeyValueRef] = []
+    for deployment in builder.project.deployments:
+        combined_secret_refs = combined_secret_refs + (
+            deployment.properties.kubernetes if deployment.properties else []
+        )
+    secret_refs = []
+    for secret_ref in builder.create_secret_env_vars(combined_secret_refs):
+        secret_refs.append(to_dict(secret_ref, skip_none=True))
 
     sealed_secret_manifest = builder.to_sealed_secrets(
         combined_sealed_secrets, release_name
@@ -71,7 +80,8 @@ def to_user_code_values(
                             project, run_properties.target
                         ).items()
                     ]
-                    + sealed_secret_refs,
+                    + sealed_secret_refs
+                    + secret_refs,
                     "envSecrets": [{"name": s.name} for s in project.dagster.secrets],
                     "image": {
                         "pullPolicy": "Always",

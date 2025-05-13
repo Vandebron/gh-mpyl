@@ -119,8 +119,13 @@ def __generate_component(
                 {
                     "url": f"{repository_url}/{project.path}",
                     "type": "repository",
+                    "title": "project.yml",
+                },
+                {
+                    "url": f"{repository_url}/{project.root_path}",
+                    "type": "repository",
                     "title": "Github",
-                }
+                },
             ],
         },
         "spec": {

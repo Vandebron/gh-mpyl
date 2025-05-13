@@ -40,6 +40,16 @@ spec:
             - python
             - run.py
             env:
+            - name: OTEL_SERVICE_NAME
+              value: cronjob
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel.example.com:4318
+            - name: OTEL_LOGS_EXPORTER
+              value: none
+            - name: OTEL_METRICS_EXPORTER
+              value: none
+            - name: OTEL_TRACES_EXPORTER
+              value: otlp
             - name: SOME_SECRET_ENV
               valueFrom:
                 secretKeyRef:
@@ -57,8 +67,7 @@ spec:
                 cpu: 100m
                 memory: 512Mi
           restartPolicy: Never
-          serviceAccount: cronjob
-          serviceAccountName: cronjob
+          serviceAccountName: service-account
       ttlSecondsAfterFinished: 3600
   schedule: 0 22 * * *
   successfulJobsHistoryLimit: 3

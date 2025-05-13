@@ -19,8 +19,6 @@ from kubernetes.client import (
     V1Service,
     V1ServiceSpec,
     V1ServicePort,
-    V1ServiceAccount,
-    V1LocalObjectReference,
     V1EnvVarSource,
     V1SecretKeySelector,
     V1Probe,
@@ -78,6 +76,9 @@ from ....utilities import replace_item
 # Memory is cheaper, but poses a harder limit (OOM when exceeding limit), so we are more generous than with CPU.
 CPU_REQUEST_SCALE_FACTOR = 0.2
 MEM_REQUEST_SCALE_FACTOR = 0.5
+
+# All applications now point to this service account rather than generating its own copy
+DEFAULT_SERVICE_ACCOUNT_NAME = "service-account"
 
 
 def try_parse_target(value: object, target: Target):
@@ -171,6 +172,7 @@ class DeploymentDefaults:
     deployment_strategy: dict
     additional_routes: list[TraefikAdditionalRoute]
     traefik_config: TraefikConfig
+    env: list[KeyValueProperty]
 
     @staticmethod
     def from_config(config: dict):
@@ -178,10 +180,6 @@ class DeploymentDefaults:
         if deployment_values is None:
             raise KeyError("Configuration should have project.deployment section")
         kubernetes = deployment_values.get("kubernetes", {})
-        additional_routes = deployment_values.get("additionalTraefikRoutes", [])
-        traefik_config = TraefikConfig.from_config(
-            deployment_values.get("traefikDefaults", None)
-        )
         return DeploymentDefaults(
             resources_defaults=ResourceDefaults.from_config(kubernetes["resources"]),
             liveness_probe_defaults=kubernetes["livenessProbe"],
@@ -191,9 +189,17 @@ class DeploymentDefaults:
             white_lists=DefaultWhitelists.from_config(config.get("whiteLists", {})),
             deployment_strategy=config["kubernetes"]["deploymentStrategy"],
             additional_routes=list(
-                map(TraefikAdditionalRoute.from_config, additional_routes)
+                map(
+                    TraefikAdditionalRoute.from_config,
+                    deployment_values.get("additionalTraefikRoutes", []),
+                )
             ),
-            traefik_config=traefik_config,
+            traefik_config=TraefikConfig.from_config(
+                deployment_values.get("traefikDefaults", None)
+            ),
+            env=list(
+                map(KeyValueProperty.from_config, deployment_values.get("env", []))
+            ),
         )
 
 
@@ -316,43 +322,6 @@ class ChartBuilder:
 
         return liveness_probe, startup_probe
 
-    def to_service_old(self, deployment: Deployment) -> V1Service:
-        service_ports = list(
-            map(
-                lambda key: V1ServicePort(
-                    port=int(key),
-                    target_port=int(deployment.kubernetes.port_mappings[key]),
-                    protocol="TCP",
-                    name=f"{key}-webservice-port",
-                ),
-                deployment.kubernetes.port_mappings.keys(),
-            )
-        )
-
-        return V1Service(
-            api_version="v1",
-            kind="Service",
-            metadata=V1ObjectMeta(
-                annotations=self._to_annotations(),
-                name=f"{self.release_name}",
-                labels=self.to_labels(deployment_name=deployment.name),
-            ),
-            spec=V1ServiceSpec(
-                type="ClusterIP",
-                ports=service_ports,
-                selector=V1LabelSelector(
-                    match_labels={
-                        "app.kubernetes.io/instance": self.release_name,
-                        "app.kubernetes.io/name": self.release_name,
-                        "vandebron.nl/deployment": deployment.name,
-                    }
-                    # Use the Deployment name as a label selector so that this Service points only to the Pods
-                    # created by it, and not to all Pods in the application.
-                    # Required for applications with multiple deployments.
-                ).match_labels,
-            ),
-        )
-
     def to_service(self, deployment: Deployment) -> V1Service:
         service_ports = list(
             map(
@@ -416,8 +385,7 @@ class ChartBuilder:
             ),
             spec=V1PodSpec(
                 containers=[job_container],
-                service_account=self.release_name,
-                service_account_name=self.release_name,
+                service_account_name=DEFAULT_SERVICE_ACCOUNT_NAME,
                 restart_policy="Never",
             ),
         )
@@ -663,16 +631,6 @@ class ChartBuilder:
             for host in hosts
         } | adjusted_middlewares
 
-    def to_service_account(self) -> V1ServiceAccount:
-        return V1ServiceAccount(
-            api_version="v1",
-            kind="ServiceAccount",
-            metadata=self._to_object_meta(),
-            image_pull_secrets=[
-                ChartBuilder._to_k8s_model({"name": "aws-ecr"}, V1LocalObjectReference)
-            ],
-        )
-
     def to_sealed_secrets(
         self, sealed_secrets: list[KeyValueProperty], name: str
     ) -> V1SealedSecret:
@@ -752,7 +710,7 @@ class ChartBuilder:
 
         return V1EnvVar(name=ref.key, value_from=value_from)
 
-    def _create_secret_env_vars(self, secret_list: list[KeyValueRef]) -> list[V1EnvVar]:
+    def create_secret_env_vars(self, secret_list: list[KeyValueRef]) -> list[V1EnvVar]:
         return list(map(self._map_key_value_refs, secret_list))
 
     @staticmethod
@@ -780,6 +738,17 @@ class ChartBuilder:
             if deployment.properties
             else {}
         )
+
+        # this variable is added here explicitly because:
+        #   1. the name of this service should not be overriden
+        #   2. we don't expose the service name as a replaceable placeholder for env variables
+        raw_env_vars.update({"OTEL_SERVICE_NAME": self.project.name})
+
+        # add default environment variables if they are not declared for the project
+        for prop in self.config_defaults.env:
+            if prop.key not in raw_env_vars:
+                raw_env_vars.update({prop.key: prop.get_value(self.target)})
+
         pr_identifier = (
             None
             if self.step_input.run_properties.versioning.tag
@@ -799,7 +768,7 @@ class ChartBuilder:
             V1EnvVar(name=key, value=value) for key, value in processed_env_vars.items()
         ]
         secrets = (
-            self._create_secret_env_vars(deployment.properties.kubernetes)
+            self.create_secret_env_vars(deployment.properties.kubernetes)
             if deployment.properties
             else []
         )
@@ -872,8 +841,7 @@ class ChartBuilder:
                     metadata=self._to_object_meta(deployment_name=deployment.name),
                     spec=V1PodSpec(
                         containers=[container],
-                        service_account=self.release_name,
-                        service_account_name=self.release_name,
+                        service_account_name=DEFAULT_SERVICE_ACCOUNT_NAME,
                         security_context=deployment.kubernetes.pod_security_context,
                     ),
                 ),
@@ -890,7 +858,7 @@ class ChartBuilder:
     def to_common_chart(
         self, deployment: Deployment
     ) -> dict[str, CustomResourceDefinition]:
-        chart = {"service-account": self.to_service_account()}
+        chart = {}
 
         if deployment.properties and len(deployment.properties.sealed_secrets) > 0:
             chart[f"sealed-secrets-{deployment.name}"] = self.to_sealed_secrets(
@@ -922,8 +890,7 @@ def to_service_chart(
     builder: ChartBuilder, deployment: Deployment
 ) -> dict[str, CustomResourceDefinition]:
     return (
-        {"service": builder.to_service_old(deployment)}
-        | {f"service-{deployment.name}": builder.to_service(deployment)}
+        {f"service-{deployment.name}": builder.to_service(deployment)}
         | {f"deployment-{deployment.name}": builder.to_deployment(deployment)}
         | _to_ingress_routes_charts(builder, deployment)
         | builder.to_middlewares(deployment)
