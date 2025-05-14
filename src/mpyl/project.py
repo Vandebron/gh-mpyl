@@ -320,6 +320,8 @@ class Kubernetes:
     args: Optional[TargetProperty[str]]
     labels: Optional[list[KeyValueProperty]]
     deployment_strategy: Optional[dict]
+    pod_security_context: Optional[dict]
+    security_context: Optional[dict]
 
     @staticmethod
     def from_config(values: dict):
@@ -334,6 +336,8 @@ class Kubernetes:
             args=TargetProperty.from_config(values.get("args", {})),
             labels=list(map(KeyValueProperty.from_config, values.get("labels", []))),
             deployment_strategy=values.get("deploymentStrategy", {}),
+            pod_security_context=values.get("podSecurityContext", None),
+            security_context=values.get("securityContext", None),
         )
 
 
