@@ -16,8 +16,7 @@ build:
       - key: SOME_CREDENTIAL
         id: SOME_CREDENTIAL
 dependencies:
-  build:
-    - 'test/docker/'
+  - 'test/docker/'
 kubernetes:
   namespace:
     all: 'nodeservice'
