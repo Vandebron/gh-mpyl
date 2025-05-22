@@ -13,8 +13,7 @@ build:
         acceptance: "Acceptance"
         production: "Production"
 dependencies:
-  build:
-    - 'test/docker/'
+  - 'test/docker/'
 kubernetes:
   namespace:
     all: "mpyl"

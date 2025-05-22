@@ -47,22 +47,11 @@ def is_file_in_project(logger: logging.Logger, project: Project, path: str) -> b
 def is_file_a_dependency(
     logger: logging.Logger,
     project: Project,
-    stage: str,
     path: str,
 ) -> bool:
-    deps = project.dependencies
-    if not deps:
-        return False
-
-    touched_stages: set[str] = {
-        dep_stage
-        for dep_stage, dependencies in deps.all().items()
-        if len([d for d in dependencies if path.startswith(d)]) > 0
-    }
-
-    if stage in touched_stages:
+    if any(path.startswith(d) for d in project.dependencies):
         logger.debug(
-            f"Project {project.name} added to the run plan because a {stage} dependency was modified: {path}"
+            f"Project {project.name} added to the run plan because a dependency was modified: {path}"
         )
         return True
 
@@ -72,32 +61,24 @@ def is_file_a_dependency(
 def find_projects_to_execute(
     logger: logging.Logger,
     all_projects: set[Project],
-    stage: str,
     changeset: Changeset,
 ) -> set[Project]:
     def find_projects_that_should_execute(project: Project) -> Optional[Project]:
-        if project.stages.for_stage(stage) is None:
-            return None
-
-        is_any_dependency_modified = any(
-            is_file_a_dependency(logger, project, stage, changed_file)
-            for changed_file in changeset.files_touched()
-        )
-        is_project_modified = any(
+        if any(
             is_file_in_project(logger, project, changed_file)
             for changed_file in changeset.files_touched()
-        )
-
-        if is_any_dependency_modified:
+        ):
             logger.debug(
-                f"Project {project.name} will execute stage {stage} because (at least) one of its dependencies was "
-                f"modified"
+                f"Project {project.name} will run because its content changed since the previous run"
             )
             return project
 
-        if is_project_modified:
+        if any(
+            is_file_a_dependency(logger, project, changed_file)
+            for changed_file in changeset.files_touched()
+        ):
             logger.debug(
-                f"Project {project} will execute stage {stage} because its content changed since the previous run"
+                f"Project {project.name} will run because one or more of its dependencies was modified"
             )
             return project
 

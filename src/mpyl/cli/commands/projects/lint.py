@@ -169,16 +169,14 @@ def _assert_no_self_dependencies(console: Console, all_projects: list[Project]):
     projects_with_self_dependencies = []
 
     for project in all_projects:
-        if project.dependencies:
-            # this check is dependent on root_path always ending with a trailing slash (which is the case now).
-            # it will break if that is changed in the future
-            if any(
-                path == project.root_path
-                or path.startswith(str(project.root_path) + "/")
-                for paths in project.dependencies.all().values()
-                for path in paths
-            ):
-                projects_with_self_dependencies.append(project)
+        # this check is dependent on root_path always ending with a trailing slash (which is the case now).
+        # it will break if that is changed in the future
+        if any(
+            path == project.root_path or path.startswith(str(project.root_path) + "/")
+            for paths in project.dependencies
+            for path in paths
+        ):
+            projects_with_self_dependencies.append(project)
 
     return projects_with_self_dependencies
 

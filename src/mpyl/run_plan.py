@@ -249,16 +249,25 @@ def discover_run_plan(
         logger=logger, changed_files_path=changed_files_path
     )
 
-    plan = {}
-    for stage in all_stages:
-        projects = find_projects_to_execute(
-            logger=logger,
-            all_projects=all_projects,
-            stage=stage.name,
-            changeset=changeset,
-        )
+    projects_impacted_by_change = find_projects_to_execute(
+        logger=logger,
+        all_projects=all_projects,
+        changeset=changeset,
+    )
 
-        if projects:
+    plan = {}
+
+    # this is necessary to determine whether the project deploys or runs the postdeploy stage,
+    # but completely completely ignored for all the other stages.
+    # we should figure out a better way to do this
+    for stage in all_stages:
+        projects = {
+            project
+            for project in projects_impacted_by_change
+            if project.stages.for_stage(stage.name) is not None
+        }
+
+        if len(projects) > 0:
             logger.debug(
                 f"Will execute projects for stage {stage.name}: {[p.name for p in projects]}"
             )
