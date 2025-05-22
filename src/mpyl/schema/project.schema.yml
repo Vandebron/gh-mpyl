@@ -682,6 +682,8 @@ definitions:
     type: object
     additionalProperties: false
     properties:
+      affinity:
+        $ref: 'k8s_api_core.schema.yml#/definitions/io.k8s.api.core.v1.Affinity'
       podSecurityContext:
         $ref: 'k8s_api_core.schema.yml#/definitions/io.k8s.api.core.v1.PodSecurityContext'
       securityContext:
