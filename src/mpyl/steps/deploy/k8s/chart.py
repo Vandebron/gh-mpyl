@@ -880,6 +880,7 @@ class ChartBuilder:
                         containers=[container],
                         service_account_name=DEFAULT_SERVICE_ACCOUNT_NAME,
                         security_context=deployment.kubernetes.pod_security_context,
+                        affinity=deployment.kubernetes.affinity,
                     ),
                 ),
                 strategy=strategy,

@@ -322,6 +322,7 @@ class Kubernetes:
     deployment_strategy: Optional[dict]
     pod_security_context: Optional[dict]
     security_context: Optional[dict]
+    affinity: Optional[dict]
 
     @staticmethod
     def from_config(values: dict):
@@ -338,6 +339,7 @@ class Kubernetes:
             deployment_strategy=values.get("deploymentStrategy", {}),
             pod_security_context=values.get("podSecurityContext", None),
             security_context=values.get("securityContext", None),
+            affinity=values.get("affinity", None),
         )
 
 
