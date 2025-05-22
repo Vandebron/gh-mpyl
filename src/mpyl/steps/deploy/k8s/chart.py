@@ -32,6 +32,7 @@ from kubernetes.client import (
     V1CronJob,
     V1CronJobSpec,
     V1JobTemplateSpec,
+    V1Affinity,
 )
 
 from . import substitute_namespaces
@@ -864,6 +865,28 @@ class ChartBuilder:
             **(deployment.kubernetes.deployment_strategy or {}),
         }
         strategy = ChartBuilder._to_k8s_model(merged_config, V1DeploymentStrategy)
+        affinity = V1Affinity(
+            pod_anti_affinity={
+                "preferredDuringSchedulingIgnoredDuringExecution": [
+                    {
+                        "weight": 100,
+                        "podAffinityTerm": {
+                            "topologyKey": "kubernetes.io/hostname",
+                            "labelSelector": {
+                                "matchExpressions": [
+                                    {
+                                        "key": "app.kubernetes.io/name",
+                                        "operator": "In",
+                                        "values": [self.release_name],
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                ],
+            },
+        )
+
         return V1Deployment(
             api_version="apps/v1",
             kind="Deployment",
@@ -880,6 +903,7 @@ class ChartBuilder:
                         containers=[container],
                         service_account_name=DEFAULT_SERVICE_ACCOUNT_NAME,
                         security_context=deployment.kubernetes.pod_security_context,
+                        affinity=affinity,
                     ),
                 ),
                 strategy=strategy,

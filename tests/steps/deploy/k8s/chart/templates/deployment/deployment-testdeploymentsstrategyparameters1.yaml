@@ -39,6 +39,18 @@ spec:
         revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
       name: testdeploymentsstrategyparameters
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - testdeploymentsstrategyparameters
       containers:
       - env:
         - name: SOME_ENV
