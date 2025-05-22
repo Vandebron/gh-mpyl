@@ -13,7 +13,9 @@ from ..steps.deploy.k8s.chart import ChartBuilder
 logger = logging.getLogger("mpyl")
 
 
-def generate_components(directory: str, repository_url: str) -> None:
+def generate_components(  # pylint: disable=too-many-locals
+    directory: str, repository_url: str, repository: str
+) -> None:
     projects: list[Project] = []
     for project_yaml_file in find_projects():
         projects.append(load_project(project_yaml_file, validate_project_yaml=True))
@@ -24,7 +26,9 @@ def generate_components(directory: str, repository_url: str) -> None:
     for project in projects:
         maintainer = project.maintainer[0] if len(project.maintainer) else "unknown"
         service_components.append(
-            __generate_component(project, project_names, maintainer, repository_url)
+            __generate_component(
+                project, project_names, maintainer, repository_url, repository
+            )
         )
         maintainers.append(maintainer)
 
@@ -107,7 +111,11 @@ def __get_dependencies_for_project(
 
 
 def __generate_component(
-    project: Project, project_names: list[str], maintainer: str, repository_url: str
+    project: Project,
+    project_names: list[str],
+    maintainer: str,
+    repository_url: str,
+    repository: str,
 ) -> dict:
     return {
         "apiVersion": "backstage.io/v1alpha1",
@@ -115,6 +123,7 @@ def __generate_component(
         "metadata": {
             "name": project.name,
             "description": project.description,
+            "repository": repository,
             "links": [
                 {
                     "url": f"{repository_url}/{project.path}",

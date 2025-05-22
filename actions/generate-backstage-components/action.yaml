@@ -8,6 +8,9 @@ inputs:
   repository-url:
     description: The url of the repository
     required: true
+  repository-name:
+    description: The name of the repository
+    required: true
 runs:
   using: docker
   image: docker://public.ecr.aws/vdb-public/gh-mpyl:v1.5.5
@@ -18,3 +21,5 @@ runs:
     - ${{ inputs.output-path }}
     - --url
     - ${{ inputs.repository-url }}
+    - --repository
+    - ${{ inputs.repository-name }}

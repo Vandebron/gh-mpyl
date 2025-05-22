@@ -25,5 +25,12 @@ def backstage():
     type=str,
     help="The repository url",
 )
-def generate(output: str, url: str):
-    generate_components(output, url)
+@click.option(
+    "--repository",
+    "-r",
+    required=True,
+    type=str,
+    help="The repository name",
+)
+def generate(output: str, url: str, repository: str):
+    generate_components(output, url, repository)
