@@ -873,11 +873,13 @@ class ChartBuilder:
                         "podAffinityTerm": {
                             "topologyKey": "kubernetes.io/hostname",
                             "labelSelector": {
-                                "matchExpressions": {
-                                    "key": "app.kubernetes.io/name",
-                                    "operator": "In",
-                                    "values": [self.release_name],
-                                },
+                                "matchExpressions": [
+                                    {
+                                        "key": "app.kubernetes.io/name",
+                                        "operator": "In",
+                                        "values": [self.release_name],
+                                    },
+                                ],
                             },
                         },
                     },
