@@ -15,12 +15,9 @@ build:
         acceptance: "Acceptance"
         production: "Production"
 dependencies:
-  build:
-    - 'test/docker/'
-  test:
-    - 'test2/docker/'
-  postdeploy:
-    - 'specs/*.js'
+  - 'test/docker/'
+  - 'test2/docker/'
+  - 'specs/*.js'
 kubernetes:
   namespace:
     all: 'dockertest'

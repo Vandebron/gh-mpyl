@@ -80,7 +80,7 @@ class TestSteps:
             stages=stages,
             maintainer=[],
             deployments=[],
-            dependencies=None,
+            dependencies=[],
             kubernetes=None,
             _dagster=None,
         )
