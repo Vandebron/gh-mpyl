@@ -27,7 +27,7 @@ def to_user_code_values(  # pylint: disable=too-many-locals
     project = builder.project
 
     global_override = {}
-    if not service_account_override is None: 
+    if not service_account_override is None:
         global_override = {"global": {"serviceAccountName": service_account_override}}
 
     combined_sealed_secrets: list[KeyValueProperty] = []
