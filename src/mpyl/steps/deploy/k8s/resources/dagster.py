@@ -27,7 +27,7 @@ def to_user_code_values(  # pylint: disable=too-many-locals
     project = builder.project
 
     global_override = {}
-    if not service_account_override is None:
+    if not service_account_override is None: 
         global_override = {"global": {"serviceAccountName": service_account_override}}
 
     combined_sealed_secrets: list[KeyValueProperty] = []
@@ -61,6 +61,24 @@ def to_user_code_values(  # pylint: disable=too-many-locals
         if len(sealed_secret_refs) > 0
         else {}
     )
+
+    if (
+        project.dagster.readiness_probe_script
+        and project.dagster.readiness_probe_script.strip()
+    ):
+        readiness_probe = {
+            "readinessProbe": {
+                "exec": {
+                    "command": ["python", project.dagster.readiness_probe_script],
+                },
+                "periodSeconds": 20,
+                "timeoutSeconds": 30,
+                "successThreshold": 1,
+                "failureThreshold": 3,
+            }
+        }
+    else:
+        readiness_probe = {}
 
     return (
         global_override
@@ -104,6 +122,7 @@ def to_user_code_values(  # pylint: disable=too-many-locals
                         },
                         "vandebron.nl/dagster": "user-code-deployment",
                     },
+                    **readiness_probe,
                     "includeConfigInLaunchedRuns": {"enabled": True},
                     "name": release_name,
                     "port": 3030,
