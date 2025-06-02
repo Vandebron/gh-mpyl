@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-jsonschema = "==4.23.0"
+jsonschema = "==4.24.0"
 mypy = "==1.15.0"
 "ruamel.yaml" = "==0.18.6"
 kubernetes = "==32.0.1"
