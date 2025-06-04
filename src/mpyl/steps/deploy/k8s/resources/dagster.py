@@ -62,6 +62,22 @@ def to_user_code_values(  # pylint: disable=too-many-locals
         else {}
     )
 
+    readiness_probe = (
+        {
+            "readinessProbe": {
+                "exec": {
+                    "command": ["python", project.dagster.readiness_probe_script],
+                },
+                "periodSeconds": 20,
+                "timeoutSeconds": 30,
+                "successThreshold": 1,
+                "failureThreshold": 3,
+            }
+        }
+        if project.dagster.readiness_probe_script
+        else {}
+    )
+
     return (
         global_override
         | {
@@ -104,6 +120,7 @@ def to_user_code_values(  # pylint: disable=too-many-locals
                         },
                         "vandebron.nl/dagster": "user-code-deployment",
                     },
+                    **readiness_probe,
                     "includeConfigInLaunchedRuns": {"enabled": True},
                     "name": release_name,
                     "port": 3030,
