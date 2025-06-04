@@ -416,7 +416,7 @@ class Dagster:
         return Dagster(
             repo=values.get("repo", ""),
             secrets=[DagsterSecret.from_config(v) for v in values.get("secrets", [])],
-            readiness_probe_script=values.get("readinessProbeScript", ""),
+            readiness_probe_script=values.get("readinessProbeScript"),
         )
 
 

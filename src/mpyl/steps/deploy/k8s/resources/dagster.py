@@ -62,11 +62,8 @@ def to_user_code_values(  # pylint: disable=too-many-locals
         else {}
     )
 
-    if (
-        project.dagster.readiness_probe_script
-        and project.dagster.readiness_probe_script.strip()
-    ):
-        readiness_probe = {
+    readiness_probe = (
+        {
             "readinessProbe": {
                 "exec": {
                     "command": ["python", project.dagster.readiness_probe_script],
@@ -77,8 +74,9 @@ def to_user_code_values(  # pylint: disable=too-many-locals
                 "failureThreshold": 3,
             }
         }
-    else:
-        readiness_probe = {}
+        if project.dagster.readiness_probe_script
+        else {}
+    )
 
     return (
         global_override
