@@ -22,6 +22,7 @@ from ..cli.commands.projects.lint import (
     _assert_no_self_dependencies,
     _find_projects_without_deployments,
     _find_too_long_service_names,
+    _find_project_names_with_underscores,
 )
 from ..cli.commands.projects.upgrade import check_upgrade
 from ..constants import DEFAULT_CONFIG_FILE_NAME
@@ -158,6 +159,16 @@ def lint(ctx: Context):
             console.print(
                 f"  ❌ service_name-deployment_name can't be longer than 52 characters: {name}"
             )
+        failed = True
+
+    projects_with_underscores = _find_project_names_with_underscores(
+        console, all_projects
+    )
+    if len(projects_with_underscores) == 0:
+        console.print("  ✅ No projects with underscores found")
+    else:
+        for name in projects_with_underscores:
+            console.print(f"  ❌ project name can't contain an underscore: {name}")
         failed = True
 
     if failed:
