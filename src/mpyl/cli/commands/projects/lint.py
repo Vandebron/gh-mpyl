@@ -208,3 +208,10 @@ def _find_too_long_service_names(console: Console, all_projects: list[Project]):
                 too_long_names.append(name)
 
     return too_long_names
+
+
+def _find_project_names_with_underscores(console: Console, all_projects: list[Project]):
+    console.print("")
+    console.print("Checking for project names with underscores:")
+
+    return [project.name for project in all_projects if "_" in project.name]
