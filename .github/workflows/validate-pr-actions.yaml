@@ -57,7 +57,7 @@ jobs:
           registry-type: public
 
       - name: Create repository in ECR
-        uses: int128/create-ecr-repository-action@v1.379.0
+        uses: int128/create-ecr-repository-action@v1.381.0
         with:
           repository: gh-mpyl
           public: true
