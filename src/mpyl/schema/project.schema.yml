@@ -110,6 +110,11 @@ properties:
         type: string
         examples:
           - /python/my_project/dagster/repo.py
+      readinessProbeScript:
+        description: Path to a script that will be used to check if the Dagster server is ready.
+        type: string
+        examples:
+          - /python/my_project/dagster/readiness_probe.py
   build:
     type: object
     additionalProperties: false

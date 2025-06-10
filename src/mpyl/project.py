@@ -409,12 +409,14 @@ class DagsterSecret:
 class Dagster:
     repo: str
     secrets: List[DagsterSecret]
+    readiness_probe_script: Optional[str]
 
     @staticmethod
     def from_config(values: dict):
         return Dagster(
             repo=values.get("repo", ""),
             secrets=[DagsterSecret.from_config(v) for v in values.get("secrets", [])],
+            readiness_probe_script=values.get("readinessProbeScript"),
         )
 
 
