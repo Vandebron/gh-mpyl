@@ -136,6 +136,9 @@ def __generate_component(
                     "title": "Github",
                 },
             ],
+            "annotations": {
+                "argocd/app-name": project.name.lower(),
+            },
         },
         "spec": {
             "type": __get_project_type(project),
