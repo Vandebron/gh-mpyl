@@ -137,7 +137,7 @@ def __generate_component(
                 },
             ],
             "annotations": {
-                "argocd/app-name": project.name,
+                "argocd/app-name": project.name.lower(),
             },
         },
         "spec": {
