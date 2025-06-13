@@ -44,7 +44,7 @@ jobs:
       - uses: actions/checkout@v4.2.2
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4.1.0
+        uses: aws-actions/configure-aws-credentials@v4.2.1
         with:
           aws-access-key-id: ${{ secrets.AWS_ECR_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
@@ -57,7 +57,7 @@ jobs:
           registry-type: public
 
       - name: Create repository in ECR
-        uses: int128/create-ecr-repository-action@v1.365.0
+        uses: int128/create-ecr-repository-action@v1.381.0
         with:
           repository: gh-mpyl
           public: true
@@ -82,7 +82,7 @@ jobs:
 
       - name: Build and push
         id: docker-build-push
-        uses: docker/build-push-action@v6.15.0
+        uses: docker/build-push-action@v6.18.0
         with:
           file: Dockerfile
           context: .
@@ -194,3 +194,25 @@ jobs:
           version: a-random-version
           deploy-image: a-random-docker-image
           config-path: mpyl_config.example.yml
+
+  generate-backstage-components:
+    name: ▶️ Run actions/generate-backstage-components
+    runs-on: ubuntu-latest
+    if: ${{ !failure() && !cancelled() }}
+    needs:
+      - changed-files
+      - docker
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - name: Point action.yaml to the Docker image built in the previous job
+        if: needs.changed-files.outputs.build-docker-image == 'true'
+        env:
+          IMAGE: docker://${{ needs.docker.outputs.image }}
+        run: |-
+          yq -i '.runs.image = strenv(IMAGE)' actions/generate-backstage-components/action.yaml
+
+      - uses: ./actions/generate-backstage-components
+        with:
+          output-path: catalog/gh-mpyl
+          repository-url: https://github.com/Vandebron/gh-mpyl/tree/main

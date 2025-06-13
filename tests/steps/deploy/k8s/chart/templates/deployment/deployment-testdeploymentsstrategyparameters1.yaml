@@ -39,10 +39,32 @@ spec:
         revision: 2ad3293a7675d08bc037ef0846ef55897f38ec8f
       name: testdeploymentsstrategyparameters
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - testdeploymentsstrategyparameters
       containers:
       - env:
         - name: SOME_ENV
           value: PullRequest
+        - name: OTEL_SERVICE_NAME
+          value: testDeploymentsStrategyParameters
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: http://otel.example.com:4318
+        - name: OTEL_LOGS_EXPORTER
+          value: none
+        - name: OTEL_METRICS_EXPORTER
+          value: none
+        - name: OTEL_TRACES_EXPORTER
+          value: otlp
         image: registry/image:123
         imagePullPolicy: Always
         name: testdeploymentsstrategyparameters-testdeploymentsstrategyparameters1
@@ -57,5 +79,4 @@ spec:
           requests:
             cpu: 100m
             memory: 512Mi
-      serviceAccount: testdeploymentsstrategyparameters
-      serviceAccountName: testdeploymentsstrategyparameters
+      serviceAccountName: service-account

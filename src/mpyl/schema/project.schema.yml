@@ -110,6 +110,11 @@ properties:
         type: string
         examples:
           - /python/my_project/dagster/repo.py
+      readinessProbeScript:
+        description: Path to a script that will be used to check if the Dagster server is ready.
+        type: string
+        examples:
+          - /python/my_project/dagster/readiness_probe.py
   build:
     type: object
     additionalProperties: false
@@ -682,6 +687,10 @@ definitions:
     type: object
     additionalProperties: false
     properties:
+      podSecurityContext:
+        $ref: 'k8s_api_core.schema.yml#/definitions/io.k8s.api.core.v1.PodSecurityContext'
+      securityContext:
+        $ref: 'k8s_api_core.schema.yml#/definitions/io.k8s.api.core.v1.SecurityContext'
       secrets:
         type: array
         additionalItems: false

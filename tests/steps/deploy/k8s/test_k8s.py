@@ -137,7 +137,6 @@ class TestKubernetesChart:
         [
             "deployment-dockertest",
             "service-dockertest",
-            "service-account",
             "service",
             "sealed-secrets-dockertest",
             "ingress-dockertest-0",
@@ -161,11 +160,10 @@ class TestKubernetesChart:
             self.template_path / "service", filename=template, resources=chart
         )
         assert set(chart.keys()) == {
-            "service-account",
             "sealed-secrets-dockertest",
             "deployment-dockertest",
-            "service",
             "service-dockertest",
+            "service",
             "ingress-dockertest-0",
             "ingress-dockertest-1",
             "ingress-dockertest-ingress-intracloud-https-0",
@@ -246,8 +244,7 @@ class TestKubernetesChart:
         self._roundtrip(self.template_path / "ingress-prod", "ingress-http-0", chart)
 
     @pytest.mark.parametrize(
-        "template",
-        ["job-job", "service-account", "sealed-secrets-job", "prometheus-rule-job"],
+        "template", ["job-job", "sealed-secrets-job", "prometheus-rule-job"]
     )
     def test_job_chart_roundtrip(self, template):
         job_project = get_job_project()
@@ -259,12 +256,7 @@ class TestKubernetesChart:
 
     @pytest.mark.parametrize(
         "template",
-        [
-            "cronjob-cronjob",
-            "service-account",
-            "sealed-secrets-cronjob",
-            "prometheus-rule-cronjob",
-        ],
+        ["cronjob-cronjob", "sealed-secrets-cronjob", "prometheus-rule-cronjob"],
     )
     def test_cron_job_chart_roundtrip(self, template):
         cron_job_project = get_cron_job_project()
