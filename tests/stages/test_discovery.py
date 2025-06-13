@@ -8,7 +8,6 @@ from src.mpyl.plan.discovery import (
 from src.mpyl.project import load_project
 from src.mpyl.utilities.repo import Changeset
 from tests.projects.find import load_projects
-from tests.test_resources.test_data import TestStage
 
 
 class TestDiscovery:
@@ -23,12 +22,10 @@ class TestDiscovery:
     def _helper_find_projects_to_execute(
         self,
         files_touched: dict[str, str],
-        stage_name: str = TestStage.build().name,
     ):
         return find_projects_to_execute(
             logger=self.logger,
             all_projects=self.projects,
-            stage=stage_name,
             changeset=Changeset(files_touched),
         )
 
@@ -57,60 +54,7 @@ class TestDiscovery:
                 {status}
             )
 
-    def test_find_projects_to_execute_for_each_stage(self):
-        changeset = Changeset(
-            {
-                "tests/projects/service/file.py": "A",
-                "tests/some_file.txt": "A",
-            }
-        )
-        projects = load_projects()
-        assert (
-            len(
-                find_projects_to_execute(
-                    self.logger,
-                    projects,
-                    TestStage.build().name,
-                    changeset,
-                )
-            )
-            == 1
-        )
-        assert (
-            len(
-                find_projects_to_execute(
-                    self.logger,
-                    projects,
-                    TestStage.test().name,
-                    changeset,
-                )
-            )
-            == 0
-        )
-        assert (
-            len(
-                find_projects_to_execute(
-                    self.logger,
-                    projects,
-                    TestStage.deploy().name,
-                    changeset,
-                )
-            )
-            == 1
-        )
-        assert (
-            len(
-                find_projects_to_execute(
-                    self.logger,
-                    projects,
-                    TestStage.post_deploy().name,
-                    changeset,
-                )
-            )
-            == 0
-        )
-
-    def test_stage_with_files_changed(self):
+    def test_files_changed(self):
         projects = self._helper_find_projects_to_execute(
             files_touched={
                 "tests/projects/job/deployment/project.yml": "M",
@@ -119,7 +63,7 @@ class TestDiscovery:
         assert len(projects) == 1
         assert next(p for p in projects if p.name == "job")
 
-    def test_stage_with_files_changed_but_filtered(self):
+    def test_files_changed_but_filtered(self):
         projects = self._helper_find_projects_to_execute(
             files_touched={
                 "tests/projects/job/deployment/project.yml": "D",
@@ -128,7 +72,7 @@ class TestDiscovery:
         assert len(projects) == 1
         assert next(p for p in projects if p.name == "job")
 
-    def test_stage_with_build_dependency_changed(self):
+    def test_dependency_changed(self):
         projects = self._helper_find_projects_to_execute(
             files_touched={
                 "tests/projects/sbt-service/src/main/scala/vandebron/mpyl/Main.scala": "M"
@@ -140,16 +84,7 @@ class TestDiscovery:
         assert next(p for p in projects if p.name == "job")
         assert next(p for p in projects if p.name == "sbtservice")
 
-    def test_stage_with_test_dependency_changed(self):
-        projects = self._helper_find_projects_to_execute(
-            files_touched={"tests/projects/service/file.py": "M"},
-        )
-
-        # job should not be executed because it wasn't modified and service is only a test dependency
-        assert len(projects) == 1
-        assert not {p for p in projects if p.name == "job"}
-
-    def test_stage_with_files_changed_and_dependency_changed(self):
+    def test_files_changed_and_dependency_changed(self):
         projects = self._helper_find_projects_to_execute(
             files_touched={
                 "tests/projects/job/deployment/project.yml": "M",
@@ -169,35 +104,20 @@ class TestDiscovery:
                 Path("tests/projects/sbt-service/deployment/project.yml"),
                 validate_project_yaml=True,
             ),
-            stage=TestStage.build().name,
             path="tests/projects/sbt-service-other/file.py",
         )
 
     def test_listing_override_files(self):
         touched_files = {"tests/projects/overriden-project/file.py": "A"}
-        projects = load_projects()
-        projects_for_build = find_projects_to_execute(
+        all_projects = load_projects()
+        projects = find_projects_to_execute(
             self.logger,
-            projects,
-            TestStage.build().name,
+            all_projects,
             Changeset(touched_files),
         )
-        projects_for_test = find_projects_to_execute(
-            self.logger,
-            projects,
-            TestStage.test().name,
-            Changeset(touched_files),
-        )
-        projects_for_deploy = find_projects_to_execute(
-            self.logger,
-            projects,
-            TestStage.deploy().name,
-            Changeset(touched_files),
-        )
-        assert len(projects_for_build) == 1
-        assert len(projects_for_test) == 1
-        assert len(projects_for_deploy) == 2
-        assert projects_for_deploy.pop().deployments[0].kubernetes.port_mappings == {
+
+        assert len(projects) == 3
+        assert projects.pop().deployments[0].kubernetes.port_mappings == {
             8088: 8088,
             8089: 8089,
         }
