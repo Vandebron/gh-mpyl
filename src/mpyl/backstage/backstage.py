@@ -61,10 +61,6 @@ def generate_components(  # pylint: disable=too-many-locals
 def __get_project_type(  # pylint: disable=too-many-return-statements
     project: Project,
 ) -> str:
-    # This check can be removed after all project overrides are replaced
-    if len(list(project.deployment_path.glob("*-override-*"))) > 0:
-        return "project override"
-
     deploy_step = project.stages.for_stage(deploy.STAGE_NAME)
     if not deploy_step:
         return "library"
