@@ -96,7 +96,7 @@ jobs:
       - name: Test
         run: pipenv run test-ci
 
-      - uses: mikepenz/action-junit-report@v5.6.0
+      - uses: mikepenz/action-junit-report@v5.6.1
         if: success() || failure()
         with:
           report_paths: build/test-result/test.xml
