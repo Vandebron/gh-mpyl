@@ -34,6 +34,7 @@ from kubernetes.client import (
     V1JobTemplateSpec,
     V1Affinity,
 )
+from ruamel.yaml.scalarstring import DoubleQuotedScalarString
 
 from . import substitute_namespaces
 from .resources import (
@@ -803,7 +804,8 @@ class ChartBuilder:
             pr_identifier=pr_identifier,
         )
         env_vars = [
-            V1EnvVar(name=key, value=value) for key, value in processed_env_vars.items()
+            V1EnvVar(name=key, value=DoubleQuotedScalarString(value))
+            for key, value in processed_env_vars.items()
         ]
         secrets = (
             self.create_secret_env_vars(deployment.properties.kubernetes)
