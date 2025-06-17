@@ -244,7 +244,7 @@ class ChartBuilder:
             app_labels.update({"vandebron.nl/deployment": deployment_name})
 
         if len(self.project.maintainer) > 0:
-            app_labels["maintainers"] = ".".join(self.project.maintainer).replace(
+            app_labels["maintainers"] = ",".join(self.project.maintainer).replace(
                 " ", "_"
             )
             app_labels["maintainer"] = self.project.maintainer[0].replace(" ", "_")
