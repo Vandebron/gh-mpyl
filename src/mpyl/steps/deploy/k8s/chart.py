@@ -257,7 +257,7 @@ class ChartBuilder:
         return app_labels
 
     def _to_annotations(self) -> dict:
-        return {"description": self.project.description}
+        return {"description": DoubleQuotedScalarString(self.project.description)}
 
     def _to_image_annotation(self) -> dict:
         return {"image": self._get_image()}
