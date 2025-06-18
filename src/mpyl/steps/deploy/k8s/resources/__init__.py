@@ -11,6 +11,7 @@ import six
 from jsonschema import ValidationError
 from kubernetes.client import Configuration, V1ObjectMeta
 from ruamel.yaml import YAML
+from ruamel.yaml.scalarstring import DoubleQuotedScalarString
 
 from .....projects.versioning import yaml_to_string
 
@@ -103,7 +104,7 @@ class CustomResourceDefinition:
         self._spec = spec
 
 
-def to_dict(obj, skip_none=False):
+def to_dict(obj, skip_none=False, is_env_var=False):
     result = {}
 
     for attr, _ in six.iteritems(obj.openapi_types):
@@ -111,7 +112,14 @@ def to_dict(obj, skip_none=False):
         key = obj.attribute_map.get(attr)
         if isinstance(value, list):
             result[key] = list(
-                map(lambda x: to_dict(x) if hasattr(x, "to_dict") else x, value)
+                map(
+                    lambda x, current_key=key: (  # type: ignore
+                        (to_dict(x, is_env_var=current_key == "env"))
+                        if hasattr(x, "to_dict")
+                        else x
+                    ),
+                    value,
+                )
             )
         elif hasattr(value, "to_dict"):
             result[key] = to_dict(value, skip_none)
@@ -130,7 +138,7 @@ def to_dict(obj, skip_none=False):
             if not skip_none:
                 result[key] = value  # type: ignore
         else:
-            result[key] = value
+            result[key] = DoubleQuotedScalarString(value) if is_env_var and key == "value" else value  # type: ignore
     return result
 
 

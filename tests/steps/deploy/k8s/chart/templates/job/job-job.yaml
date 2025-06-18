@@ -39,15 +39,15 @@ spec:
         - run.py
         env:
         - name: OTEL_SERVICE_NAME
-          value: job
+          value: "job"
         - name: OTEL_LOGS_EXPORTER
-          value: this-will-be-used-as-is
+          value: "this-will-be-used-as-is"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
-          value: http://otel.example.com:4318
+          value: "http://otel.example.com:4318"
         - name: OTEL_METRICS_EXPORTER
-          value: none
+          value: "none"
         - name: OTEL_TRACES_EXPORTER
-          value: otlp
+          value: "otlp"
         - name: SOME_SECRET_ENV
           valueFrom:
             secretKeyRef:
