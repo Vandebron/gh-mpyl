@@ -69,7 +69,7 @@ spec:
           restartPolicy: Never
           serviceAccountName: service-account
       ttlSecondsAfterFinished: 3600
-  schedule: 0 22 * * *
+  schedule: "0 22 * * *"
   successfulJobsHistoryLimit: 3
   suspend: true
   timeZone: Europe/Amsterdam

@@ -138,7 +138,11 @@ def to_dict(obj, skip_none=False, is_env_var=False):
             if not skip_none:
                 result[key] = value  # type: ignore
         else:
-            result[key] = DoubleQuotedScalarString(value) if is_env_var and key == "value" else value  # type: ignore
+            result[key] = (
+                (DoubleQuotedScalarString(value))  # type: ignore
+                if (is_env_var and key == "value") or key == "schedule"
+                else value
+            )
     return result
 
 

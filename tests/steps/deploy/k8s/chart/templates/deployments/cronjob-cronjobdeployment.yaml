@@ -56,5 +56,5 @@ spec:
           restartPolicy: Never
           serviceAccountName: service-account
       ttlSecondsAfterFinished: 3600
-  schedule: 00 00 31 02 *
+  schedule: "00 00 31 02 *"
   successfulJobsHistoryLimit: 3
