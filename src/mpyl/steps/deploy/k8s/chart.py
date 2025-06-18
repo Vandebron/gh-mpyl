@@ -34,6 +34,7 @@ from kubernetes.client import (
     V1JobTemplateSpec,
     V1Affinity,
 )
+from ruamel.yaml.scalarstring import DoubleQuotedScalarString
 
 from . import substitute_namespaces
 from .resources import (
@@ -243,7 +244,7 @@ class ChartBuilder:
             app_labels.update({"vandebron.nl/deployment": deployment_name})
 
         if len(self.project.maintainer) > 0:
-            app_labels["maintainers"] = ".".join(self.project.maintainer).replace(
+            app_labels["maintainers"] = ",".join(self.project.maintainer).replace(
                 " ", "_"
             )
             app_labels["maintainer"] = self.project.maintainer[0].replace(" ", "_")
@@ -256,7 +257,7 @@ class ChartBuilder:
         return app_labels
 
     def _to_annotations(self) -> dict:
-        return {"description": self.project.description}
+        return {"description": DoubleQuotedScalarString(self.project.description)}
 
     def _to_image_annotation(self) -> dict:
         return {"image": self._get_image()}
@@ -803,7 +804,8 @@ class ChartBuilder:
             pr_identifier=pr_identifier,
         )
         env_vars = [
-            V1EnvVar(name=key, value=value) for key, value in processed_env_vars.items()
+            V1EnvVar(name=key, value=DoubleQuotedScalarString(value))
+            for key, value in processed_env_vars.items()
         ]
         secrets = (
             self.create_secret_env_vars(deployment.properties.kubernetes)
