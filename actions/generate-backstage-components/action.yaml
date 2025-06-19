@@ -13,7 +13,7 @@ inputs:
     required: true
 runs:
   using: docker
-  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v1.8.0
+  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v1.8.1
   args:
     - backstage
     - generate
