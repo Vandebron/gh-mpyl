@@ -132,9 +132,20 @@ def __generate_component(
                     "title": "Github",
                 },
             ],
-            "annotations": {
-                "argocd/app-name": project.name.lower(),
-            },
+            "annotations": (
+                {
+                    "argocd/app-name": project.name.lower(),
+                }
+                | {
+                    # Hardcoded to test since we only run Kyverno on test
+                    "kyverno.io/namespace": project.namespace(Target.TEST),
+                    "kyverno.io/kind": "CronJob,DaemonSet,Deployment,Job,Pod,StatefulSet",
+                    # The plugin has a bug which doesn't return anything when listing multiple resources
+                    "kyverno.io/resource-name": f"{project.name}-{project.deployments[0].name}".lower(),
+                }
+                if len(project.deployments) > 0
+                else {}
+            ),
         },
         "spec": {
             "type": __get_project_type(project),
@@ -143,7 +154,8 @@ def __generate_component(
             "dependsOn": [
                 f"component:default/{name}"
                 for name in __get_dependencies_for_project(project, project_names)
-            ],
+            ]
+            + ["resource:default/scw-test"],
         },
     }
 
