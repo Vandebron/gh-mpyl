@@ -16,18 +16,13 @@ from . import (
 from ..cli.commands.projects.lint import (
     _check_and_load_projects,
     _assert_unique_project_names,
-    _assert_correct_project_linkup,
-    _lint_whitelisting_rules,
-    __detail_wrong_substitutions,
     _assert_no_self_dependencies,
-    _find_projects_without_deployments,
-    _find_too_long_service_names,
     _find_project_names_with_underscores,
 )
 from ..cli.commands.projects.upgrade import check_upgrade
 from ..constants import DEFAULT_CONFIG_FILE_NAME
 from ..plan.discovery import find_projects
-from ..project import load_project, Target
+from ..project import load_project
 from ..projects.versioning import check_upgrades_needed, upgrade_file
 from ..utilities.pyaml_env import parse_config
 
@@ -101,34 +96,6 @@ def lint(ctx: Context):
     else:
         console.print("  ✅ No duplicate project names found")
 
-    wrong_substitutions = _assert_correct_project_linkup(
-        console=console,
-        target=Target.PULL_REQUEST,
-        projects=all_projects,
-        pr_identifier=123,
-    )
-    if len(wrong_substitutions) == 0:
-        console.print("  ✅ No wrong namespace substitutions found")
-    else:
-        failed = True
-        __detail_wrong_substitutions(console, all_projects, wrong_substitutions)
-
-    for target in Target:
-        wrong_whitelists = _lint_whitelisting_rules(
-            console=console,
-            projects=all_projects,
-            config=ctx.config,
-            target=target,
-        )
-        if len(wrong_whitelists) == 0:
-            console.print("  ✅ No undefined whitelists found")
-        else:
-            for project, diff in wrong_whitelists:
-                console.log(
-                    f"  ❌ Project {project.name} has undefined whitelists: {diff}"
-                )
-                failed = True
-
     projects_with_self_dependencies = _assert_no_self_dependencies(
         console, all_projects
     )
@@ -137,28 +104,6 @@ def lint(ctx: Context):
     else:
         for project in projects_with_self_dependencies:
             console.print(f"  ❌ Project {project.name} has a dependency on itself")
-        failed = True
-
-    projects_without_deployments = _find_projects_without_deployments(
-        console, all_projects
-    )
-    if len(projects_without_deployments) == 0:
-        console.print("  ✅ No project without a required deployment found")
-    else:
-        for project in projects_without_deployments:
-            console.print(
-                f"  ❌ Project {project.name} has a deploy stage defined without a deployments config"
-            )
-        failed = True
-
-    projects_with_too_long_names = _find_too_long_service_names(console, all_projects)
-    if len(projects_with_too_long_names) == 0:
-        console.print("  ✅ No project with a too long name found")
-    else:
-        for name in projects_with_too_long_names:
-            console.print(
-                f"  ❌ service_name-deployment_name can't be longer than 52 characters: {name}"
-            )
         failed = True
 
     projects_with_underscores = _find_project_names_with_underscores(

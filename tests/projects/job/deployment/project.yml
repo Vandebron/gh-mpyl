@@ -4,20 +4,9 @@ projectYmlVersion: 3
 maintainer: ["MPyL"]
 stages:
   build: Echo Build
-  deploy: "Kubernetes Deploy"
-deployments:
-  - name: cronjob
-    kubernetes:
-      job:
-        cron:
-          all:
-            schedule: "0 22 * * *"
-            timeZone: "Europe/Amsterdam"
+  deploy: "Echo Deploy"
 dependencies:
   build:
     - tests/projects/sbt-service/src/
   test:
     - tests/projects/service/file.py
-kubernetes:
-  namespace:
-    all: job

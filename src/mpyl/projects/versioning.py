@@ -8,7 +8,6 @@ list in this module.
 """
 
 import copy
-import re
 from abc import ABC
 from pathlib import Path
 from typing import Generator
@@ -17,8 +16,6 @@ from typing import Optional
 from deepdiff import DeepDiff
 from ruamel.yaml.compat import ordereddict
 
-from ..constants import NAMESPACE_PLACEHOLDER
-from ..project import Project
 from ..utilities.yaml import yaml_to_string, load_for_roundtrip, yaml_for_roundtrip
 
 VERSION_FIELD = "projectYmlVersion"
@@ -44,157 +41,6 @@ class ProjectUpgraderOne(Upgrader):
         return previous_dict
 
 
-class ProjectUpgraderTwo(Upgrader):
-    project_yml_path: Path
-
-    def __init__(self, project_yml_path: Path):
-        self.project_yml_path = project_yml_path
-
-    target_version = 2
-
-    def upgrade(self, previous_dict: ordereddict) -> ordereddict:
-        traefik = previous_dict.get("deployment", {}).get("traefik", {})
-
-        if traefik:
-            service_name = previous_dict["name"]
-            traefik_yml_path = (
-                self.project_yml_path.parent
-                / Project.traefik_yaml_file_name(service_name)
-            )
-            traefik_config = {
-                "traefik": traefik,
-            }
-            traefik_yml_path.write_text(
-                yaml_to_string(traefik_config, yaml_for_roundtrip())
-            )
-
-            del previous_dict["deployment"]["traefik"]
-
-        return previous_dict
-
-
-class ProjectUpgraderThree(Upgrader):
-    target_version = 3
-
-    def upgrade(self, previous_dict: ordereddict) -> ordereddict:
-        deployment = previous_dict.get("deployment")
-
-        # only upgrades for projects with deployment config
-        if not deployment:
-            return previous_dict
-
-        namespace = deployment.get("namespace")
-        project_id = (
-            deployment.get("kubernetes", {}).get("rancher", {}).get("projectId")
-        )
-        new_kubernetes_config = previous_dict.get("kubernetes")
-
-        # create new dict entry if needed
-        if (namespace or project_id) and not new_kubernetes_config:
-            previous_dict["kubernetes"] = {}
-
-        # move namespace from deployment to common kubernetes config since it's shared between deployments
-        if namespace:
-            del deployment["namespace"]
-            previous_dict["kubernetes"]["namespace"] = {}
-            previous_dict["kubernetes"]["namespace"]["all"] = namespace
-
-        # same as namespace above
-        if project_id:
-            del deployment["kubernetes"]["rancher"]
-            previous_dict["kubernetes"]["projectId"] = project_id
-
-        # move dagster config out of deployment since it's not related
-        dagster_config = deployment.get("dagster")
-        if dagster_config:
-            del deployment["dagster"]
-            previous_dict["dagster"] = dagster_config
-
-        # copy project name to deployment name (just for the migration, they don't need to match later)
-        deployment.insert(0, "name", previous_dict["name"])
-
-        # move deployment to deployments
-        del previous_dict["deployment"]
-        previous_dict["deployments"] = [deployment]
-
-        # combine kubernetes deploy steps
-        if previous_dict["stages"].get("deploy", "") == "Kubernetes Job Deploy":
-            previous_dict["stages"]["deploy"] = "Kubernetes Deploy"
-
-        return previous_dict
-
-
-class ProjectUpgraderFour(Upgrader):
-    project_yml_path: Path
-
-    def __init__(self, project_yml_path: Path):
-        self.project_yml_path = project_yml_path
-
-    target_version = 4
-
-    def upgrade(self, previous_dict: ordereddict) -> ordereddict:
-        service_name = previous_dict["name"]
-
-        # change the default deployment name
-        deployments = previous_dict.get("deployments", [])
-        if len(deployments) == 1:
-            deployment = deployments[0]
-
-            if deployment["name"] == service_name:
-                is_job = deployment.get("kubernetes", {}).get("job", {})
-                is_cron_job = is_job.get("cron")
-
-                if is_cron_job:
-                    deployment["name"] = "cronjob"
-                elif is_job:
-                    deployment["name"] = "job"
-                else:
-                    deployment["name"] = "http"
-
-        # update traefik config file name
-        traefik_yml_path = (
-            self.project_yml_path.parent / Project.traefik_yaml_file_name(service_name)
-        )
-        if traefik_yml_path.exists():
-            traefik_yml_path.rename(
-                self.project_yml_path.parent / Project.traefik_yaml_file_name("http")
-            )
-
-        return previous_dict
-
-
-class ProjectUpgraderFive(Upgrader):
-    target_version = 5
-
-    def upgrade(self, previous_dict: ordereddict) -> ordereddict:
-        # update the env var url's
-        deployments = previous_dict.get("deployments", [])
-        for deployment in deployments:
-            properties = deployment.get("properties")
-
-            if properties:
-                for env_var in properties.get("env", []):
-                    for key, value in env_var.items():
-                        if "keycloak" in value:
-                            continue
-                        regex = (
-                            r"http://([a-zA-Z0-9\-]+)\.("
-                            + f"{NAMESPACE_PLACEHOLDER}"
-                            + r"|[a-z\-]+)\.svc"
-                        )
-                        match = re.search(regex, value)
-                        if match:
-                            service_name = match.groups()[0]
-                            namespace = match.groups()[1]
-                            env_var[key] = re.sub(
-                                regex,
-                                f"http://{service_name}-http.{namespace}.svc",
-                                value,
-                            )
-
-        return previous_dict
-
-
 def get_entry_upgrader_index(
     current_version: int, upgraders: list[Upgrader]
 ) -> Optional[int]:
@@ -212,12 +58,8 @@ def __get_version(project: dict) -> int:
 def upgrade_to_latest(project_file: Path) -> ordereddict:
     loaded, _ = load_for_roundtrip(project_file)
     to_upgrade = copy.deepcopy(loaded)
-    upgraders = [
+    upgraders: list[Upgrader] = [
         ProjectUpgraderOne(),
-        ProjectUpgraderTwo(project_file),
-        ProjectUpgraderThree(),
-        ProjectUpgraderFour(project_file),
-        ProjectUpgraderFive(),
     ]
 
     upgrade_index = get_entry_upgrader_index(__get_version(to_upgrade), upgraders)

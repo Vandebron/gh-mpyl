@@ -5,39 +5,6 @@ stages:
   test: Echo Test
   deploy: Echo Deploy
 maintainer: [ 'MPyL' ]
-build:
-  args:
-    plain:
-      - key: SOME_ENV
-        test: "Test"
-        acceptance: "Acceptance"
-        production: "Production"
 dependencies:
   build:
     - 'test/docker/'
-kubernetes:
-  namespace:
-    all: "mpyl"
-deployment:
-  properties:
-    env:
-      - key: SOME_ENV
-        pr: "PullRequest"
-        test: "Test"
-        acceptance: "Acceptance"
-        production: "Production"
-  kubernetes:
-    deploymentStrategy:
-      rollingUpdate:
-        maxSurge: "100%"
-        maxUnavailable: "0%"
-    livenessProbe:
-      path:
-        all: /health
-      successThreshold: 0
-      failureThreshold: 99
-      grpc:
-        port: 123
-        service: 'grpcService'
-    portMappings:
-      8080: 8080

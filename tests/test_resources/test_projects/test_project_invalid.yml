@@ -2,7 +2,4 @@ name: nginx
 description: "A proxy server that handles requests"
 stages:
   build: "Docker Build"
-  deploy: Kubernetes Deploy
-kubernetes:
-  namespace:
-    all: "webapps"
+  deploy: Echo Deploy

@@ -3,53 +3,5 @@ maintainer: ['MPyL']
 projectYmlVersion: 3
 stages:
   build: Echo Build
-  deploy: Kubernetes Deploy
+  deploy: Echo Deploy
 description: 'Demonstrates how an SBT project can be built and tested'
-kubernetes:
-  namespace:
-    all: 'sbtservice'
-deployments:
-  - name: 'http'
-    properties:
-      env:
-        - key: SOME_ENV
-          pr: "PullRequest"
-          test: "Test"
-          acceptance: "Acceptance"
-          production: "Production"
-      kubernetes:
-        - key: SOME_SECRET_ENV
-          valueFrom:
-            secretKeyRef:
-              name: some-secret-name
-              key: sbt-job
-              optional: false
-    kubernetes:
-      livenessProbe:
-        path:
-          all: /health
-        successThreshold: 0
-        failureThreshold: 99
-      portMappings:
-        8080: 8080
-      resources:
-        instances:
-          all: 1
-        limit:
-          cpus:
-            all: 0.1
-          mem:
-            all: 256
-      metrics:
-        enabled: true
-        alerts:
-          - name: 'ServiceError'
-            expr: 'true'
-            forDuration: '1m'
-            description: 'Service has encountered errors'
-            severity: 'warning'
-          - name: 'ServiceErrorCritical'
-            expr: 'true'
-            forDuration: '1m'
-            description: 'Service has encountered critical errors'
-            severity: 'critical'

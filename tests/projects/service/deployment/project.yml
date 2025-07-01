@@ -3,52 +3,8 @@ description: 'This is a test container. For testing the MPyL pipelines, not to b
 projectYmlVersion: 3
 stages:
   build: ''
-  deploy: Kubernetes Deploy
+  deploy: Echo Deploy
 maintainer: ['MPyL']
-build:
-  args:
-    plain:
-      - key: SOME_ENV
-        test: "Test"
-        acceptance: "Acceptance"
-        production: "Production"
-    credentials:
-      - key: SOME_CREDENTIAL
-        id: SOME_CREDENTIAL
 dependencies:
   build:
     - 'test/docker/'
-kubernetes:
-  namespace:
-    all: 'nodeservice'
-deployments:
-  - name: 'http'
-    properties:
-      env:
-        - key: SOME_ENV
-          test: "Test"
-          acceptance: "Acceptance"
-          production: "Production"
-    kubernetes:
-      deploymentStrategy:
-        rollingUpdate:
-          maxSurge: "25%"
-          maxUnavailable: "25%"
-        type: "RollingUpdate"
-      livenessProbe:
-        path:
-          all: /health
-        successThreshold: 0
-        failureThreshold: 99
-      portMappings:
-        8081: 8081
-      metrics:
-        enabled: false
-      resources:
-        instances:
-          all: 1
-        limit:
-          cpus:
-            all: 0.1
-          mem:
-            all: 128
