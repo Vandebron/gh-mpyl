@@ -1,11 +1,11 @@
 from pathlib import Path
 
 from src.mpyl.projects.versioning import (
+    Upgrader,
     upgrade_file,
     get_entry_upgrader_index,
     load_for_roundtrip,
     ProjectUpgraderOne,
-    ProjectUpgraderTwo,
 )
 from src.mpyl.utilities.yaml import yaml_to_string
 from tests.test_resources.test_data import assert_roundtrip
@@ -25,13 +25,11 @@ class TestVersioning:
         assert_roundtrip(target, upgraded, overwrite)
 
     def test_get_upgrader_index(self):
-        upgraders = [
+        upgraders: list[Upgrader] = [
             ProjectUpgraderOne(),
-            ProjectUpgraderTwo(Path("")),
         ]
 
         assert get_entry_upgrader_index(1, upgraders) == 0
-        assert get_entry_upgrader_index(2, upgraders) == 1
         assert get_entry_upgrader_index(0, upgraders) is None
 
     def test_full_upgrade(self):

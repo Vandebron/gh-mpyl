@@ -22,10 +22,7 @@ def stub_project(name: str) -> Project:
         pipeline=None,
         stages=Stages.from_config({}),
         maintainer=[],
-        deployments=[],
         dependencies=None,
-        kubernetes=None,
-        _dagster=None,
     )
 
 

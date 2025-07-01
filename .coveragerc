@@ -6,6 +6,3 @@ omit =
     src/mpyl/cli/commands/*
     src/mpyl/steps/test/after_test.py
     src/mpyl/steps/test/before_test.py
-    src/mpyl/steps/deploy/dagster.py
-    src/mpyl/steps/deploy/kubernetes.py
-    src/mpyl/steps/deploy/k8s/kubectl.py

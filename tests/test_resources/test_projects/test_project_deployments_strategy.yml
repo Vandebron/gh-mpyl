@@ -5,47 +5,6 @@ stages:
   test: Echo Test
   deploy: Echo Deploy
 maintainer: [ 'MPyL' ]
-build:
-  args:
-    plain:
-      - key: SOME_ENV
-        test: "Test"
-        acceptance: "Acceptance"
-        production: "Production"
 dependencies:
   build:
     - 'test/docker/'
-kubernetes:
-  namespace:
-    all: "mpyl"
-deployments:
-  - name: "testDeploymentsStrategyParameters1"
-    properties:
-      env:
-        - key: SOME_ENV
-          pr: "PullRequest"
-          test: "Test"
-          acceptance: "Acceptance"
-          production: "Production"
-    kubernetes:
-      deploymentStrategy:
-        rollingUpdate:
-          maxSurge: "100%"
-          maxUnavailable: "0%"
-      portMappings:
-        8080: 8080
-  - name: "testDeploymentsStrategyParameters2"
-    properties:
-      env:
-        - key: SOME_ENV
-          pr: "PullRequest"
-          test: "Test"
-          acceptance: "Acceptance"
-          production: "Production"
-    kubernetes:
-      deploymentStrategy:
-        rollingUpdate:
-          maxSurge: "100%"
-          maxUnavailable: "0%"
-      portMappings:
-        8080: 8080
