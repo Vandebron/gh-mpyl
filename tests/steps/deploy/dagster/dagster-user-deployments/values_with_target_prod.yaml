@@ -9,9 +9,9 @@ deployments:
   - /tests/projects/dagster-user-code/main.py
   env:
   - name: DEPLOY_ENV
-    value: prod
+    value: "prod"
   - name: LOGGING_LEVEL
-    value: INFO
+    value: "INFO"
   envSecrets:
   - name: some-normal-secret
   image:
