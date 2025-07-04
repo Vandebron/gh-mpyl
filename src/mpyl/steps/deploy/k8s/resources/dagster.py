@@ -4,6 +4,7 @@ This module contains the Dagster user-code-deployment values conversion
 
 from dataclasses import dataclass
 from typing import Optional
+from ruamel.yaml.scalarstring import DoubleQuotedScalarString
 
 from . import to_dict
 from ..chart import ChartBuilder
@@ -91,7 +92,7 @@ def to_user_code_values(  # pylint: disable=too-many-locals
                         project.dagster.repo,
                     ],
                     "env": [
-                        {"name": key, "value": value}
+                        {"name": key, "value": DoubleQuotedScalarString(value)}
                         for key, value in get_env_variables(
                             project, run_properties.target
                         ).items()
