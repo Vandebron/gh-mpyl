@@ -6,12 +6,14 @@ import shutil
 from logging import Logger
 from pathlib import Path
 from typing import Optional
-
-import yaml
+from ruamel.yaml import YAML
 
 from .resources import to_yaml, CustomResourceDefinition
 from ...output import Output
 from ....utilities.subprocess import custom_check_output
+
+
+yaml = YAML()
 
 
 def template_chart(
@@ -52,7 +54,7 @@ def write_chart(
                 "# This file is intentionally left empty. All values in /templates have been pre-interpolated"
             )
         else:
-            file.write(yaml.dump(values))
+            yaml.dump(values, file)
 
     my_dictionary: dict[str, str] = dict(
         map(lambda item: (item[0], to_yaml(item[1])), chart.items())
