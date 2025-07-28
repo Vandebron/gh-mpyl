@@ -96,7 +96,7 @@ jobs:
       - name: Test
         run: pipenv run test-ci
 
-      - uses: mikepenz/action-junit-report@v5.6.1
+      - uses: mikepenz/action-junit-report@v5.6.2
         if: success() || failure()
         with:
           report_paths: build/test-result/test.xml
@@ -123,7 +123,7 @@ jobs:
           thresholds: 79 99
 
       - name: Add Coverage PR Comment
-        uses: marocchino/sticky-pull-request-comment@v2.9.3
+        uses: marocchino/sticky-pull-request-comment@v2.9.4
         continue-on-error: true
         with:
           number: ${{ github.event.pull_request.number }}
