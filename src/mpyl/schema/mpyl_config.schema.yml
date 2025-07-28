@@ -106,20 +106,12 @@ definitions:
           type: string
       deployment:
         type: object
-        additionalProperties: false
+        additionalProperties: {traefik: object, kubernetes: object, env: object}
         properties:
-          traefik:
-            $ref: project.schema.yml#/definitions/traefik
           additionalTraefikRoutes:
             $ref: '#/definitions/AdditionalTraefikRoutes'
           traefikDefaults:
             $ref: '#/definitions/TraefikDefaults'
-          kubernetes:
-            $ref: project.schema.yml#/definitions/kubernetes
-          env:
-            type: array
-            items:
-              $ref: project.schema.yml#/definitions/env
   AdditionalTraefikRoutes:
     type: array
     items:
