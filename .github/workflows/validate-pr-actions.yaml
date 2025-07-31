@@ -53,8 +53,9 @@ jobs:
         id: image
         run: |-
           image="ghcr.io/${{ github.repository }}/mpyl:pr-${{ github.event.pull_request.number }}"
-          echo "image=$image" | tee -a "$GITHUB_OUTPUT"
-          echo "image-with-sha=$image.${{ github.sha }}" | tee -a "$GITHUB_OUTPUT"
+          image_with_sha="$image.${{ github.sha }}"
+          echo "image=${image@L}" | tee -a "$GITHUB_OUTPUT"
+          echo "image-with-sha=${image_with_sha@L}" | tee -a "$GITHUB_OUTPUT"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3.6.0
