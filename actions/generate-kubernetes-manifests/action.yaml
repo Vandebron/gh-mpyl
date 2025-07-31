@@ -29,7 +29,7 @@ inputs:
     required: false
 runs:
   using: docker
-  image: docker://public.ecr.aws/vdb-public/gh-mpyl:v1.10.0
+  image: docker://ghcr.io/vandebron/gh-mpyl/mpyl:v1.10.0
   args:
     - build
     - --environment

@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7-labs
 ARG PYTHON_VERSION=3.13
-FROM public.ecr.aws/vdb-public/python:${PYTHON_VERSION}-slim-bookworm
+FROM ghcr.io/vandebron/docker-images/python:${PYTHON_VERSION}-slim-bookworm
 
 USER root
 
