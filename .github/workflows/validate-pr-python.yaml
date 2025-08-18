@@ -19,7 +19,7 @@ jobs:
     name: 🧽 Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v5.0.0
       - uses: actions/setup-python@v5.6.0
         id: cache-dependencies
         with:
@@ -48,7 +48,7 @@ jobs:
     name: 🧐 Check types
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v5.0.0
       - uses: actions/setup-python@v5.6.0
         id: cache-dependencies
         with:
@@ -77,7 +77,7 @@ jobs:
       pull-requests: write  # required for Dependabot to run marocchino/sticky-pull-request-comment
       contents: read
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v5.0.0
       - uses: actions/setup-python@v5.6.0
         id: cache-dependencies
         with:
