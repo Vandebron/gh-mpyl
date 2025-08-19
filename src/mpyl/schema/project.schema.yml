@@ -10,7 +10,7 @@ required:
 dependencies:
   deployment:
     - maintainer
-additionalProperties: false
+additionalProperties: {deployments: object}
 properties:
   name:
     description: Uniquely identifies this project
@@ -78,16 +78,6 @@ properties:
           - Skip Postdeploy
         type: string
     minProperties: 1
-  build:
-    type: object
-    additionalProperties: false
-    properties:
-      platforms:
-        description: The build platforms for this project
-        type: array
-        items:
-          type: string
-    minProperties: 1
   postdeploy:
     additionalProperties: false
     type: object
@@ -148,22 +138,3 @@ definitions:
         type: number
       all:
         type: number
-  label:
-    type: object
-    additionalProperties: false
-    minProperties: 2
-    required:
-      - key
-    properties:
-      key:
-        type: string
-      pr:
-        type: string
-      test:
-        type: string
-      acceptance:
-        type: string
-      production:
-        type: string
-      all:
-        type: string
