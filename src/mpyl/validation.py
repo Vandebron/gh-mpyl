@@ -32,8 +32,6 @@ def load_schema(schema_string: str) -> Validator:
         [
             "project.schema.yml",
             "mpyl_stages.schema.yml",
-            "k8s_api_core.schema.yml",
-            "traefik_v2.schema.yml",
         ]
     )
 

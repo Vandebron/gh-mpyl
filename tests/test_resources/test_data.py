@@ -123,10 +123,7 @@ def get_project_with_stages(
         pipeline=None,
         stages=stages,
         maintainer=maintainers,
-        deployments=[],
         dependencies=None,
-        kubernetes=None,
-        _dagster=None,
     )
 
 

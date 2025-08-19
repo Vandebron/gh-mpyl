@@ -5,28 +5,3 @@ maintainer:
   - MPyL
 stages:
   build: Echo Build
-deployments:
-  - name: 'http'
-    properties:
-      env:
-        - key: DEPLOY_ENV
-          pr: 'test'
-          test: 'test'
-          acceptance: 'acce'
-          production: 'prod'
-        - key: LOGGING_LEVEL
-          pr: 'DEBUG'
-          test: 'DEBUG'
-          acceptance: 'DEBUG'
-          production: 'INFO'
-    kubernetes:
-      job:
-        ttlSecondsAfterFinished:
-          all: 30
-kubernetes:
-  namespace:
-    all: 'example-dagster-user-code'
-dagster:
-  repo: "/tests/projects/dagster-user-code/main.py"
-  secrets:
-    - name: "some-normal-secret"

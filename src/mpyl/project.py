@@ -20,7 +20,7 @@ import traceback
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional, TypeVar, Any, List
+from typing import Optional, TypeVar
 
 import jsonschema
 from mypy.checker import Generic
@@ -194,282 +194,6 @@ class Env:
 
 
 @dataclass(frozen=True)
-class Properties:
-    env: list[KeyValueProperty]
-    sealed_secrets: list[KeyValueProperty]
-    kubernetes: list[KeyValueRef]
-
-    @staticmethod
-    def from_config(values: dict[Any, Any]):
-        return Properties(
-            env=list(map(KeyValueProperty.from_config, values.get("env", []))),
-            sealed_secrets=list(
-                map(KeyValueProperty.from_config, values.get("sealedSecret", []))
-            ),
-            kubernetes=list(map(KeyValueRef.from_config, values.get("kubernetes", []))),
-        )
-
-
-@dataclass(frozen=True)
-class Probe:
-    path: TargetProperty[str]
-    values: dict
-
-    @staticmethod
-    def from_config(values: dict):
-        if not values:
-            return None
-        return Probe(path=TargetProperty.from_config(values["path"]), values=values)
-
-
-@dataclass(frozen=True)
-class Alert:
-    name: str
-    expr: str
-    for_duration: str
-    description: str
-    severity: str
-
-    @staticmethod
-    def from_config(values: dict):
-        name = values.get("name")
-        expr = values.get("expr")
-        for_duration = values.get("forDuration")
-        description = values.get("description")
-        severity = values.get("severity")
-        if not name or not expr or not for_duration or not description or not severity:
-            raise KeyError(
-                "Alerts must have a name, expr, forDuration, description and severity set."
-            )
-        return Alert(name, expr, for_duration, description, severity)
-
-
-@dataclass(frozen=True)
-class Metrics:
-    path: str
-    port: Optional[str]
-    enabled: bool
-    alerts: list[Alert]
-
-    @staticmethod
-    def from_config(values: dict):
-        if not values:
-            return None
-        return Metrics(
-            path=values.get("path", "/metrics"),
-            port=values.get("port", None),
-            enabled=values.get("enabled", False),
-            alerts=[Alert.from_config(v) for v in values.get("alerts", [])],
-        )
-
-
-@dataclass(frozen=True)
-class ResourceSpecification:
-    cpus: Optional[TargetProperty[float]]
-    mem: Optional[TargetProperty[int]]
-    disk: Optional[TargetProperty[int]]
-
-    @staticmethod
-    def from_config(values: dict):
-        return ResourceSpecification(
-            cpus=TargetProperty.from_config(values.get("cpus", {})),
-            mem=TargetProperty.from_config(values.get("mem", {})),
-            disk=TargetProperty.from_config(values.get("disk", {})),
-        )
-
-
-@dataclass(frozen=True)
-class Resources:
-    instances: Optional[TargetProperty[int]]
-    limit: Optional[ResourceSpecification]
-    request: Optional[ResourceSpecification]
-
-    @staticmethod
-    def from_config(values: dict):
-        return Resources(
-            instances=TargetProperty.from_config(values.get("instances", {})),
-            limit=ResourceSpecification.from_config(values.get("limit", {})),
-            request=ResourceSpecification.from_config(values.get("request", {})),
-        )
-
-
-@dataclass(frozen=True)
-class Job:
-    cron: TargetProperty[dict]
-    job: dict
-
-    @staticmethod
-    def from_config(values: dict):
-        if not values:
-            return None
-        return Job(
-            cron=TargetProperty.from_config(values.get("cron", {})),
-            job=without_keys(values, {"cron"}),
-        )
-
-
-@dataclass(frozen=True)
-class Kubernetes:
-    port_mappings: dict[int, int]
-    liveness_probe: Optional[Probe]
-    startup_probe: Optional[Probe]
-    metrics: Optional[Metrics]
-    resources: Resources
-    job: Optional[Job]
-    command: Optional[TargetProperty[str]]
-    args: Optional[TargetProperty[str]]
-    labels: Optional[list[KeyValueProperty]]
-    deployment_strategy: Optional[dict]
-    pod_security_context: Optional[dict]
-    security_context: Optional[dict]
-
-    @staticmethod
-    def from_config(values: dict):
-        return Kubernetes(
-            port_mappings=values.get("portMappings", {}),
-            liveness_probe=Probe.from_config(values.get("livenessProbe", {})),
-            startup_probe=Probe.from_config(values.get("startupProbe", {})),
-            metrics=Metrics.from_config(values.get("metrics", {})),
-            resources=Resources.from_config(values.get("resources", {})),
-            job=Job.from_config(values.get("job", {})),
-            command=TargetProperty.from_config(values.get("command", {})),
-            args=TargetProperty.from_config(values.get("args", {})),
-            labels=list(map(KeyValueProperty.from_config, values.get("labels", []))),
-            deployment_strategy=values.get("deploymentStrategy", {}),
-            pod_security_context=values.get("podSecurityContext", None),
-            security_context=values.get("securityContext", None),
-        )
-
-
-@dataclass(frozen=True)
-class KubernetesCommon:
-    namespace: TargetProperty[str]
-
-    @staticmethod
-    def from_config(values: dict):
-        return KubernetesCommon(
-            namespace=TargetProperty.from_config(values.get("namespace", {})),
-        )
-
-
-@dataclass(frozen=True)
-class TraefikAdditionalRoute:
-    name: str
-    middlewares: list[str]
-    entrypoints: list[str]
-
-    @staticmethod
-    def from_config(values: Optional[dict]):
-        if not values:
-            return None
-        return TraefikAdditionalRoute(
-            name=values.get("name", ""),
-            middlewares=values.get("middlewares", []),
-            entrypoints=values.get("entrypoints", []),
-        )
-
-
-@dataclass(frozen=True)
-class TraefikHost:
-    host: TargetProperty[str]
-    service_port: Optional[int]
-    has_swagger: bool
-    tls: Optional[TargetProperty[str]]
-    whitelists: TargetProperty[list[str]]
-    priority: Optional[TargetProperty[int]]
-    insecure: bool
-    additional_route: Optional[str]
-    syntax: Optional[TargetProperty[str]]
-
-    @staticmethod
-    def from_config(values: dict):
-        return TraefikHost(
-            host=TargetProperty.from_config(values.get("host", {})),
-            service_port=values.get("servicePort"),
-            has_swagger=values.get("hasSwagger", True),
-            tls=TargetProperty.from_config(values.get("tls", {})),
-            whitelists=TargetProperty.from_config(values.get("whitelists", {})),
-            priority=TargetProperty.from_config(values.get("priority", {})),
-            insecure=values.get("insecure", False),
-            additional_route=values.get("additionalRoute", None),
-            syntax=TargetProperty.from_config(values.get("syntax", {})),
-        )
-
-
-@dataclass
-class DagsterSecret:
-    name: str
-
-    @staticmethod
-    def from_config(values: dict):
-        return DagsterSecret(name=values.get("name", ""))
-
-
-@dataclass(frozen=True)
-class Dagster:
-    repo: str
-    secrets: List[DagsterSecret]
-    readiness_probe_script: Optional[str]
-
-    @staticmethod
-    def from_config(values: dict):
-        return Dagster(
-            repo=values.get("repo", ""),
-            secrets=[DagsterSecret.from_config(v) for v in values.get("secrets", [])],
-            readiness_probe_script=values.get("readinessProbeScript"),
-        )
-
-
-@dataclass(frozen=True)
-class Traefik:
-    hosts: list[TraefikHost]
-    ingress_routes: Optional[TargetProperty[dict]]
-    middlewares: Optional[TargetProperty[list[dict]]]
-
-    @staticmethod
-    def from_config(values: dict):
-        hosts = values.get("hosts")
-        return Traefik(
-            hosts=(list(map(TraefikHost.from_config, hosts) if hosts else [])),
-            ingress_routes=TargetProperty.from_config(values.get("ingressRoutes", {})),
-            middlewares=TargetProperty.from_config(values.get("middlewares", {})),
-        )
-
-
-@dataclass(frozen=True)
-class Deployment:
-    name: str
-    properties: Optional[Properties]
-    _kubernetes: Optional[Kubernetes]
-    traefik: Optional[Traefik]
-
-    @staticmethod
-    def from_config(values: dict):
-        props = values.get("properties")
-        kubernetes = values.get("kubernetes")
-        traefik = values.get("traefik")
-
-        return Deployment(
-            name=values["name"].lower(),
-            properties=Properties.from_config(props) if props else None,
-            _kubernetes=Kubernetes.from_config(kubernetes) if kubernetes else None,
-            traefik=Traefik.from_config(traefik) if traefik else None,
-        )
-
-    def has_kubernetes(self) -> bool:
-        return self._kubernetes is not None
-
-    @property
-    def kubernetes(self) -> Kubernetes:
-        if not self._kubernetes:
-            raise KeyError(
-                f"Deployment '{self.name}' does not have kubernetes configuration"
-            )
-
-        return self._kubernetes
-
-
-@dataclass(frozen=True)
 class Project:
     name: str
     description: str
@@ -477,10 +201,7 @@ class Project:
     pipeline: Optional[str]
     stages: Stages
     maintainer: list[str]
-    deployments: list[Deployment]
     dependencies: Optional[Dependencies]
-    kubernetes: Optional[KubernetesCommon]
-    _dagster: Optional[Dagster]
 
     def __lt__(self, other):
         return self.path < other.path
@@ -491,26 +212,9 @@ class Project:
     def __hash__(self):
         return hash(self.path)
 
-    def namespace(self, target: Target) -> str:
-        return (
-            self.kubernetes.namespace.get_value(target)
-            if self.kubernetes and self.kubernetes.namespace
-            else self.name
-        )
-
-    @property
-    def dagster(self) -> Dagster:
-        if self._dagster is None:
-            raise KeyError(f"Project '{self.name}' does not have dagster configuration")
-        return self._dagster
-
     @staticmethod
     def project_yaml_file_name() -> str:
         return "project.yml"
-
-    @staticmethod
-    def traefik_yaml_file_name(deployment_name: str) -> str:
-        return f"{deployment_name}-traefik.yml"
 
     @property
     def root_path(self) -> Path:
@@ -530,30 +234,7 @@ class Project:
 
     @staticmethod
     def from_config(values: dict, project_path: Path):
-        kubernetes_values = values.get("kubernetes", {})
-        dagster = values.get("dagster")
-        deployment_old = values.get("deployment", {})
-        if (
-            deployment_old
-        ):  # Deprecated, only used for old tags. Remove in a month or so after this commit
-            deployment_old["name"] = values["name"]
-            deployment_list = [deployment_old]
-
-            old_namespace = deployment_old.get("namespace")
-            if old_namespace:
-                kubernetes_values["namespace"] = {}
-                kubernetes_values["namespace"]["all"] = old_namespace
-
-            dagster_old = deployment_old.get("dagster")
-            if dagster_old:
-                dagster = dagster_old
-        else:
-            deployment_list = values.get("deployments", [])
-        deployments = [
-            Deployment.from_config(deployment) for deployment in deployment_list
-        ]
         dependencies = values.get("dependencies")
-
         return Project(
             name=values["name"],
             description=values["description"],
@@ -561,12 +242,9 @@ class Project:
             pipeline=values.get("pipeline"),
             stages=Stages.from_config(values.get("stages", {})),
             maintainer=values.get("maintainer", []),
-            deployments=deployments,
             dependencies=(
                 Dependencies.from_config(dependencies) if dependencies else None
             ),
-            _dagster=Dagster.from_config(dagster) if dagster else None,
-            kubernetes=KubernetesCommon.from_config(kubernetes_values),
         )
 
 
@@ -611,23 +289,6 @@ def load_project(  # pylint: disable=too-many-locals
             loader: YAML = YAML()
             yaml_values: dict = loader.load(file)
 
-            deployment_old = yaml_values.get(
-                "deployment"
-            )  # deprecated, can be removed in a month
-            deployments = (
-                [deployment_old]
-                if deployment_old
-                else yaml_values.get("deployments", [])
-            )
-            for deployment in deployments:
-                deployment_name = deployment.get("name") or yaml_values.get("name", "")
-                traefik_config = load_traefik_config(
-                    project_path.parent
-                    / Project.traefik_yaml_file_name(deployment_name),
-                    loader,
-                )
-                if traefik_config:
-                    deployment["traefik"] = traefik_config["traefik"]
             if validate_project_yaml:
                 validate_project(yaml_values)
             project = Project.from_config(yaml_values, project_path)

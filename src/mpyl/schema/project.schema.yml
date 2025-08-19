@@ -70,7 +70,7 @@ properties:
         $id: '#/properties/stages/deploy'
         description: Deploys the artifacts created in the build stage
         examples:
-          - Kubernetes Deploy
+          - Echo
         type: string
       postdeploy:
         description: Additional steps that can be done after the project has been deployed.

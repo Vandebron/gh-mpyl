@@ -12,80 +12,11 @@ definitions:
         type: string
       vcs:
         $ref: '#/definitions/VCS'
-      dagster:
-        $ref: '#/definitions/Dagster'
-      whiteLists:
-        $ref: '#/definitions/Whitelists'
-      kubernetes:
-        $ref: '#/definitions/Kubernetes'
       project:
         $ref: '#/definitions/Project'
     required:
       - vcs
     title: MPyL global configuration
-  Whitelists:
-    type: object
-    required:
-      - default
-      - addresses
-    properties:
-      default:
-        description: Default whitelist for all environments
-        type: array
-        items:
-          minItems: 1
-          type: string
-      addresses:
-        type: array
-        minItems: 1
-        items:
-          type: object
-          additionalProperties: false
-          required:
-            - name
-          oneOf:
-            - required:
-                - pr
-                - test
-                - acceptance
-                - production
-            - required:
-                - all
-          properties:
-            name:
-              type: string
-            pr:
-              type: array
-              items:
-                minItems: 1
-                type: string
-            test:
-              type: array
-              items:
-                minItems: 1
-                type: string
-            acceptance:
-              type: array
-              items:
-                minItems: 1
-                type: string
-            production:
-              type: array
-              items:
-                minItems: 1
-                type: string
-            all:
-              type: array
-              items:
-                minItems: 1
-                type: string
-  Kubernetes:
-    type: object
-    required:
-      - deploymentStrategy
-    properties:
-      deploymentStrategy:
-        $ref: k8s_api_core.schema.yml#/definitions/io.k8s.api.apps.v1.DeploymentStrategy
   VCS:
     type: object
     properties:
@@ -98,70 +29,8 @@ definitions:
     additionalProperties: false
     required:
       - allowedMaintainers
-      - deployment
     properties:
       allowedMaintainers:
         type: array
         items:
           type: string
-      deployment:
-        type: object
-        additionalProperties: {traefik: object, kubernetes: object, env: object}
-        properties:
-          additionalTraefikRoutes:
-            $ref: '#/definitions/AdditionalTraefikRoutes'
-          traefikDefaults:
-            $ref: '#/definitions/TraefikDefaults'
-  AdditionalTraefikRoutes:
-    type: array
-    items:
-      type: object
-      additionalProperties: false
-      properties:
-        name:
-          type: string
-        clusterEnv:
-          $ref: project.schema.yml#/definitions/dtapValue
-        middlewares:
-          type: array
-          items:
-            type: string
-        entrypoints:
-          type: array
-          items:
-            type: string
-  TraefikDefaults:
-    type: object
-    additionalProperties: false
-    properties:
-      httpMiddleware:
-        type: string
-      tls:
-        type: string
-    required: [httpMiddleware, tls]
-  Dagster:
-    title: Dagster
-    type: object
-    additionalProperties: false
-    properties:
-      baseNamespace:
-        description: Namespace that contains dagster instances
-        type: string
-      workspaceConfigMap:
-        description: Configmap that contains the dagster workspace configuration
-        type: string
-      workspaceFileKey:
-        description: Key of the workspaceConfigMap entry that contains the list of servers that are hosted on the dagster instance
-        type: string
-      daemon:
-        description: Name of the kubernetes instance that runs the dagster daemon
-        type: string
-      webserver:
-        description: Name of the kubernetes instance that runs the dagster web UI, default
-        type: string
-      globalServiceAccountOverride:
-        description: Name of an (external) serviceAccount that will be assigned to a dagster user-deployment in favor of creating a new one
-        type: string
-      userCodeHelmChartVersion:
-        description: Version of the Helm Chart that is used for user-code deployments
-        type: string

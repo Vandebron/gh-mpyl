@@ -136,14 +136,13 @@ name: batterypackApi
 stages:
   build: Sbt Build
   test: Sbt Test
-  deploy: Kubernetes Deploy
+  deploy: Echo Deploy
 ```
 
 - `name` is a required parameter
 - `stages` are optional parameters. Stages that are undefined will be skipped. Depending on the
   type of project you want to build, you need to specify an appropriate action to be performed in each stage.
   For example: `Sbt Build` can be used for scala projects, and `Docker Build` can be used for front-end projects.
-- `kubernetes` is a required parameter if `deploy` stage is set to `Kubernetes Deploy`.
 
 The [schema](https://vandebron.github.io/mpyl/schema/project.schema.yml) for `project.yml` contains detailed
 documentation and
