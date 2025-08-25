@@ -14,7 +14,7 @@ pyaml-env = "==1.2.2"
 python-dotenv = "==1.1.1"
 toml = "==0.10.2"
 deepdiff = "==8.6.0"
-requests = "==2.32.4"
+requests = "==2.32.5"
 referencing = "==0.36.2"
 
 [dev-packages]
